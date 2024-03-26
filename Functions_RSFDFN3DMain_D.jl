@@ -5,7 +5,7 @@ function main(StiffnessMatrixShear, StiffnessMatrixNormal,
     InitialNormalStress, LoadingRate, 
     TotalStep, RecordStep, SwitchV, TimeStepping, SaveResultFileName,RockDensity,
     FaultCenter,FaultLengthStrike, FaultLengthDip, FaultStrikeAngle, FaultDipAngle, FaultLLRR, SaveStep,
-    HMatrixCompress, HMatrix_atol_Shear, HMatrix_atol_Normal, HMatrix_eta, TimeStepOnlyBasedOnUnstablePatch, MinimumNormalStress)
+    HMatrixCompress, HMatrix_atol_Shear, HMatrix_atol_Normal, HMatrix_eta, TimeStepOnlyBasedOnUnstablePatch, MinimumNormalStress, Alpha_Evo)
     
     ExternalStressExist=0;
 
@@ -294,7 +294,8 @@ function main(StiffnessMatrixShear, StiffnessMatrixNormal,
                 Mass,ShearModulus, 
                 EffNormalStress_i,Total_Loading_Disp, SolverSwitch,
                 V,Friction,Disp,Theta,EffNormalStress,Dt_All,Instability,
-                LoadingRate, LoadingFaultCount, FaultCount, RockDensity, D_EffStress_Shear, SwitchV)
+                LoadingRate, LoadingFaultCount, FaultCount, RockDensity, D_EffStress_Shear, SwitchV, Alpha_Evo, EffNormalStress_Old)
+
                 ############ End of One Step Solver ############
 
 
@@ -355,7 +356,7 @@ function main(StiffnessMatrixShear, StiffnessMatrixNormal,
                     
                     save(SaveResultFileName, 
                     "History_V", History_V, "History_Disp", History_Disp, "History_Pressure", History_Pressure,
-                    "History_Time", History_Time, "History_Theta", History_V, "History_NormalStress", History_NormalStress,
+                    "History_Time", History_Time, "History_Theta", History_Theta, "History_NormalStress", History_NormalStress,
                     # "History_External_Shear", History_External_Shear, "History_External_Normal", History_External_Normal,
                     ) 
                     println("Saved Upto Here")

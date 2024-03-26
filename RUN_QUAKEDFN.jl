@@ -108,8 +108,11 @@ function RunRSFDFN3D(TotalStep, RecordStep,
     ################################ Run Simulation ################################
     ######++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++######
 
-    FaultMass .= 1e6 
+
     ######+++++++++++++++++++++++++ Adjust Parameters ++++++++++++++++++++++++######
+    FaultMass .= 1e6 
+    Alpha_Evo = 0.0
+
     LoadingFaultCount, FaultMass, Fault_a, Fault_b, Fault_Dc, Fault_Theta_i, Fault_V_i, 
     Fault_Friction_i, Fault_NormalStress, Fault_V_Const, StiffnessMatrixShear, StiffnessMatrixNormal, FaultCenter, FaultIndex_Adjusted, MinimumNormalStress = 
         ParameterAdj(LoadingFaultCount, FaultMass, Fault_a, Fault_b, Fault_Dc, Fault_Theta_i, Fault_V_i, 
@@ -201,7 +204,7 @@ function RunRSFDFN3D(TotalStep, RecordStep,
     Fault_NormalStress, Fault_V_Const,
     TotalStep, RecordStep, SwitchV, TimeStepping, SaveResultFileName,RockDensity,
     FaultCenter,FaultLengthStrike, FaultLengthDip, FaultStrikeAngle, FaultDipAngle, FaultLLRR, SaveStep,
-    HMatrixCompress, HMatrix_atol_Shear, HMatrix_atol_Normal, HMatrix_eta, TimeStepOnlyBasedOnUnstablePatch, MinimumNormalStress)  
+    HMatrixCompress, HMatrix_atol_Shear, HMatrix_atol_Normal, HMatrix_eta, TimeStepOnlyBasedOnUnstablePatch, MinimumNormalStress, Alpha_Evo)  
 
 
     ########^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^########
