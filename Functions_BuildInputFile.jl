@@ -326,175 +326,61 @@ end
 
 
 
-
 ###################################################################
-############### Build Stiffness Matrix  Stirke Slip ###############
-###################################################################
-
-function Function_StiffnessMatrixStrikeSlip(Input_Segment, ShearModulus, PoissonRatio)
-    FaultCount=size(Input_Segment,1)
-    FaultCenter=Input_Segment[:,1:3]
-    FaultLengthStrike=Input_Segment[:,4]
-    FaultLengthDip=Input_Segment[:,5]
-    FaultStrikeAngle=Input_Segment[:,6]
-    FaultDipAngle=Input_Segment[:,7]
-    FaultLLRR=Input_Segment[:,8]
-    Fault_V_Const=Input_Segment[:,16]
-    FaultLengthStrike_Bulk=Input_Segment[:,18]
-    FaultLengthDip_Bulk=Input_Segment[:,19]
-    StiffnessMatrixShear = zeros(FaultCount,FaultCount)
-    StiffnessMatrixNormal = zeros(FaultCount,FaultCount)
-    
-    @time begin 
-    # Threads.@threads for ReceiverIndex=1:FaultCount;
-    # Threads.@spawn for ReceiverIndex=1:FaultCount;
-        for ReceiverIndex=1:FaultCount;        
-            println(ReceiverIndex)
-            # Threads.@spawn for SourceIndex=1:FaultCount;
-            for SourceIndex=1:FaultCount;
-                    
-
-                    ####################################
-                    ##### get source geometry and slip
-
-                    SourceCenter = FaultCenter[SourceIndex,:];
-                    SourceLengthStrike = FaultLengthStrike[SourceIndex];
-                    SourceLengthDip = FaultLengthDip[SourceIndex];
-                    SourceStrikeAngle = FaultStrikeAngle[SourceIndex];
-                    SourceDipAngle = FaultDipAngle[SourceIndex];
-                    SourceLLRR = FaultLLRR[SourceIndex];
-                            
-                    ReceiverCenter = FaultCenter[ReceiverIndex,:];
-                    ReceiverStrikeAngle = FaultStrikeAngle[ReceiverIndex];
-                    ReceiverDipAngle = FaultDipAngle[ReceiverIndex];
-                    ReceiverLLRR = FaultLLRR[ReceiverIndex];
-                    RelativeStrkieAngle = ReceiverStrikeAngle - SourceStrikeAngle
-                    
-                    DISL1 = -SourceLLRR; # Left Latteral is +1 for Okada
-                    DISL2 = 0;
-                    DISL3 = 0;
-                            
-                    DEPTH=SourceCenter[3]; # Source Depth
-                    AL1=SourceLengthStrike/2;
-                    AL2=SourceLengthStrike/2;
-                    AW1=SourceLengthDip/2;
-                    AW2=SourceLengthDip/2;
-                    
-                    LameFirstParam=2*ShearModulus*PoissonRatio/(1-2*PoissonRatio);
-                    ALPHA=(LameFirstParam+ShearModulus)/(LameFirstParam+2*ShearModulus);
-                    
-
-                    #######################################################################
-                    ##### Calculate Receiver Point Relative to the Source and Source frame
-                    
-                    X_Dist=ReceiverCenter[1]-SourceCenter[1];
-                    Y_Dist=ReceiverCenter[2]-SourceCenter[2];
-                    
-                    X=X_Dist*cosd(-SourceStrikeAngle)-Y_Dist*sind(-SourceStrikeAngle);
-                    Y=X_Dist*sind(-SourceStrikeAngle)+Y_Dist*cosd(-SourceStrikeAngle);
-                    Z=-ReceiverCenter[3];
-
-                    
-                    #######################################################################
-                    ##### Calculate Stress Change at Source Frame
-
-                    UX,UY,UZ,UXX,UYX,UZX,UXY,UYY,UZY,UXZ,UYZ,UZZ,IRET = Okada_DC3D(ALPHA,
-                        X,Y,Z,DEPTH,SourceDipAngle,
-                        AL1,AL2,AW1,AW2,DISL1,DISL2,DISL3);
-
-                    
-                    StressXX_SourceFrame=(LameFirstParam*(UXX+UYY+UZZ) + 2*ShearModulus*UXX);
-                    StressYY_SourceFrame=(LameFirstParam*(UXX+UYY+UZZ) + 2*ShearModulus*UYY);
-                    StressZZ_SourceFrame=(LameFirstParam*(UXX+UYY+UZZ) + 2*ShearModulus*UZZ);
-                    StressXY_SourceFrame=(UXY + UYX)*ShearModulus;
-                    StressXZ_SourceFrame=(UXZ + UZX)*ShearModulus;
-                    StressYZ_SourceFrame=(UYZ + UZY)*ShearModulus;      
-                    
-                    Stress_SourceFrame=[StressXX_SourceFrame StressXY_SourceFrame StressXZ_SourceFrame
-                        StressXY_SourceFrame StressYY_SourceFrame StressYZ_SourceFrame
-                        StressXZ_SourceFrame StressYZ_SourceFrame StressZZ_SourceFrame];
-                
-
-                    #######################################################################
-                    ##### Rotate Source Frame Stress to Flat Receiver 
-
-                    RotationMat_FromReceiver_Strike=
-                    [cosd(-RelativeStrkieAngle) -sind(-RelativeStrkieAngle)  0
-                    sind(-RelativeStrkieAngle) cosd(-RelativeStrkieAngle) 0
-                    0  0  1];
-
-                    RotationMat_FromReceiver_Dip=
-                    [1 0 0
-                    0 cosd(-ReceiverDipAngle) -sind(-ReceiverDipAngle)
-                    0 sind(-ReceiverDipAngle) cosd(-ReceiverDipAngle)]
-                    
-                    RotationMat_FromReceiver_All = RotationMat_FromReceiver_Dip*RotationMat_FromReceiver_Strike
-                                    
-                    Stress_Receiver = RotationMat_FromReceiver_All*Stress_SourceFrame*RotationMat_FromReceiver_All'
-                          
-
-                    #######################################################################
-                    ##### Read Normal and Shear Stress Change
-                    StiffnessMatrixNormal[ReceiverIndex,SourceIndex] = - Stress_Receiver[3,3]  # compression is negative
-                    StiffnessMatrixShear[ReceiverIndex,SourceIndex] = - ReceiverLLRR * Stress_Receiver[1,3]  # right latteral is negative
-
-                    # println(SourceDipAngle,"  ",Z,"  ",DEPTH, " ", StressZZ_SourceFrame, "  ",Stress_Receiver[3,3])
-                    
-            end                  
-        end
-    end
-
-        return StiffnessMatrixShear, StiffnessMatrixNormal 
-end
- 
-
-
-
-###################################################################
-########### Build Stiffness Matrix  Stirke Slip Vector ############
+####### Build Stiffness Matrix  Stirke Slip Vector By Part  #######
 ###################################################################
 
-function Function_StiffnessMatrixStrikeSlip_Vector(Input_Segment, ShearModulus, PoissonRatio)
-    FaultCount=size(Input_Segment,1)
-    FaultCenter=Input_Segment[:,1:3]
-    FaultLengthStrike=Input_Segment[:,4]
-    FaultLengthDip=Input_Segment[:,5]
-    FaultStrikeAngle=Input_Segment[:,6]
-    FaultDipAngle=Input_Segment[:,7]
-    FaultLLRR=Input_Segment[:,8]
-    Fault_V_Const=Input_Segment[:,16]
-    FaultLengthStrike_Bulk=Input_Segment[:,18]
-    FaultLengthDip_Bulk=Input_Segment[:,19]
-    StiffnessMatrixShear = zeros(FaultCount,FaultCount)
-    StiffnessMatrixNormal = zeros(FaultCount,FaultCount)
+function StiffnessMatrix_ByParts_Calculation_Shear(Input_SegmentSource, Input_SegmentReceiver, ShearModulus, PoissonRatio,
+    CurrentPart, TotalParts)
+    FaultCountSource=size(Input_SegmentSource,1)
+    FaultCenterSource=Input_SegmentSource[:,1:3]
+    FaultLengthStrikeSource=Input_SegmentSource[:,4]
+    FaultLengthDipSource=Input_SegmentSource[:,5]
+    FaultStrikeAngleSource=Input_SegmentSource[:,6]
+    FaultDipAngleSource=Input_SegmentSource[:,7]
+    FaultLLRRSource=Input_SegmentSource[:,8]
+
+    FaultCountReceiver=size(Input_SegmentReceiver,1)
+    FaultCenterReceiver=Input_SegmentReceiver[:,1:3]
+    FaultLengthStrikeReceiver=Input_SegmentReceiver[:,4]
+    FaultLengthDipReceiver=Input_SegmentReceiver[:,5]
+    FaultStrikeAngleReceiver=Input_SegmentReceiver[:,6]
+    FaultDipAngleReceiver=Input_SegmentReceiver[:,7]
+    FaultLLRRReceiver=Input_SegmentReceiver[:,8]
+    # println(FaultCountSource, "  ", FaultCountReceiver)
+
+
+    StiffnessMatrixShear = zeros(FaultCountReceiver,FaultCountSource)
+    StiffnessMatrixNormal = zeros(FaultCountReceiver,FaultCountSource)
     
     @time begin 
     # Threads.@threads for ReceiverIndex=1:FaultCount;
     # Threads.@spawn for ReceiverIndex=1:FaultCount;
     # Threads.@spawn for SourceIndex=1:FaultCount;
-            for SourceIndex=1:FaultCount;
-                println(SourceIndex)
+            for SourceIndex=1:FaultCountSource;
+                println(SourceIndex,"  ",CurrentPart,"/",TotalParts)
                     
 
                     ####################################
                     ##### get source geometry and slip
 
-                    SourceCenter = FaultCenter[SourceIndex,:];
-                    SourceLengthStrike = FaultLengthStrike[SourceIndex];
-                    SourceLengthDip = FaultLengthDip[SourceIndex];
-                    SourceStrikeAngle = FaultStrikeAngle[SourceIndex];
-                    SourceDipAngle = FaultDipAngle[SourceIndex];
-                    SourceLLRR = FaultLLRR[SourceIndex];
+                    SourceCenter = FaultCenterSource[SourceIndex,:];
+                    SourceLengthStrike = FaultLengthStrikeSource[SourceIndex];
+                    SourceLengthDip = FaultLengthDipSource[SourceIndex];
+                    SourceStrikeAngle = FaultStrikeAngleSource[SourceIndex];
+                    SourceDipAngle = FaultDipAngleSource[SourceIndex];
+                    SourceLLRR = FaultLLRRSource[SourceIndex];
                             
-                    ReceiverCenter = FaultCenter;
-                    ReceiverStrikeAngle = FaultStrikeAngle;
-                    ReceiverDipAngle = FaultDipAngle;
-                    ReceiverLLRR = FaultLLRR;
+                    ReceiverCenter = FaultCenterReceiver;
+                    ReceiverStrikeAngle = FaultStrikeAngleReceiver;
+                    ReceiverDipAngle = FaultDipAngleReceiver;
+                    ReceiverLLRR = FaultLLRRReceiver;
                     RelativeStrkieAngle = ReceiverStrikeAngle .- SourceStrikeAngle
                     
+
                     DISL1 = -SourceLLRR; # Left Latteral is +1 for Okada
                     DISL2 = 0;
-                    DISL3 = 0;
+                    DISL3 = 0;            
                             
                     DEPTH=SourceCenter[3]; # Source Depth
                     AL1=SourceLengthStrike/2;
@@ -533,7 +419,7 @@ function Function_StiffnessMatrixStrikeSlip_Vector(Input_Segment, ShearModulus, 
                     
 
 
-                    for ReceiverIdx = 1:FaultCount
+                    for ReceiverIdx = 1:FaultCountReceiver
                         Stress_SourceFrame=[StressXX_SourceFrame[ReceiverIdx] StressXY_SourceFrame[ReceiverIdx] StressXZ_SourceFrame[ReceiverIdx]
                         StressXY_SourceFrame[ReceiverIdx] StressYY_SourceFrame[ReceiverIdx] StressYZ_SourceFrame[ReceiverIdx]
                         StressXZ_SourceFrame[ReceiverIdx] StressYZ_SourceFrame[ReceiverIdx] StressZZ_SourceFrame[ReceiverIdx]];
@@ -570,189 +456,57 @@ function Function_StiffnessMatrixStrikeSlip_Vector(Input_Segment, ShearModulus, 
 end
  
 
-
-
-
-
 ###################################################################
-############# Build Stiffness Matrix Reverse Normal ###############
+####### Build Stiffness Matrix  Stirke Slip Vector By Part  #######
 ###################################################################
 
-function Function_StiffnessMatrixReverseNormal(Input_Segment, ShearModulus, PoissonRatio)
-    FaultCount=size(Input_Segment,1)
-    FaultCenter=Input_Segment[:,1:3]
-    FaultLengthStrike=Input_Segment[:,4]
-    FaultLengthDip=Input_Segment[:,5]
-    FaultStrikeAngle=Input_Segment[:,6]
-    FaultDipAngle=Input_Segment[:,7]
-    FaultLLRR=Input_Segment[:,8]
-    Fault_V_Const=Input_Segment[:,16]
-    FaultLengthStrike_Bulk=Input_Segment[:,18]
-    FaultLengthDip_Bulk=Input_Segment[:,19]
-    StiffnessMatrixShear = zeros(FaultCount,FaultCount)
-    StiffnessMatrixNormal = zeros(FaultCount,FaultCount)
-    
-    @time begin 
-    # Threads.@threads for ReceiverIndex=1:FaultCount;
-    # Threads.@spawn for ReceiverIndex=1:FaultCount;
-        for ReceiverIndex=1:FaultCount;        
-            println(ReceiverIndex)
-            # Threads.@spawn for SourceIndex=1:FaultCount;
-            for SourceIndex=1:FaultCount;
-                    
+function StiffnessMatrix_ByParts_Calculation_Normal(Input_SegmentSource, Input_SegmentReceiver, ShearModulus, PoissonRatio,
+    CurrentPart, TotalParts)
+    FaultCountSource=size(Input_SegmentSource,1)
+    FaultCenterSource=Input_SegmentSource[:,1:3]
+    FaultLengthStrikeSource=Input_SegmentSource[:,4]
+    FaultLengthDipSource=Input_SegmentSource[:,5]
+    FaultStrikeAngleSource=Input_SegmentSource[:,6]
+    FaultDipAngleSource=Input_SegmentSource[:,7]
+    FaultLLRRSource=Input_SegmentSource[:,8]
 
-                    ####################################
-                    ##### get source geometry and slip
-
-                    SourceCenter = FaultCenter[SourceIndex,:];
-                    SourceLengthStrike = FaultLengthStrike[SourceIndex];
-                    SourceLengthDip = FaultLengthDip[SourceIndex];
-                    SourceStrikeAngle = FaultStrikeAngle[SourceIndex];
-                    SourceDipAngle = FaultDipAngle[SourceIndex];
-                    SourceLLRR = FaultLLRR[SourceIndex];
-                            
-                    ReceiverCenter = FaultCenter[ReceiverIndex,:];
-                    ReceiverStrikeAngle = FaultStrikeAngle[ReceiverIndex];
-                    ReceiverDipAngle = FaultDipAngle[ReceiverIndex];
-                    ReceiverLLRR = FaultLLRR[ReceiverIndex];
-                    RelativeStrkieAngle = ReceiverStrikeAngle - SourceStrikeAngle
-                    OrientationCoefficient = 0
-
-                    
-                    if SourceDipAngle <= 90
-                        OrientationCoeff_Source = -1
-                    else
-                        OrientationCoeff_Source = 1
-                    end
-
-                    DISL1 = 0
-                    DISL2 = OrientationCoeff_Source * SourceLLRR # Reverse Slip is +1 for Okada
-                    DISL3 = 0
-                            
-                    DEPTH=SourceCenter[3]; # Source Depth
-                    AL1=SourceLengthStrike/2;
-                    AL2=SourceLengthStrike/2;
-                    AW1=SourceLengthDip/2;
-                    AW2=SourceLengthDip/2;
-                    
-                    LameFirstParam=2*ShearModulus*PoissonRatio/(1-2*PoissonRatio);
-                    ALPHA=(LameFirstParam+ShearModulus)/(LameFirstParam+2*ShearModulus);
-                    
-
-                    #######################################################################
-                    ##### Calculate Receiver Point Relative to the Source and Source frame
-                    
-                    X_Dist=ReceiverCenter[1]-SourceCenter[1];
-                    Y_Dist=ReceiverCenter[2]-SourceCenter[2];
-                    
-                    X=X_Dist*cosd(-SourceStrikeAngle)-Y_Dist*sind(-SourceStrikeAngle);
-                    Y=X_Dist*sind(-SourceStrikeAngle)+Y_Dist*cosd(-SourceStrikeAngle);
-                    Z=-ReceiverCenter[3];
-
-                    
-                    #######################################################################
-                    ##### Calculate Stress Change at Source Frame
-
-                    UX,UY,UZ,UXX,UYX,UZX,UXY,UYY,UZY,UXZ,UYZ,UZZ,IRET = Okada_DC3D(ALPHA,
-                        X,Y,Z,DEPTH,SourceDipAngle,
-                        AL1,AL2,AW1,AW2,DISL1,DISL2,DISL3);
-
-                    
-                    StressXX_SourceFrame=(LameFirstParam*(UXX+UYY+UZZ) + 2*ShearModulus*UXX);
-                    StressYY_SourceFrame=(LameFirstParam*(UXX+UYY+UZZ) + 2*ShearModulus*UYY);
-                    StressZZ_SourceFrame=(LameFirstParam*(UXX+UYY+UZZ) + 2*ShearModulus*UZZ);
-                    StressXY_SourceFrame=(UXY + UYX)*ShearModulus;
-                    StressXZ_SourceFrame=(UXZ + UZX)*ShearModulus;
-                    StressYZ_SourceFrame=(UYZ + UZY)*ShearModulus;      
-                    
-                    Stress_SourceFrame=[StressXX_SourceFrame StressXY_SourceFrame StressXZ_SourceFrame
-                        StressXY_SourceFrame StressYY_SourceFrame StressYZ_SourceFrame
-                        StressXZ_SourceFrame StressYZ_SourceFrame StressZZ_SourceFrame];
-                
-
-                    #######################################################################
-                    ##### Rotate Source Frame Stress to Flat Receiver 
-
-                    RotationMat_FromReceiver_Strike=
-                    [cosd(-RelativeStrkieAngle) -sind(-RelativeStrkieAngle)  0
-                    sind(-RelativeStrkieAngle) cosd(-RelativeStrkieAngle) 0
-                    0  0  1];
-
-                    RotationMat_FromReceiver_Dip=
-                    [1 0 0
-                    0 cosd(-ReceiverDipAngle) -sind(-ReceiverDipAngle)
-                    0 sind(-ReceiverDipAngle) cosd(-ReceiverDipAngle)]
-
-                    RotationMat_FromReceiver_All = RotationMat_FromReceiver_Dip*RotationMat_FromReceiver_Strike
-                                    
-                    Stress_Receiver = RotationMat_FromReceiver_All*Stress_SourceFrame*RotationMat_FromReceiver_All'
-                                
-
-                    #######################################################################
-                    ##### Read Normal and Shear Stress Change
-                    
-                    if ReceiverDipAngle <= 90
-                        OrientationCoeff_Receiver = -1
-                    else
-                        OrientationCoeff_Receiver = 1
-                    end
-
-                    StiffnessMatrixNormal[ReceiverIndex,SourceIndex] = - Stress_Receiver[3,3]  # compression is negative
-                    StiffnessMatrixShear[ReceiverIndex,SourceIndex] = OrientationCoeff_Receiver * ReceiverLLRR * Stress_Receiver[2,3]  # normal is negative
-
-                    # println(SourceDipAngle,"  ",Z,"  ",DEPTH, " ", StressZZ_SourceFrame, "  ",Stress_Receiver[3,3])
-                    
-            end                  
-        end
-    end
-    
-        return StiffnessMatrixShear, StiffnessMatrixNormal 
-end
- 
+    FaultCountReceiver=size(Input_SegmentReceiver,1)
+    FaultCenterReceiver=Input_SegmentReceiver[:,1:3]
+    FaultLengthStrikeReceiver=Input_SegmentReceiver[:,4]
+    FaultLengthDipReceiver=Input_SegmentReceiver[:,5]
+    FaultStrikeAngleReceiver=Input_SegmentReceiver[:,6]
+    FaultDipAngleReceiver=Input_SegmentReceiver[:,7]
+    FaultLLRRReceiver=Input_SegmentReceiver[:,8]
+    # println(FaultCountSource, "  ", FaultCountReceiver)
 
 
-###################################################################
-########## Build Stiffness Matrix  Reverse Normal Vector ##########
-###################################################################
-
-function Function_StiffnessMatrixReverseNormal_Vector(Input_Segment, ShearModulus, PoissonRatio)
-    
-    FaultCount=size(Input_Segment,1)
-    FaultCenter=Input_Segment[:,1:3]
-    FaultLengthStrike=Input_Segment[:,4]
-    FaultLengthDip=Input_Segment[:,5]
-    FaultStrikeAngle=Input_Segment[:,6]
-    FaultDipAngle=Input_Segment[:,7]
-    FaultLLRR=Input_Segment[:,8]
-    Fault_V_Const=Input_Segment[:,16]
-    FaultLengthStrike_Bulk=Input_Segment[:,18]
-    FaultLengthDip_Bulk=Input_Segment[:,19]
-    StiffnessMatrixShear = zeros(FaultCount,FaultCount)
-    StiffnessMatrixNormal = zeros(FaultCount,FaultCount)
+    StiffnessMatrixShear = zeros(FaultCountReceiver,FaultCountSource)
+    StiffnessMatrixNormal = zeros(FaultCountReceiver,FaultCountSource)
     
     @time begin 
     # Threads.@threads for ReceiverIndex=1:FaultCount;
     # Threads.@spawn for ReceiverIndex=1:FaultCount;
     # Threads.@spawn for SourceIndex=1:FaultCount;
-            for SourceIndex=1:FaultCount;
-                println(SourceIndex)
+            for SourceIndex=1:FaultCountSource;
+                println(SourceIndex,"  ",CurrentPart,"/",TotalParts)
                     
 
                     ####################################
                     ##### get source geometry and slip
 
-                    SourceCenter = FaultCenter[SourceIndex,:];
-                    SourceLengthStrike = FaultLengthStrike[SourceIndex];
-                    SourceLengthDip = FaultLengthDip[SourceIndex];
-                    SourceStrikeAngle = FaultStrikeAngle[SourceIndex];
-                    SourceDipAngle = FaultDipAngle[SourceIndex];
-                    SourceLLRR = FaultLLRR[SourceIndex];
+                    SourceCenter = FaultCenterSource[SourceIndex,:];
+                    SourceLengthStrike = FaultLengthStrikeSource[SourceIndex];
+                    SourceLengthDip = FaultLengthDipSource[SourceIndex];
+                    SourceStrikeAngle = FaultStrikeAngleSource[SourceIndex];
+                    SourceDipAngle = FaultDipAngleSource[SourceIndex];
+                    SourceLLRR = FaultLLRRSource[SourceIndex];
                             
-                    ReceiverCenter = FaultCenter;
-                    ReceiverStrikeAngle = FaultStrikeAngle;
-                    ReceiverDipAngle = FaultDipAngle;
-                    ReceiverLLRR = FaultLLRR;
+                    ReceiverCenter = FaultCenterReceiver;
+                    ReceiverStrikeAngle = FaultStrikeAngleReceiver;
+                    ReceiverDipAngle = FaultDipAngleReceiver;
+                    ReceiverLLRR = FaultLLRRReceiver;
                     RelativeStrkieAngle = ReceiverStrikeAngle .- SourceStrikeAngle
+                    
                     
                     if SourceDipAngle <= 90
                         OrientationCoeff_Source = -1
@@ -762,7 +516,7 @@ function Function_StiffnessMatrixReverseNormal_Vector(Input_Segment, ShearModulu
 
                     DISL1 = 0
                     DISL2 = OrientationCoeff_Source * SourceLLRR # Reverse Slip is +1 for Okada
-                    DISL3 = 0
+                    DISL3 = 0                
                             
                     DEPTH=SourceCenter[3]; # Source Depth
                     AL1=SourceLengthStrike/2;
@@ -801,7 +555,7 @@ function Function_StiffnessMatrixReverseNormal_Vector(Input_Segment, ShearModulu
                     
 
 
-                    for ReceiverIdx = 1:FaultCount
+                    for ReceiverIdx = 1:FaultCountReceiver
                         Stress_SourceFrame=[StressXX_SourceFrame[ReceiverIdx] StressXY_SourceFrame[ReceiverIdx] StressXZ_SourceFrame[ReceiverIdx]
                         StressXY_SourceFrame[ReceiverIdx] StressYY_SourceFrame[ReceiverIdx] StressYZ_SourceFrame[ReceiverIdx]
                         StressXZ_SourceFrame[ReceiverIdx] StressYZ_SourceFrame[ReceiverIdx] StressZZ_SourceFrame[ReceiverIdx]];
@@ -826,7 +580,7 @@ function Function_StiffnessMatrixReverseNormal_Vector(Input_Segment, ShearModulu
 
                         #######################################################################
                         ##### Read Normal and Shear Stress Change
-                        
+
                         if ReceiverDipAngle[ReceiverIdx] <= 90
                             OrientationCoeff_Receiver = -1
                         else
@@ -844,11 +598,6 @@ function Function_StiffnessMatrixReverseNormal_Vector(Input_Segment, ShearModulu
         return StiffnessMatrixShear, StiffnessMatrixNormal 
 end
  
-
-
-
-
-
 
 
 
@@ -1024,8 +773,63 @@ function SaveResults(ReducedStiffnessMatrixShear, ReducedStiffnessMatrixNormal, 
     ########^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^########
     ################################################################################
 
-
-
-
-
 end    
+
+function BuildMatrixByPartsShear(FaultCount, ElementPartRoughCount, Input_Segment,  ShearModulus, PoissonRatio)
+
+    DivisionCount = round(Int,FaultCount / ElementPartRoughCount)
+    if DivisionCount == 0; DivisionCount =1; end
+    PartedElementCount = FaultCount ÷ DivisionCount
+    StiffnessMatrixShearOriginal= zeros(FaultCount,FaultCount)
+    StiffnessMatrixNormalOriginal = zeros(FaultCount,FaultCount)
+    TotalParts = DivisionCount^2
+    CurrentPart = 0
+    println("preparing for discretization by parts. Total Parts ", TotalParts)
+    for i=1:DivisionCount
+        for j=1:DivisionCount
+            CurrentPart =  CurrentPart +1
+            Init_S = (i-1)*PartedElementCount+1
+            Fin_S = i*PartedElementCount
+            Init_R =  (j-1)*PartedElementCount+1
+            Fin_R = j*PartedElementCount
+            if i == DivisionCount; Fin_S = FaultCount; end
+            if j == DivisionCount; Fin_R = FaultCount; end
+    
+            StiffnessMatrixShearOriginal[Init_R:Fin_R,Init_S:Fin_S], StiffnessMatrixNormalOriginal[Init_R:Fin_R,Init_S:Fin_S] = 
+            StiffnessMatrix_ByParts_Calculation_Shear(Input_Segment[Init_S:Fin_S,:], Input_Segment[Init_R:Fin_R,:], ShearModulus, PoissonRatio,
+                                                CurrentPart, TotalParts)
+        end
+    end
+    
+    return StiffnessMatrixShearOriginal, StiffnessMatrixNormalOriginal
+end
+
+
+function BuildMatrixByPartsNormal(FaultCount, ElementPartRoughCount, Input_Segment,  ShearModulus, PoissonRatio)
+
+    DivisionCount = round(Int,FaultCount / ElementPartRoughCount)
+    if DivisionCount == 0; DivisionCount =1; end
+    PartedElementCount = FaultCount ÷ DivisionCount
+    StiffnessMatrixShearOriginal= zeros(FaultCount,FaultCount)
+    StiffnessMatrixNormalOriginal = zeros(FaultCount,FaultCount)
+    TotalParts = DivisionCount^2
+    CurrentPart = 0
+    println("preparing for discretization by parts. Total Parts ", TotalParts)
+    for i=1:DivisionCount
+        for j=1:DivisionCount
+            CurrentPart =  CurrentPart +1
+            Init_S = (i-1)*PartedElementCount+1
+            Fin_S = i*PartedElementCount
+            Init_R =  (j-1)*PartedElementCount+1
+            Fin_R = j*PartedElementCount
+            if i == DivisionCount; Fin_S = FaultCount; end
+            if j == DivisionCount; Fin_R = FaultCount; end
+    
+            StiffnessMatrixShearOriginal[Init_R:Fin_R,Init_S:Fin_S], StiffnessMatrixNormalOriginal[Init_R:Fin_R,Init_S:Fin_S] = 
+            StiffnessMatrix_ByParts_Calculation_Normal(Input_Segment[Init_S:Fin_S,:], Input_Segment[Init_R:Fin_R,:], ShearModulus, PoissonRatio,
+                                                CurrentPart, TotalParts)
+        end
+    end
+    
+    return StiffnessMatrixShearOriginal, StiffnessMatrixNormalOriginal
+end
