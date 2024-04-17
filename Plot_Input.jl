@@ -143,15 +143,20 @@ function RunPlotInput(LoadingInputFileName)
 
     ################################################################################
     ############################ Single element locator ############################
-    
-    # figure(1)
-    # # SelectedElements = FaultIndex_Adjusted
-    # SelectedElements = [20]
-    # # clf()
-    # MaxVaule, MinValue = FaultPlot_3D_Color_SelectedElements(FaultCenter,FaultLengthStrike, FaultLengthDip,
-    #     FaultStrikeAngle, FaultDipAngle, FaultLLRR, PlotInput, 
-    #     PlotRotation, MinMax_Axis, ColorMinMax, Transparent, SelectedElements)
-
+    #=
+    figure(1)
+     # SelectedElements = FaultIndex_Adjusted
+    SelectedElements = [843]
+    PlotInput = Fault_a - Fault_b; ColorMinMax = 0  
+        PlotRotation=[45,-30]
+        Edge = 0
+        Transparent = 0
+        MinMax_Axis=0 # automatically detect max and min 
+    clf()
+     MaxVaule, MinValue = FaultPlot_3D_Color_SelectedElements(FaultCenter,FaultLengthStrike, FaultLengthDip,
+         FaultStrikeAngle, FaultDipAngle, FaultLLRR, PlotInput, 
+         PlotRotation, MinMax_Axis, ColorMinMax, Transparent, SelectedElements)
+    =#
     ########^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^########
     ################################################################################
         

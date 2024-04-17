@@ -60,7 +60,7 @@ end
 
 
 function GroupAndSort_AllLevel(HowManyDivisionEachLevel, TotalHierarchyLevel, MinimumElementsToCut,
-                                ArrangePoint, FaultCount)
+                                ArrangePoint, FaultCount, Input_Segment)
 
 Block_Range_Level = zeros(Int,1, 3 + TotalHierarchyLevel)
 Block_Ctr_Diam = zeros(1, 4)
@@ -125,7 +125,7 @@ end
 ############################## Build Hierarchy ####################################
 
 
-function BuildHierarchy(Block_Range_Level, Block_Ctr_Diam, DistDiamRatioCrit) 
+function BuildHierarchy(Block_Range_Level, Block_Ctr_Diam, DistDiamRatioCrit, TotalHierarchyLevel) 
 
     Ranks =  zeros(Int,1)
     ElementRange_SR = zeros(Int, 1,4)
@@ -150,16 +150,16 @@ function BuildHierarchy(Block_Range_Level, Block_Ctr_Diam, DistDiamRatioCrit)
                     Distance = norm(Ctr_Diam_Current[i,1:3] - Ctr_Diam_Current[j,1:3])
                     Diameter = (Ctr_Diam_Current[i,4] + Ctr_Diam_Current[j,4])/2
                     if Distance/Diameter > DistDiamRatioCrit * 2
-                        Ranks = [Ranks 5]
+                        Ranks = [Ranks 10]
                         Added = [Range_Level_Current[i,1] Range_Level_Current[i,2] Range_Level_Current[j,1] Range_Level_Current[j,2]]
                         ElementRange_SR = [ElementRange_SR; Added] 
                     elseif Distance/Diameter > DistDiamRatioCrit * 1.5
-                      Ranks = [Ranks 10]
+                      Ranks = [Ranks 15]
                       Added = [Range_Level_Current[i,1] Range_Level_Current[i,2] Range_Level_Current[j,1] Range_Level_Current[j,2]]
                       ElementRange_SR = [ElementRange_SR; Added]                    
 
                     elseif Distance/Diameter > DistDiamRatioCrit 
-                      Ranks = [Ranks 15]
+                      Ranks = [Ranks 30]
                       Added = [Range_Level_Current[i,1] Range_Level_Current[i,2] Range_Level_Current[j,1] Range_Level_Current[j,2]]
                       ElementRange_SR = [ElementRange_SR; Added] 
                     
@@ -178,6 +178,91 @@ function BuildHierarchy(Block_Range_Level, Block_Ctr_Diam, DistDiamRatioCrit)
 
 end
 
+function HmatSolver(NetDisp, ShearStiffness_H, BlockCount, ElementRange_SR, FaultCount)
+    Elastic_Load_Disp = zeros(FaultCount)
+    # @sync begin
+        # @distributed for Blockidx in 1:BlockCount  
+        # @turbo for Blockidx in 1:BlockCount    
+    
+    for Blockidx in 1:BlockCount    
+            Elastic_Load_Disp[ElementRange_SR[Blockidx,1]:ElementRange_SR[Blockidx,2]] = 
+                Elastic_Load_Disp[ElementRange_SR[Blockidx,1]:ElementRange_SR[Blockidx,2]] + 
+                ShearStiffness_H[Blockidx] * NetDisp[ElementRange_SR[Blockidx,3]:ElementRange_SR[Blockidx,4]]
+        end
+    
+    return Elastic_Load_Disp
+end
+
+function HmatSolver_Pararllel(NetDisp, ShearStiffness_H, ElementRange_SR, FaultCount, Par_ElementDivision, ThreadCount)
+
+    Elastic_Load_DispPart = zeros(FaultCount,ThreadCount)
+    @sync begin
+
+            # for i=1:ThreadCount; println(i);                
+            # @time for Blockidx = Par_ElementDivision[i]+1 : Par_ElementDivision[i+1]
+            
+            Threads.@threads for i=1:ThreadCount 
+             for Blockidx = Par_ElementDivision[i]+1 : Par_ElementDivision[i+1]
+                Elastic_Load_DispPart[ElementRange_SR[Blockidx,1]:ElementRange_SR[Blockidx,2],i] = 
+                Elastic_Load_DispPart[ElementRange_SR[Blockidx,1]:ElementRange_SR[Blockidx,2],i] + 
+                    ShearStiffness_H[Blockidx] * NetDisp[ElementRange_SR[Blockidx,3]:ElementRange_SR[Blockidx,4]]
+                    
+            end
+        end
+    end
+    # println("One Step Over")
+   Elastic_Load_DispP = sum(Elastic_Load_DispPart, dims=2)
+    return Elastic_Load_DispP
+end
+
+
+function ParallelOptimization(ShearStiffness_H, ElementRange_SR, FaultCount, Par_BlockCount, ThreadCount)
+    println("Parallel Calculation Optimizing")
+    RepeatCount=50
+    NetDisp = ones(FaultCount)
+    Elastic_Load_DispPart = zeros(FaultCount)
+
+    # RecordedTime = ones(Par_BlockCount) * 1000
+    RecordedTime = zeros(Par_BlockCount) 
+    TimeEachRepeat = zeros(RepeatCount)
+    # RecordedTime = zeros(Par_BlockCount) 
+             for Blockidx = 1 : Par_BlockCount       
+                for RepeatTime = 1:RepeatCount        
+                    ElapsedTime= @elapsed begin
+                    Elastic_Load_DispPart[ElementRange_SR[Blockidx,1]:ElementRange_SR[Blockidx,2]] = 
+                    Elastic_Load_DispPart[ElementRange_SR[Blockidx,1]:ElementRange_SR[Blockidx,2]] + 
+                        ShearStiffness_H[Blockidx] * NetDisp[ElementRange_SR[Blockidx,3]:ElementRange_SR[Blockidx,4]]
+                    end
+                    TimeEachRepeat[RepeatTime] = ElapsedTime
+                    sort!(TimeEachRepeat)
+                    # RecordedTime[Blockidx] = sum(TimeEachRepeat[round(Int,RepeatCount/10):round(Int,RepeatCount*2/10)])
+                    RecordedTime[Blockidx] = sum(TimeEachRepeat[1:round(Int,RepeatCount*1/10)])
+                    # if ElapsedTime < RecordedTime[Blockidx]
+                    #     RecordedTime[Blockidx] = ElapsedTime
+                    # end
+                end
+                    # RecordedTime[Blockidx] = RecordedTime[Blockidx] + ElapsedTime
+            end 
+                
+        
+    CumRecordTime = cumsum(RecordedTime)
+    CumRecordTimeNorm = CumRecordTime / maximum(CumRecordTime)
+    figure(3); plot(CumRecordTimeNorm)
+
+    ElementGap = 1 / ThreadCount
+    Par_ElementDivision = zeros(Int, ThreadCount +1)
+    for i=1:ThreadCount
+        if i==ThreadCount 
+            Par_ElementDivision[i+1] = Par_BlockCount
+        else 
+            Par_ElementDivision[i+1] = findmin(abs.(CumRecordTimeNorm .- ElementGap * i))[2]
+        end
+    end
+    println(Par_ElementDivision)
+    # println(RecordedTime)
+    # Elastic_Load_DispP = sum(Elastic_Load_DispPart[:,:], dims=2)
+    return Par_ElementDivision
+end
 
 #= 
 function GroupAndSort(Input_Segment_Part, HowManyDivision, 

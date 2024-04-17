@@ -9,8 +9,8 @@ using PyCall
 pygui(true)
 
 
-FlowRate=100 # kg/s
-PressureOrigin=[0.0, 0.0,-2000]; # Custom Faults
+FlowRate=10 # kg/s
+PressureOrigin=[0.0, 10.0,-2005]; # Custom Faults
 Permeability = 1e-16;
 Viscosity = 0.4e-3;
 SkemptonCoeff=0.75;
@@ -18,7 +18,7 @@ PoissonRatio_Undrained=0.3;
 FluidDensity_Ref = 1e3;
 
 OutputFile="Input_ExternalStressChange.jld2"
-LoadingInputFileName="Input_Discretized.jld2" 
+LoadingInputFileName="Input_Discretized_H.jld2" 
 
 ############################### Load Input Files ###############################
 ######++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++######
