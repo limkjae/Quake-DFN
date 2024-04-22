@@ -16,24 +16,22 @@ include("Functions_OKADA3D.jl")
 include("Results/Functions_Plot.jl")
 include("Functions_Hmatrix.jl")
 
-
-function BuildInputFromBulkGeometry_H()
-
-
     InputBulkFileName="Input_BulkFaultGeometry.txt"
     OutputFileName="Input_Discretized_H.jld2"
 
 
-    ArrangePoint = [0,-3000,1000]
+    ArrangePoint = [0,-10000,2000]
     HowManyDivisionEachLevel = 2
-    TotalHierarchyLevel = 8
-    MinimumElementsToCut = 30
-    ElementPartRoughCount = 2000
+    TotalHierarchyLevel = 2
+    MinimumElementsToCut = 100
+    ElementPartRoughCount = 1000
     DistDiamRatioCrit = 1
+    AllowedError = 1e-3 # ratio
+    # AllowedError = 1e3 # pascal for 1m slip
 
     ############# Plots? ##############
     PlotHMat = 1
-    PlotBlock3D = 1
+    PlotBlock3D =1
     ###################################
 
 
@@ -96,6 +94,7 @@ function BuildInputFromBulkGeometry_H()
 
 
     ############################## Build Hierarchy ####################################
+    
     Ranks, ElementRange_SR = BuildHierarchy(Block_Range_Level, Block_Ctr_Diam, DistDiamRatioCrit, TotalHierarchyLevel) 
 
 
@@ -113,11 +112,11 @@ function BuildInputFromBulkGeometry_H()
         ColorMinMax = 0  
         figure(1)
         clf()
-        MaxVaule, MinValue = FaultPlot_3D_Color_General(Input_Segment[:,1:3],Input_Segment[:,4], Input_Segment[:,5],
+        MaxVaule, MinValue = HMatBlockPlot(Input_Segment[:,1:3],Input_Segment[:,4], Input_Segment[:,5],
             Input_Segment[:,6], Input_Segment[:,7], Input_Segment[:,8], Input_Segment[:,20], 
             PlotRotation, MinMax_Axis, ColorMinMax, Transparent, Edge, LoadingFaultCount)
 
-        plotforcbar=  scatter([1,1],[1,1],0.1, [MinValue,MaxVaule], cmap="jet")
+        # plotforcbar=  scatter([1,1],[1,1],0.1, [MinValue,MaxVaule], cmap="jet")
         colorbar(plotforcbar, pad=0.15)
         figure(1).canvas.draw()
         xlabel("x")
@@ -137,17 +136,14 @@ function BuildInputFromBulkGeometry_H()
         ax = gca()
         # ax[:set_aspect]("equal")
         for i=1:length(ElementRange_SR[:,1])
-            if Ranks[i] > 6 
+            if Ranks[i] > 0   
                 c = PyObject(patches.Rectangle((ElementRange_SR[i,3], -ElementRange_SR[i,1]), ElementRange_SR[i,4] - ElementRange_SR[i,3], 
-                            -ElementRange_SR[i,2] + ElementRange_SR[i,1], linewidth=1, edgecolor="k", facecolor=[0.2 0.3 1]))                                
-            elseif Ranks[i] > 0                 
-                c = PyObject(patches.Rectangle((ElementRange_SR[i,3], -ElementRange_SR[i,1]), ElementRange_SR[i,4] - ElementRange_SR[i,3], 
-                            -ElementRange_SR[i,2] + ElementRange_SR[i,1], linewidth=1, edgecolor="k", facecolor=[0.5 0.8 1]))
+                            -ElementRange_SR[i,2] + ElementRange_SR[i,1], linewidth=1, edgecolor="k", facecolor=[1-Ranks[i]/maximum(Ranks)*0.6  1-Ranks[i]/maximum(Ranks)*0.6  1]))    
             else           
                 c = PyObject(patches.Rectangle((ElementRange_SR[i,3], -ElementRange_SR[i,1]), ElementRange_SR[i,4] - ElementRange_SR[i,3], 
-                            -ElementRange_SR[i,2] + ElementRange_SR[i,1], linewidth=1, edgecolor="k", facecolor=[1 0.8 0.4]))
+                            -ElementRange_SR[i,2] + ElementRange_SR[i,1], linewidth=1, edgecolor="k", facecolor=[1 0.4 0.4]))
             end
-            ax.text( (ElementRange_SR[i,3] + ElementRange_SR[i,4])/2, -(ElementRange_SR[i,1] + ElementRange_SR[i,2])/2, i ,size=8, horizontalalignment="center", verticalalignment="center", color="k") 
+            # ax.text( (ElementRange_SR[i,3] + ElementRange_SR[i,4])/2, -(ElementRange_SR[i,1] + ElementRange_SR[i,2])/2, i ,size=8, horizontalalignment="center", verticalalignment="center", color="k") 
             ax.add_patch(c) 
         end
         xlim(0,FaultCount)
@@ -157,8 +153,7 @@ function BuildInputFromBulkGeometry_H()
     ################################################################################
 
 
-
-
+#=
 
 
     ########################## Build Stiffness Matrix ##############################
@@ -182,30 +177,39 @@ function BuildInputFromBulkGeometry_H()
         println("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
     end
 
-    ElasticLoadingShearMatrix=zeros(FaultCount,FaultCount)
-    for i=1:FaultCount
-        for j=1:FaultCount  
-            if i==j
-                ElasticLoadingShearMatrix[i,j]=0.0;
-            else
-                ElasticLoadingShearMatrix[i,j]=StiffnessMatrixShearOriginal[i,j]/StiffnessMatrixShearOriginal[i,i];
-                # ElasticLoadingNormal[i,j]=StiffnessMatrixNormal[i,j]/StiffnessMatrixShear[i,i];
-            end
-        end
-    end
 
-    ##################### Approximate #####################
+
+    ################################## Approximate ######################################
     BlockCount = length(ElementRange_SR[:,1])
     ShearStiffness_H = Any[0]
     BlockIndex = 0
     # Ranks = Ranks .* 2
+    println("compressing")
     for i=1:BlockCount
         BlockIndex = BlockIndex + 1
+        
         if Ranks[BlockIndex] > 0
-            # push!(ABlock_H,psvdfact(ShearMatrix[ElementRange_SR[i,1]:ElementRange_SR[i,2],ElementRange_SR[i,3]:ElementRange_SR[i,4]], rank=Ranks[i]))
-            push!(ShearStiffness_H,pqrfact(ElasticLoadingShearMatrix[ElementRange_SR[i,1]:ElementRange_SR[i,2],ElementRange_SR[i,3]:ElementRange_SR[i,4]], rank=Ranks[i]))
+            OrigianlMatrixToApproximate = StiffnessMatrixShearOriginal[ElementRange_SR[i,1]:ElementRange_SR[i,2],ElementRange_SR[i,3]:ElementRange_SR[i,4]]
+            TestVector = ones(size(OrigianlMatrixToApproximate,2))
+            Error = 1e9
+
+            # while Error > 1e2
+            while Error > AllowedError
+                Ranks[BlockIndex] += 1
+                ApproxMatrix = pqrfact(OrigianlMatrixToApproximate, rank=Ranks[BlockIndex])
+                TestMul_Original = OrigianlMatrixToApproximate * TestVector
+                TestMul_Approx = ApproxMatrix * TestVector
+                if AllowedError < 1 
+                    Error = maximum(abs.((TestMul_Original .- TestMul_Approx)./TestMul_Original))
+                else
+                    Error = maximum(abs.((TestMul_Original .- TestMul_Approx)))
+                end
+                # println(Error)
+            end
+            push!(ShearStiffness_H,pqrfact(OrigianlMatrixToApproximate, rank=Ranks[i]))
+            
         else 
-            push!(ShearStiffness_H,ElasticLoadingShearMatrix[ElementRange_SR[i,1]:ElementRange_SR[i,2],ElementRange_SR[i,3]:ElementRange_SR[i,4]])
+            push!(ShearStiffness_H,StiffnessMatrixShearOriginal[ElementRange_SR[i,1]:ElementRange_SR[i,2],ElementRange_SR[i,3]:ElementRange_SR[i,4]])
         end
 
     end
@@ -213,28 +217,15 @@ function BuildInputFromBulkGeometry_H()
 
 
 
-
-
-
-
-
-    println("Stiffness NaN count: ",sum(isnan.(StiffnessMatrixShearOriginal)))
-
-    ########################## Remove Unstable Faults ##############################    
-    ReducedStiffnessMatrixShear, ReducedStiffnessMatrixNormal, ReducedInput_Segment=
-    CheckTooClose(StiffnessMatrixShearOriginal, StiffnessMatrixNormalOriginal, Input_Segment, Input_Bulk, DropCrit, DropCritNormalStressMultiplier);
+    # ########################## Remove Unstable Faults ##############################    
+    # ReducedStiffnessMatrixShear, ReducedStiffnessMatrixNormal, ReducedInput_Segment=
+    # CheckTooClose(StiffnessMatrixShearOriginal, StiffnessMatrixNormalOriginal, Input_Segment, Input_Bulk, DropCrit, DropCritNormalStressMultiplier);
 
 
     ################################### Save Files #################################
-    jldsave("HmatSave.jld2"; ShearStiffness_H, ElasticLoadingShearMatrix, ReducedStiffnessMatrixShear, ReducedStiffnessMatrixNormal, Ranks, ElementRange_SR)
+    # jldsave("HmatSave.jld2"; ShearStiffness_H, StiffnessMatrixShearOriginal, StiffnessMatrixNormalOriginal, Ranks, ElementRange_SR)
 
-    SaveResults_H(ReducedStiffnessMatrixShear, ReducedStiffnessMatrixNormal, ReducedInput_Segment,
+    SaveResults_H(StiffnessMatrixShearOriginal, StiffnessMatrixNormalOriginal, Input_Segment,
          OutputFileName, ShearModulus, PoissonRatio, RockDensity, Switch_StrikeSlip_or_ReverseNormal, MinimumNS,
-         Ranks, ElementRange_SR, ShearStiffness_H);
-
-end
-
-
-
-
-Input = BuildInputFromBulkGeometry_H()
+         Ranks, ElementRange_SR, ShearStiffness_H)
+=#

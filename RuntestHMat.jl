@@ -31,25 +31,36 @@ BlockCount = length(Ranks)
 Elastic_Load_DispP = zeros(FaultCount)
 Elastic_Load_Disp = zeros(FaultCount)
 NetDisp = ones(FaultCount)
-ElasticLoadingShearMatrix = load(LoadingInputFileName, "StiffnessMatrixShear")
+# ElasticLoadingShearMatrix = load(LoadingInputFileName, "StiffnessMatrixShear")
+StiffnessMatrixShear= load(LoadingInputFileName, "StiffnessMatrixShear")
 
 ThreadCount = 24
-
 BlockCount = length(Ranks)
 Par_ElementDivision = ParallelOptimization(ShearStiffness_H, ElementRange_SR, FaultCount, BlockCount, ThreadCount)
 
-
-for i=1:10
-    # @time Elastic_Load_Disp  = HmatSolver(NetDisp, ShearStiffness_H, BlockCount, ElementRange_SR, FaultCount)
-    @time Elastic_Load_DispP= 
-        HmatSolver_Pararllel(NetDisp, ShearStiffness_H, ElementRange_SR, FaultCount, Par_ElementDivision, ThreadCount)
-        #  Elastic_Load_DispP = Elastic_Load_Disp1 + Elastic_Load_Disp2 + Elastic_Load_Disp3 +Elastic_Load_Disp4
+@time for i=1:100
+ Elastic_Load_DispP= 
+    HmatSolver_Pararllel(NetDisp, ShearStiffness_H, ElementRange_SR, FaultCount, Par_ElementDivision, ThreadCount)
 end
 
+@time for i=1:100
+ ElasticLoadDisp = StiffnessMatrixShear * NetDisp
+end
+maximum(abs.((ElasticLoadDisp - Elastic_Load_DispP)./ElasticLoadDisp))
+
+
+# @time for i=1:10
+#     # @time Elastic_Load_Disp  = HmatSolver(NetDisp, ShearStiffness_H, BlockCount, ElementRange_SR, FaultCount)
+#     @time Elastic_Load_DispP= 
+#         HmatSolver_Pararllel(NetDisp, ShearStiffness_H, ElementRange_SR, FaultCount, Par_ElementDivision, ThreadCount) ./ Elastic_Load_DispP
+#     @time ElasticLoadDisp = StiffnessMatrixShear * NetDisp
+#         # println("One Step Over")
+# end
+
+
+# Elastic_Load_DispP
 
 # println(Par_ElementDivision)
-
-
 # SizeAndRankCumNorm = zeros(size(ShearStiffness_H,1))
 # SizeAndRank = zeros(size(ShearStiffness_H,1))
 # for i in eachindex(ShearStiffness_H[:])

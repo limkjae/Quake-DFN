@@ -9,8 +9,8 @@ using PyCall
 pygui(true)
 
 
-FlowRate=10 # kg/s
-PressureOrigin=[0.0, 10.0,-2005]; # Custom Faults
+FlowRate=100 # kg/s
+PressureOrigin=[0.0, 0.0,-2000]; # Custom Faults
 Permeability = 1e-16;
 Viscosity = 0.4e-3;
 SkemptonCoeff=0.75;

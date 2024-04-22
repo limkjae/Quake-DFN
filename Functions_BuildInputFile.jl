@@ -349,13 +349,13 @@ function StiffnessMatrix_ByParts_Calculation_Shear(Input_SegmentSource, Input_Se
     FaultLLRRReceiver=Input_SegmentReceiver[:,8]
     # println(FaultCountSource, "  ", FaultCountReceiver)
 
-
     StiffnessMatrixShear = zeros(FaultCountReceiver,FaultCountSource)
     StiffnessMatrixNormal = zeros(FaultCountReceiver,FaultCountSource)
-    
+    # println(CurrentPart,"/",TotalParts)
+    print("\033c")
         for SourceIndex=1:FaultCountSource;
+            
             println(SourceIndex,"  ",CurrentPart,"/",TotalParts)
-                
 
             ####################################
             ##### get source geometry and slip
@@ -445,6 +445,7 @@ function StiffnessMatrix_ByParts_Calculation_Shear(Input_SegmentSource, Input_Se
 
                 # println(SourceDipAngle,"  ",Z,"  ",DEPTH, " ", StressZZ_SourceFrame, "  ",Stress_Receiver[3,3])
             end
+        
         end                  
 
 
@@ -479,6 +480,7 @@ function StiffnessMatrix_ByParts_Calculation_Normal(Input_SegmentSource, Input_S
     StiffnessMatrixShear = zeros(FaultCountReceiver,FaultCountSource)
     StiffnessMatrixNormal = zeros(FaultCountReceiver,FaultCountSource)
     
+    print("\033c")
     for SourceIndex=1:FaultCountSource;
         println(SourceIndex,"  ",CurrentPart,"/",TotalParts)
             

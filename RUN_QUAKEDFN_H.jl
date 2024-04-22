@@ -25,9 +25,9 @@ LoadingInputFileName="Input_Discretized_H.jld2"
 
 
 ########################## Simulation Time Set ################################
-TotalStep = 500 # Total simulation step
-SaveStep = 600 # Automatically saved every this step
-RecordStep = 50 # Simulation sampling rate
+TotalStep = 10000 # Total simulation step
+SaveStep = 10000 # Automatically saved every this step
+RecordStep = 10 # Simulation sampling rate
 
 
 ########################## Time Stepping Setup ################################
