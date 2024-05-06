@@ -23,12 +23,11 @@ function BuildInputFromBulkGeometry_H()
 
 
     ArrangePoint = [0,-5000,1000]
-    HowManyDivisionEachLevel = 2
     TotalHierarchyLevel = 8
     MinimumElementsToCut = 50
     ElementPartRoughCount = 2000
     DistDiamRatioCrit = 1
-    AllowedError = 1e4 # pascal for 1m slip
+    Tolerance = 1e3 # pascal for 1m slip
 
     ############# Plots? ##############
     PlotHMat = 1
@@ -86,6 +85,8 @@ function BuildInputFromBulkGeometry_H()
 
 
     ################################# Group and Sort #################################
+    HowManyDivisionEachLevel = 2
+    
     Block_Ctr_Diam, Block_Range_Level, Input_Segment = 
         GroupAndSort_AllLevel(HowManyDivisionEachLevel, TotalHierarchyLevel, MinimumElementsToCut,
                             ArrangePoint, FaultCount, Input_Segment)
@@ -191,19 +192,9 @@ function BuildInputFromBulkGeometry_H()
         
         if Ranks[BlockIndex] > 0
             OrigianlMatrixToApproximate = StiffnessMatrixShearOriginal[ElementRange_SR[i,1]:ElementRange_SR[i,2],ElementRange_SR[i,3]:ElementRange_SR[i,4]]
-            TestVector = ones(size(OrigianlMatrixToApproximate,2))
-            Error = 1e9
-
-            # while Error > 1e2
-            while Error > AllowedError
-                Ranks[BlockIndex] += 1
-                ApproxMatrix = pqrfact(OrigianlMatrixToApproximate, rank=Ranks[BlockIndex])
-                TestMul_Original = OrigianlMatrixToApproximate * TestVector
-                TestMul_Approx = ApproxMatrix * TestVector
-                Error = maximum(abs.((TestMul_Original .- TestMul_Approx)))
-                # println(Error)
-            end
-            push!(ShearStiffness_H,pqrfact(OrigianlMatrixToApproximate, rank=Ranks[i]))
+            ApproxMatrix = pqrfact(OrigianlMatrixToApproximate, atol = Tolerance)
+            push!(ShearStiffness_H,ApproxMatrix)
+            Ranks[BlockIndex] = size(ApproxMatrix[:Q],2)
             
         else 
             push!(ShearStiffness_H,StiffnessMatrixShearOriginal[ElementRange_SR[i,1]:ElementRange_SR[i,2],ElementRange_SR[i,3]:ElementRange_SR[i,4]])

@@ -10,6 +10,7 @@ using HMatrices
 using StaticArrays
 using LowRankApprox
 using Distributed
+using Statistics
 pygui(true)
 
 include("Functions_Solvers.jl")
@@ -21,12 +22,12 @@ include("Functions_Hmatrix.jl")
 SaveResultFileName="Results/Result.jld2"
 SaveInputInfoFileName="Results/Result_Input.jld2" 
 
-LoadingInputFileName="Input_Discretized_H.jld2" 
+LoadingInputFileName="Input_Discretized_H_16k.jld2" 
 
 
 ########################## Simulation Time Set ################################
-TotalStep = 10000 # Total simulation step
-SaveStep = 10000 # Automatically saved every this step
+TotalStep = 1000 # Total simulation step
+SaveStep = 1000 # Automatically saved every this step
 RecordStep = 10 # Simulation sampling rate
 
 
