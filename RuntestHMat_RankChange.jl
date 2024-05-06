@@ -35,6 +35,27 @@ NetDisp = ones(FaultCount)
 StiffnessMatrixShear= load(LoadingInputFileName, "StiffnessMatrixShear")
 
 
+BlockNumber = 1
+AMatrix_Original = StiffnessMatrixShear[ElementRange_SR[BlockNumber,1]:ElementRange_SR[BlockNumber,2],
+                                        ElementRange_SR[BlockNumber,3]:ElementRange_SR[BlockNumber,4]]
+
+AMatrix_QR = ShearStiffness_H[BlockNumber]
+AMatrix_Sketch = sketchfact(AMatrix_Original, rank=7)
+AMatrix_Sketch = idfact(AMatrix_Original,  sketch=:srft)
+test = ones(3958)
+
+AMatrix_Original * test
+AMatrix_QR * test
+AMatrix_Sketch * test
+
+ShearStiffness_H[1][:Q] = ShearStiffness_H[1][:Q][:,1:3]
+ShearStiffness_H[1][:Q] = 1
+@time for repeat = 1:50
+ShearStiffness_H[1][:Q][:,1:3] * ShearStiffness_H[1][:R][1:3,:] * test
+end
+@time for repeat = 1:50
+ShearStiffness_H[1] * test
+end
 
 ArrangePoint = [0,-5000,1000]
 HowManyDivisionEachLevel = 2

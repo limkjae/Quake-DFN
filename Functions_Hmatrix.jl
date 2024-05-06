@@ -181,21 +181,47 @@ function HmatSolver(NetDisp, ShearStiffness_H, BlockCount, ElementRange_SR, Faul
     return Elastic_Load_Disp
 end
 
+
+
+
 function HmatSolver_Pararllel(NetDisp, ShearStiffness_H, ElementRange_SR, FaultCount, Par_ElementDivision, ThreadCount)
 
     Elastic_Load_DispPart = zeros(FaultCount,ThreadCount)
+    
+        # for i=1:ThreadCount; #println(i);              
+        #     @time Elastic_Load_DispPart[:,i] = SolveEachThread(Par_ElementDivision[i]+1, Par_ElementDivision[i+1], ElementRange_SR, ShearStiffness_H, NetDisp, FaultCount)
+        # end  
     @sync begin
-
-        # for i=1:ThreadCount; println(i);                
-        # @time for Blockidx = Par_ElementDivision[i]+1 : Par_ElementDivision[i+1]                    
-        # Threads.@threads for i=1:ThreadCount 
         Threads.@threads for i=1:ThreadCount 
-            Elastic_Load_DispPart[:,i] = SolveEachThread(Par_ElementDivision[i]+1, Par_ElementDivision[i+1], ElementRange_SR, ShearStiffness_H, NetDisp, FaultCount)
+             Elastic_Load_DispPart[:,i] = SolveEachThread(Par_ElementDivision[i]+1, Par_ElementDivision[i+1], ElementRange_SR, ShearStiffness_H, NetDisp, FaultCount)
         end
     end
-     Elastic_Load_DispP = sum(Elastic_Load_DispPart, dims=2)
+
+    Elastic_Load_DispP = sum(Elastic_Load_DispPart, dims=2)
     return Elastic_Load_DispP
 end
+
+
+
+
+function HmatSolver_SpeedTest(NetDisp, ShearStiffness_H, ElementRange_SR, FaultCount, Par_ElementDivision, ThreadCount)
+    TestRep = 5
+    Elastic_Load_DispPart = zeros(FaultCount,ThreadCount)
+    ElapsedTime= zeros(ThreadCount,TestRep)
+    ElapsedTMin= zeros(ThreadCount)
+    for TestIndex = 1:TestRep
+        for i=1:ThreadCount; #println(i);              
+            ElapsedTime[i,TestIndex] = @elapsed begin 
+                Elastic_Load_DispPart[:,i] = SolveEachThread(Par_ElementDivision[i]+1, Par_ElementDivision[i+1], ElementRange_SR, ShearStiffness_H, NetDisp, FaultCount)
+            end
+        end  
+    end
+    ElapsedTMin = vec(median(ElapsedTime, dims=2))
+
+    return ElapsedTMin
+end
+
+
 
 
 function SolveEachThread(BlockI, BlockF, ElementRange_SR, ShearStiffness_H, NetDisp, FaultCount)
@@ -211,71 +237,120 @@ end
 
 
 
-# function HmatSolver_Pararllel(NetDisp, ShearStiffness_H, ElementRange_SR, FaultCount, Par_ElementDivision, ThreadCount)
-
-#     Elastic_Load_DispPart = zeros(FaultCount,ThreadCount)
-#     @sync begin
-
-#         # for i=1:ThreadCount; println(i);                
-#         # @time for Blockidx = Par_ElementDivision[i]+1 : Par_ElementDivision[i+1]
-                    
-#          Threads.@threads for i=1:ThreadCount 
-#             @simd for Blockidx = Par_ElementDivision[i]+1 : Par_ElementDivision[i+1]
-#                @async Elastic_Load_DispPart[ElementRange_SR[Blockidx,1]:ElementRange_SR[Blockidx,2],i] +=
-#                     ShearStiffness_H[Blockidx] * NetDisp[ElementRange_SR[Blockidx,3]:ElementRange_SR[Blockidx,4]]
-                    
-#             end
-#         end
-#     end
-#     # println("One Step Over")
-#    Elastic_Load_DispP = sum(Elastic_Load_DispPart, dims=2)
-#     return Elastic_Load_DispP
-# end
-
-function ParallelOptimization(ShearStiffness_H, ElementRange_SR, FaultCount, Par_BlockCount, ThreadCount)
+function  ParallelOptimization(ShearStiffness_H, ElementRange_SR, 
+    FaultCount, BlockCount, ThreadCount, MaxRatioAllowed, MaxIteration)
     println("Parallel Calculation Optimizing")
-    RepeatCount=50
+
+    ############## calculating initial guess for division ##############
+    RepeatCount=10
     NetDisp = ones(FaultCount)
     Elastic_Load_DispPart = zeros(FaultCount)
 
-    # RecordedTime = ones(Par_BlockCount) * 1000
-    RecordedTime = zeros(Par_BlockCount) 
+    RecordedTime = zeros(BlockCount) 
     TimeEachRepeat = zeros(RepeatCount)
-    # RecordedTime = zeros(Par_BlockCount) 
-             for Blockidx = 1 : Par_BlockCount       
-                for RepeatTime = 1:RepeatCount        
-                    ElapsedTime= @elapsed begin
-                       Elastic_Load_DispPart[ElementRange_SR[Blockidx,1]:ElementRange_SR[Blockidx,2]] += 
-                        ShearStiffness_H[Blockidx] * NetDisp[ElementRange_SR[Blockidx,3]:ElementRange_SR[Blockidx,4]]
-                    end
-                    TimeEachRepeat[RepeatTime] = ElapsedTime
-                    sort!(TimeEachRepeat)
-                    # RecordedTime[Blockidx] = sum(TimeEachRepeat[round(Int,RepeatCount/10):round(Int,RepeatCount*2/10)])
-                    RecordedTime[Blockidx] = sum(TimeEachRepeat[2:round(Int,RepeatCount*1/10)])
-                    # if ElapsedTime < RecordedTime[Blockidx]
-                    #     RecordedTime[Blockidx] = ElapsedTime
-                    # end
+        for Blockidx = 1 : BlockCount       
+            for RepeatTime = 1:RepeatCount        
+                ElapsedTime= @elapsed begin
+                    Elastic_Load_DispPart[ElementRange_SR[Blockidx,1]:ElementRange_SR[Blockidx,2]] += 
+                    ShearStiffness_H[Blockidx] * NetDisp[ElementRange_SR[Blockidx,3]:ElementRange_SR[Blockidx,4]]
                 end
-                    # RecordedTime[Blockidx] = RecordedTime[Blockidx] + ElapsedTime
-            end 
+                TimeEachRepeat[RepeatTime] = ElapsedTime
+            end
+            sort!(TimeEachRepeat)
+            RecordedTime[Blockidx] = sum(TimeEachRepeat[1:round(Int,RepeatCount*3/10)])
+        end 
                 
         
     CumRecordTime = cumsum(RecordedTime)
     CumRecordTimeNorm = CumRecordTime / maximum(CumRecordTime)
-    # figure(3); plot(CumRecordTimeNorm)
 
-    ElementGap = 1 / ThreadCount
+
     Par_ElementDivision = zeros(Int, ThreadCount +1)
     for i=1:ThreadCount
         if i==ThreadCount 
-            Par_ElementDivision[i+1] = Par_BlockCount
+            Par_ElementDivision[i+1] = BlockCount
         else 
-            Par_ElementDivision[i+1] = findmin(abs.(CumRecordTimeNorm .- ElementGap * i))[2]
+            Par_ElementDivision[i+1] = findmin(abs.(CumRecordTimeNorm .- 1 / ThreadCount * i))[2]
         end
     end
-    println(Par_ElementDivision)
-    # println(RecordedTime)
-    # Elastic_Load_DispP = sum(Elastic_Load_DispPart[:,:], dims=2)
+    println("First Guess: \n", Par_ElementDivision)
+  
+
+    ################## Find the best division by actual computations and adjustment ################
+
+    ElementCountPerDivision = zeros(Int,ThreadCount)
+    for i=1:ThreadCount
+    ElementCountPerDivision[i] = Par_ElementDivision[i+1] - Par_ElementDivision[i] 
+    end
+    
+    
+    ElapsedTime = HmatSolver_SpeedTest(NetDisp, ShearStiffness_H, ElementRange_SR, FaultCount, Par_ElementDivision, ThreadCount)
+    AverageTime = mean(ElapsedTime)
+    
+    Minimum_Par_ElementDivision = zeros(length(Par_ElementDivision))
+    Minimum_ElapsedTimeRatio = 1e5
+    iteration=0
+    Termination = 1
+
+    while Termination ==1
+            iteration=iteration+1
+            for i=1:ThreadCount
+                if ElapsedTime[i] > AverageTime
+                    ElapsedOverAverage = ElapsedTime[i] / AverageTime
+                    ElementCountPerDivision[i] = round(Int,ElementCountPerDivision[i] * (1 - (1- 1/ElapsedOverAverage)*0.5))
+                else 
+                    ElapsedOverAverage = ElapsedTime[i] / AverageTime
+                    if ElementCountPerDivision[i] ==1 
+                        ElementCountPerDivision[i] = round(Int,ElementCountPerDivision[i] * (1 - (1- 1/ElapsedOverAverage)))
+                    else
+                    ElementCountPerDivision[i] = round(Int,ElementCountPerDivision[i] * (1 - (1- 1/ElapsedOverAverage)*0.1))
+                    end
+                end        
+                if ElementCountPerDivision[i] < 1
+                    ElementCountPerDivision[i] = 1
+                end
+            end
+        
+            ElementCountPerDivision = round.(Int, ElementCountPerDivision * BlockCount / sum(ElementCountPerDivision))
+        
+            for i=1:ThreadCount -1 
+                Par_ElementDivision[i+1] = ElementCountPerDivision[i] + Par_ElementDivision[i]
+            end
+            Par_ElementDivision[end]= BlockCount
+        
+            for i=1:ThreadCount
+                ElementCountPerDivision[i] = Par_ElementDivision[i+1] - Par_ElementDivision[i] 
+            end
+        
+        
+            ElapsedTime = HmatSolver_SpeedTest(NetDisp, ShearStiffness_H, ElementRange_SR, FaultCount, Par_ElementDivision, ThreadCount)
+        
+            Maxindex = argmax(ElapsedTime, dims=1)[1]
+            AverageTime = mean(ElapsedTime)
+            maxAverageTimeRatio = maximum(ElapsedTime/AverageTime)
+            println(iteration, ", Maxtime / Average: ", maxAverageTimeRatio)
+        
+            if maxAverageTimeRatio < Minimum_ElapsedTimeRatio
+                Minimum_ElapsedTimeRatio = copy(maxAverageTimeRatio)
+                Minimum_Par_ElementDivision = copy(Par_ElementDivision)
+            end
+        
+            if maxAverageTimeRatio < MaxRatioAllowed
+                Termination = 0
+                println(Par_ElementDivision)
+            elseif iteration == MaxIteration
+                Termination = 0
+                Par_ElementDivision = copy(Minimum_Par_ElementDivision)
+                println(Par_ElementDivision)
+            end
+        
+            # figure(11)
+            # plot(ElapsedTime)
+            # plot([0,ThreadCount],[AverageTime,AverageTime])
+            # figure(12)
+            # plot(log10.(ElementCountPerDivision))
+            
+        end
     return Par_ElementDivision
 end
 
@@ -416,13 +491,15 @@ end
 
 function SolveAx_b(LoadingStiffnessH, K_Self, InitialShearStress, ElementRange_SR, FaultCount, 
                 Par_ElementDivision, ThreadCount, Epsilon_MaxDiffRatio)
+    ########### Find Initial Displacement by Gauss Seidel ############
+    println("Iteratively Calculating Initial Displacement")
     DispI_k = ones(FaultCount)
     MaxDiff = 1
     iteration=0
     while MaxDiff > Epsilon_MaxDiffRatio
         iteration = iteration+1
-        if iteration % 10 ==0
-        println(MaxDiff / Epsilon_MaxDiffRatio)
+        if iteration % 20 ==0
+        println("Iteration until 1 > ",MaxDiff / Epsilon_MaxDiffRatio)
         end
     EFTerm = HmatSolver_Pararllel(DispI_k, LoadingStiffnessH, ElementRange_SR, FaultCount, Par_ElementDivision, ThreadCount)
     

@@ -11,6 +11,7 @@ using StaticArrays
 using LowRankApprox
 using Distributed
 using LoopVectorization
+using Statistics
 pygui(true)
 
 
@@ -36,8 +37,125 @@ StiffnessMatrixShear= load(LoadingInputFileName, "StiffnessMatrixShear")
 
 ThreadCount = 24
 BlockCount = length(Ranks)
-Par_ElementDivision = ParallelOptimization(ShearStiffness_H, ElementRange_SR, FaultCount, BlockCount, ThreadCount)
+MaxRatioAllowed = 1.5
+MaxIteration = 50
+Par_ElementDivision = ParallelOptimization(ShearStiffness_H, ElementRange_SR, 
+                FaultCount, BlockCount, ThreadCount, MaxRatioAllowed, MaxIteration)
 
+ElementCountPerDivision = zeros(Int,ThreadCount)
+
+for i=1:ThreadCount
+ElementCountPerDivision[i] = Par_ElementDivision[i+1] - Par_ElementDivision[i] 
+end
+# sum(ElementCountPerDivision)
+
+figure(1)
+clf()
+figure(2)
+clf()
+
+@time ElapsedTime = HmatSolver_SpeedTest(NetDisp, ShearStiffness_H, ElementRange_SR, FaultCount, Par_ElementDivision, ThreadCount)
+
+Maxindex = argmax(ElapsedTime, dims=1)[1]
+AverageTime = mean(ElapsedTime)
+figure(1)
+plot(ElapsedTime)
+plot([0,ThreadCount],[AverageTime,AverageTime])
+figure(2)
+plot(log10.(ElementCountPerDivision))
+
+
+Minimum_Par_ElementDivision = zeros(length(Par_ElementDivision))
+Minimum_ElapsedTimeRatio = 1e5
+iteration=0
+Termination = 1
+MaxIteration = 50
+while Termination ==1
+# for iteration =1:20
+    iteration=iteration+1
+    # println(iteration)
+    for i=1:ThreadCount
+        # if ElapsedTime[i] > AverageTime * 1.2 || ElapsedTime[i] < AverageTime * 0.8
+        if ElapsedTime[i] > AverageTime
+            ElapsedOverAverage = ElapsedTime[i] / AverageTime
+            ElementCountPerDivision[i] = round(Int,ElementCountPerDivision[i] * (1 - (1- 1/ElapsedOverAverage)*0.5))
+        else 
+            ElapsedOverAverage = ElapsedTime[i] / AverageTime
+            if ElementCountPerDivision[i] ==1 
+                ElementCountPerDivision[i] = round(Int,ElementCountPerDivision[i] * (1 - (1- 1/ElapsedOverAverage)))
+            else
+            ElementCountPerDivision[i] = round(Int,ElementCountPerDivision[i] * (1 - (1- 1/ElapsedOverAverage)*0.1))
+            end
+        end
+
+        # end
+        # if ElapsedTime[i] > AverageTime * 1.3
+        #     ElementCountPerDivision[i] = round(Int,ElementCountPerDivision[i] * 0.8)
+        # end
+        
+        # if ElapsedTime[i] < AverageTime * 0.5
+        #     ElementCountPerDivision[i] = round(Int,ElementCountPerDivision[i] * 1.5)
+        # end
+        if ElementCountPerDivision[i] < 1
+            ElementCountPerDivision[i] = 1
+        end
+    end
+
+    # ElementCountPerDivision[Maxindex] = round(Int,ElementCountPerDivision[Maxindex] * 0.8)
+    ElementCountPerDivision = round.(Int, ElementCountPerDivision * BlockCount / sum(ElementCountPerDivision))
+
+    for i=1:ThreadCount -1 
+        Par_ElementDivision[i+1] = ElementCountPerDivision[i] + Par_ElementDivision[i]
+    end
+    Par_ElementDivision[end]= BlockCount
+
+    for i=1:ThreadCount
+        ElementCountPerDivision[i] = Par_ElementDivision[i+1] - Par_ElementDivision[i] 
+    end
+
+
+    ElapsedTime = HmatSolver_SpeedTest(NetDisp, ShearStiffness_H, ElementRange_SR, FaultCount, Par_ElementDivision, ThreadCount)
+
+    Maxindex = argmax(ElapsedTime, dims=1)[1]
+    AverageTime = mean(ElapsedTime)
+    maxAverageTimeRatio = maximum(ElapsedTime/AverageTime)
+    println(maxAverageTimeRatio)
+
+    if maxAverageTimeRatio < Minimum_ElapsedTimeRatio
+        Minimum_ElapsedTimeRatio = copy(maxAverageTimeRatio)
+        Minimum_Par_ElementDivision = copy(Par_ElementDivision)
+        # println(Minimum_Par_ElementDivision)
+    end
+
+
+    if maxAverageTimeRatio < 1.5
+        Termination = 0
+        println(Par_ElementDivision)
+    elseif iteration == MaxIteration
+        Termination = 0
+        Par_ElementDivision = copy(Minimum_Par_ElementDivision)
+        println(Par_ElementDivision)
+    end
+
+    figure(1)
+    plot(ElapsedTime)
+    plot([0,ThreadCount],[AverageTime,AverageTime])
+    figure(2)
+    plot(log10.(ElementCountPerDivision))
+    
+end
+
+
+@time ElapsedTime = HmatSolver_SpeedTest(NetDisp, ShearStiffness_H, ElementRange_SR, FaultCount, Par_ElementDivision, ThreadCount)
+
+
+
+
+
+
+# Par_ElementDivision[7] = 50
+# Par_ElementDivision[8] = 100
+# Par_ElementDivision[9] = 400
 # @time for i=1:100
  @time Elastic_Load_DispP= 
     HmatSolver_Pararllel(NetDisp, ShearStiffness_H, ElementRange_SR, FaultCount, Par_ElementDivision, ThreadCount)

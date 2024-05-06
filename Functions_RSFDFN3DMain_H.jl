@@ -14,17 +14,22 @@ function main_H(StiffnessMatrixShear, StiffnessMatrixNormal,
     ################ Define HMat Parallelization ################
 
     ThreadCount = 24
-    Epsilon_MaxDiffRatio = 1e-5
-    Par_BlockCount = length(Ranks)
-    Par_ElementDivision = ParallelOptimization(ShearStiffness_H, ElementRange_SR, FaultCount, Par_BlockCount, ThreadCount)
+    Epsilon_MaxDiffRatio = 1e-7
+    MaxRatioAllowed = 1.5
+    MaxIteration = 50
+
+    BlockCount = length(Ranks)
+    Par_ElementDivision = ParallelOptimization(ShearStiffness_H, ElementRange_SR, 
+                                FaultCount, BlockCount, ThreadCount, MaxRatioAllowed, MaxIteration)
 
     LoadingStiffnessH, K_Self= StiffnessTransitionToLoading(ShearStiffness_H, ElementRange_SR, FaultCount)
 
     println("Initializing")
-    InitialShearStress = InitialNormalStress.*FrictionI;
+    InitialShearStress = InitialNormalStress .* FrictionI;
     Far_Load_Disp_Initial = SolveAx_b(LoadingStiffnessH, K_Self, InitialShearStress, ElementRange_SR, FaultCount, Par_ElementDivision, ThreadCount, Epsilon_MaxDiffRatio)
 
 
+    # Far_Load_Disp_Initial=-(StiffnessMatrixShear\InitialShearStress); # initial load point
     ##############################################################
     
     if  isfile("Input_ExternalStressChange.jld2")
@@ -94,7 +99,6 @@ function main_H(StiffnessMatrixShear, StiffnessMatrixNormal,
     
 
 
-    Far_Load_Disp_Initial=-(StiffnessMatrixShear\InitialShearStress); # initial load point
 
 
 
@@ -145,7 +149,6 @@ function main_H(StiffnessMatrixShear, StiffnessMatrixNormal,
         end
 
     end
-    BlockCount = length(Ranks)
 
 
 
