@@ -11,6 +11,7 @@ using StaticArrays
 using LowRankApprox
 using Distributed
 using LoopVectorization
+using Statistics
 pygui(true)
 
 
@@ -19,13 +20,14 @@ include("Functions_RSFDFN3DMain_H.jl")
 include("Results/Functions_Plot.jl")
 include("QuickParameterAdjust.jl")
 include("Functions_Hmatrix.jl")
-LoadingInputFileName="Input_Discretized_H_16k.jld2" 
+LoadingInputFileName="Input_Discretized.jld2" 
 
 # jldsave("HmatSave.jld2"; StiffnessMatrixShearOriginal, StiffnessMatrixNormalOriginal, Ranks, ElementRange_SR)
 
 Ranks= load(LoadingInputFileName, "Ranks")
 ElementRange_SR = load(LoadingInputFileName, "ElementRange_SR")
 ShearStiffness_H = load(LoadingInputFileName, "ShearStiffness_H")
+Admissible  = load(LoadingInputFileName, "Admissible")
 FaultCount= load(LoadingInputFileName, "FaultCount")
 BlockCount = length(Ranks)
 Elastic_Load_DispP = zeros(FaultCount)
@@ -35,13 +37,22 @@ NetDisp = ones(FaultCount)
 StiffnessMatrixShear= load(LoadingInputFileName, "StiffnessMatrixShear")
 
 ThreadCount = 24
-BlockCount = length(Ranks)
-Par_ElementDivision = ParallelOptimization(ShearStiffness_H, ElementRange_SR, FaultCount, BlockCount, ThreadCount)
+MaxRatioAllowed = 1.5
+MaxIteration = 50
 
-# @time for i=1:100
- @time Elastic_Load_DispP= 
-    HmatSolver_Pararllel(NetDisp, ShearStiffness_H, ElementRange_SR, FaultCount, Par_ElementDivision, ThreadCount)
+BlockCount = length(Ranks)
+Par_ElementDivision = ParallelOptimization(ShearStiffness_H, ElementRange_SR, 
+            FaultCount, BlockCount, ThreadCount, MaxRatioAllowed, MaxIteration)
+
+# # @time for i=1:20
+#  @time Elastic_Load_DispP= 
+#     HmatSolver_Pararllel(NetDisp, ShearStiffness_H, ElementRange_SR, FaultCount, Par_ElementDivision, ThreadCount)
+
+# @time for i=1:20
+    @time Elastic_Load_DispP= 
+    HmatSolver_ThreadTime(NetDisp, ShearStiffness_H, ElementRange_SR, FaultCount, Par_ElementDivision, ThreadCount)
 # end
+    # end
 println("done")
 
 

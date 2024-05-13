@@ -63,27 +63,30 @@ function main_H(StiffnessMatrixShear, StiffnessMatrixNormal,
 
     # define constant variables
 
-    K_Self=zeros(FaultCount)
-    Omega=zeros(FaultCount)
-    ElasticLoadingShearMatrix=zeros(FaultCount,FaultCount)
+    Omega = sqrt.(K_Self ./ Mass);
+
+    # K_Self=zeros(FaultCount)
+    # Omega=zeros(FaultCount)
+    # ElasticLoadingShearMatrix=zeros(FaultCount,FaultCount)
     # ElasticLoadingNormal=zeros(FaultCount,FaultCount)
 
     UnstablePatch=[0;]
     for i=1:FaultCount
-        K_Self[i]=abs(StiffnessMatrixShear[i,i]);
-        Omega[i]=sqrt(K_Self[i]/Mass[i]);
-        for j=1:FaultCount  
-            if i==j
-                ElasticLoadingShearMatrix[i,j]=0.0;
-            else
-                ElasticLoadingShearMatrix[i,j]=StiffnessMatrixShear[i,j]/StiffnessMatrixShear[i,i];
-                # ElasticLoadingNormal[i,j]=StiffnessMatrixNormal[i,j]/StiffnessMatrixShear[i,i];
-            end
-        end
+        # K_Self[i]=abs(StiffnessMatrixShear[i,i]);
+        # Omega[i]=sqrt(K_Self[i]/Mass[i]);
+        # for j=1:FaultCount  
+        #     if i==j
+        #         ElasticLoadingShearMatrix[i,j]=0.0;
+        #     else
+        #         ElasticLoadingShearMatrix[i,j]=StiffnessMatrixShear[i,j]/StiffnessMatrixShear[i,i];
+        #         # ElasticLoadingNormal[i,j]=StiffnessMatrixNormal[i,j]/StiffnessMatrixShear[i,i];
+        #     end
+        # end
         if a[i] - b[i] < 0
             UnstablePatch = [UnstablePatch;i]
         end
     end
+
     if length(UnstablePatch) == 1
         println("No Unstable Patch")
         TimeStepOnlyBasedOnUnstablePatch = 0
@@ -195,13 +198,13 @@ function main_H(StiffnessMatrixShear, StiffnessMatrixNormal,
     FrictionOld=copy(Friction);
     SlowOrFast=0;
     Instability=copy(InstabilityThistime);
-
-    Elastic_Load_Disp_Old=ElasticLoadingShearMatrix*Far_Load_Disp_Initial
+    Elastic_Load_Disp_Old = copy(Far_Load_Disp_Initial)
+    # Elastic_Load_Disp_Old=ElasticLoadingShearMatrix*Far_Load_Disp_Initial
     # Elastic_Load_Disp_Old=ElasticLoadingShearMatrix_H*Far_Load_Disp_Initial
     Elastic_Load_Disp=zeros(FaultCount)
-    Elastic_Load_Vel=ElasticLoadingShearMatrix*(-VOld)    
+    # Elastic_Load_Vel=ElasticLoadingShearMatrix*(-VOld)    
     # Elastic_Load_Vel=ElasticLoadingShearMatrix_H*(-VOld)
-    Elastic_Load_Vel_Old=copy(Elastic_Load_Vel)
+    # Elastic_Load_Vel_Old=copy(Elastic_Load_Vel)
     
 
     # Define Histories
@@ -289,13 +292,20 @@ function main_H(StiffnessMatrixShear, StiffnessMatrixNormal,
                 NetDisp = Far_Load_Disp_Initial - DispOld
                 Elastic_Load_Disp = HmatSolver_Pararllel(NetDisp, LoadingStiffnessH, ElementRange_SR, FaultCount,
                                      Par_ElementDivision, ThreadCount) ./ -K_Self
-                                    
+
+                if PlanarFault == 0
+                    EffNormalStressMatrixProduct = StiffnessMatrixNormal * DispOld
+                    EffNormalStress_i = EffNormalStressMatrixProduct + InitialNormalStress + D_EffStress_Normal
+                else 
+                    EffNormalStress_i = InitialNormalStress + D_EffStress_Normal
+                end
+                
                 # Elastic_Load_Disp = ElasticLoadingShearMatrix * (Far_Load_Disp_Initial-DispOld) 
 
                 # println(maximum(Elastic_Load_Disp))
                 #  println(maximum(Elastic_Load_Disp1 - Elastic_Load_Disp))
                 # println(Elastic_Load_Disp1[1:100])
-                EffNormalStress_i = InitialNormalStress + D_EffStress_Normal
+                # EffNormalStress_i = InitialNormalStress + D_EffStress_Normal
 
 
                 
@@ -407,7 +417,7 @@ function main_H(StiffnessMatrixShear, StiffnessMatrixNormal,
             DtOld=copy(Dt)
             
             Elastic_Load_Disp_Old=copy(Elastic_Load_Disp)
-            Elastic_Load_Vel_Old=copy(Elastic_Load_Vel)
+            # Elastic_Load_Vel_Old=copy(Elastic_Load_Vel)
 
             
         end

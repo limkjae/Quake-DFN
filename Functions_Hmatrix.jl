@@ -127,13 +127,12 @@ end
 
 function BuildHierarchy(Block_Range_Level, Block_Ctr_Diam, DistDiamRatioCrit, TotalHierarchyLevel) 
 
-    Ranks =  zeros(Int,1)
+    Admissible =  zeros(Int,1)
     ElementRange_SR = zeros(Int, 1,4)
     for Level = 1:TotalHierarchyLevel
         Range_Level_Current = Block_Range_Level[findall(x-> x== Level, Block_Range_Level[:,3]),:]
         Ctr_Diam_Current = Block_Ctr_Diam[findall(x-> x== Level, Block_Range_Level[:,3]),:]
         BlockedElementCount = length(Range_Level_Current[:,1])
-        BlockCount = BlockedElementCount^2
         DoneInHigherLevel = 0
     
         for i=1:BlockedElementCount
@@ -151,12 +150,12 @@ function BuildHierarchy(Block_Range_Level, Block_Ctr_Diam, DistDiamRatioCrit, To
                     Diameter = maximum([Ctr_Diam_Current[i,4], Ctr_Diam_Current[j,4]])
                     # Diameter = (Ctr_Diam_Current[i,4] + Ctr_Diam_Current[j,4])/2
                     if Distance/Diameter > DistDiamRatioCrit 
-                        Ranks = [Ranks 1]
+                        Admissible = [Admissible 1]
                         Added = [Range_Level_Current[i,1] Range_Level_Current[i,2] Range_Level_Current[j,1] Range_Level_Current[j,2]]
                         ElementRange_SR = [ElementRange_SR; Added] 
                    
                     elseif Level == TotalHierarchyLevel
-                        Ranks = [Ranks 0]
+                        Admissible = [Admissible 0]
                         Added = [Range_Level_Current[i,1] Range_Level_Current[i,2] Range_Level_Current[j,1] Range_Level_Current[j,2]]
                         ElementRange_SR = [ElementRange_SR; Added] 
                     end
@@ -164,9 +163,9 @@ function BuildHierarchy(Block_Range_Level, Block_Ctr_Diam, DistDiamRatioCrit, To
             end
         end
     end
-    Ranks = Ranks[2:end]
+    Admissible = Admissible[2:end]
     ElementRange_SR = ElementRange_SR[2:end,:]
-    return Ranks, ElementRange_SR
+    return Admissible, ElementRange_SR
 
 end
 
@@ -191,15 +190,40 @@ function HmatSolver_Pararllel(NetDisp, ShearStiffness_H, ElementRange_SR, FaultC
         # for i=1:ThreadCount; #println(i);              
         #     @time Elastic_Load_DispPart[:,i] = SolveEachThread(Par_ElementDivision[i]+1, Par_ElementDivision[i+1], ElementRange_SR, ShearStiffness_H, NetDisp, FaultCount)
         # end  
+
     @sync begin
         Threads.@threads for i=1:ThreadCount 
              Elastic_Load_DispPart[:,i] = SolveEachThread(Par_ElementDivision[i]+1, Par_ElementDivision[i+1], ElementRange_SR, ShearStiffness_H, NetDisp, FaultCount)
         end
     end
 
+
     Elastic_Load_DispP = sum(Elastic_Load_DispPart, dims=2)
     return Elastic_Load_DispP
 end
+
+
+
+
+function HmatSolver_ThreadTime(NetDisp, ShearStiffness_H, ElementRange_SR, FaultCount, Par_ElementDivision, ThreadCount)
+
+    Elastic_Load_DispPart = zeros(FaultCount,ThreadCount)
+    
+        for i=1:ThreadCount; #println(i);              
+            @time Elastic_Load_DispPart[:,i] = SolveEachThread(Par_ElementDivision[i]+1, Par_ElementDivision[i+1], ElementRange_SR, ShearStiffness_H, NetDisp, FaultCount)
+        end  
+
+    # @sync begin
+    #     Threads.@threads for i=1:ThreadCount 
+    #          Elastic_Load_DispPart[:,i] = SolveEachThread(Par_ElementDivision[i]+1, Par_ElementDivision[i+1], ElementRange_SR, ShearStiffness_H, NetDisp, FaultCount)
+    #     end
+    # end
+
+
+    Elastic_Load_DispP = sum(Elastic_Load_DispPart, dims=2)
+    return Elastic_Load_DispP
+end
+
 
 
 
@@ -212,7 +236,10 @@ function HmatSolver_SpeedTest(NetDisp, ShearStiffness_H, ElementRange_SR, FaultC
     for TestIndex = 1:TestRep
         for i=1:ThreadCount; #println(i);              
             ElapsedTime[i,TestIndex] = @elapsed begin 
-                Elastic_Load_DispPart[:,i] = SolveEachThread(Par_ElementDivision[i]+1, Par_ElementDivision[i+1], ElementRange_SR, ShearStiffness_H, NetDisp, FaultCount)
+                Elastic_Load_DispPart[:,i] = SolveEachThread(Par_ElementDivision[i]+1, Par_ElementDivision[i+1], 
+                                                ElementRange_SR, 
+                                                ShearStiffness_H,
+                                                NetDisp, FaultCount)
             end
         end  
     end
@@ -223,10 +250,8 @@ end
 
 
 
-
 function SolveEachThread(BlockI, BlockF, ElementRange_SR, ShearStiffness_H, NetDisp, FaultCount)
     Elastic_Load_D = zeros(FaultCount)
-    ShearStiffness_H
 
     for Blockidx = BlockI:BlockF
         Elastic_Load_D[ElementRange_SR[Blockidx,1]:ElementRange_SR[Blockidx,2]] +=
@@ -234,7 +259,6 @@ function SolveEachThread(BlockI, BlockF, ElementRange_SR, ShearStiffness_H, NetD
     end
     return Elastic_Load_D
 end
-
 
 
 function  ParallelOptimization(ShearStiffness_H, ElementRange_SR, 
@@ -303,7 +327,7 @@ function  ParallelOptimization(ShearStiffness_H, ElementRange_SR,
                     if ElementCountPerDivision[i] ==1 
                         ElementCountPerDivision[i] = round(Int,ElementCountPerDivision[i] * (1 - (1- 1/ElapsedOverAverage)))
                     else
-                    ElementCountPerDivision[i] = round(Int,ElementCountPerDivision[i] * (1 - (1- 1/ElapsedOverAverage)*0.1))
+                    ElementCountPerDivision[i] = round(Int,ElementCountPerDivision[i] * (1 - (1- 1/ElapsedOverAverage)*0.03))
                     end
                 end        
                 if ElementCountPerDivision[i] < 1
