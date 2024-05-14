@@ -67,11 +67,20 @@ Block_Ctr_Diam = zeros(1, 4)
 BlockCountPrevLevel = zeros(Int,TotalHierarchyLevel)
 LevelBeign = 0
 LevelEnd = 0
+LoadingFaultExist = 0
+NonLoadingFaultRange = [minimum(findall(x->x==0, Input_Segment[:,16])), maximum(findall(x->x==0, Input_Segment[:,16]))]
+if maximum(Input_Segment[:,16])>0
+    LoadingFaultExist= 1
+    LoadingFaultRange = [minimum(findall(x->x>0, Input_Segment[:,16])), maximum(findall(x->x>0, Input_Segment[:,16]))]
+    Block_Range_Level[1:2] = LoadingFaultRange # Loading fault range level
+    Block_Range_Level[3] = 0
+end
+
 for CurrentLevel = 1:TotalHierarchyLevel
     print("Level ",CurrentLevel, "\n")
     if CurrentLevel == 1
-        BlockBegin = 1
-        BlockEnd =FaultCount
+        BlockBegin = NonLoadingFaultRange[1]
+        BlockEnd = NonLoadingFaultRange[2]
         InitialBlockIdx = Input_Segment[BlockBegin,20]
         Input_Segment[BlockEnd:end,20] = Input_Segment[BlockEnd:end,20] .+ (HowManyDivisionEachLevel -1 )
 
@@ -85,12 +94,17 @@ for CurrentLevel = 1:TotalHierarchyLevel
 
         Block_Range_Level = [Block_Range_Level; AddedBlock_Range_Level]
         Block_Ctr_Diam = [Block_Ctr_Diam; AddedBlock_Ctr_Diam]
-
-        Block_Range_Level = Block_Range_Level[2:end,:]
-        Block_Ctr_Diam = Block_Ctr_Diam[2:end,:]
         BlockCountPrevLevel[CurrentLevel] = length(Block_Ctr_Diam[:,1])
-        LevelBeign =1 
-        LevelEnd = length(Block_Ctr_Diam[:,1])
+
+        if LoadingFaultExist == 0 
+            Block_Range_Level = Block_Range_Level[2:end,:]
+            Block_Ctr_Diam = Block_Ctr_Diam[2:end,:]
+            LevelBeign =1 
+            LevelEnd = length(Block_Ctr_Diam[:,1])
+        else 
+            LevelBeign =2
+            LevelEnd = length(Block_Ctr_Diam[:,1])
+        end
         
     else 
         for highLevelidx = LevelBeign : LevelEnd
@@ -119,16 +133,23 @@ for CurrentLevel = 1:TotalHierarchyLevel
         LevelEnd = length(Block_Ctr_Diam[:,1])
     end
 end
-  return Block_Ctr_Diam, Block_Range_Level, Input_Segment
+  return Block_Ctr_Diam, Block_Range_Level, Input_Segment, LoadingFaultExist
 end
 
 ############################## Build Hierarchy ####################################
 
 
-function BuildHierarchy(Block_Range_Level, Block_Ctr_Diam, DistDiamRatioCrit, TotalHierarchyLevel) 
+function BuildHierarchy(Block_Range_Level, Block_Ctr_Diam, DistDiamRatioCrit, TotalHierarchyLevel, LoadingFaultExist) 
 
     Admissible =  zeros(Int,1)
     ElementRange_SR = zeros(Int, 1,4)
+
+    if LoadingFaultExist ==1 
+        Admissible = [Admissible 0]
+        Added = [1     Block_Range_Level[1,1]-1      Block_Range_Level[1,1]      Block_Range_Level[1,2] ]
+        ElementRange_SR = [ElementRange_SR; Added] 
+    end
+
     for Level = 1:TotalHierarchyLevel
         Range_Level_Current = Block_Range_Level[findall(x-> x== Level, Block_Range_Level[:,3]),:]
         Ctr_Diam_Current = Block_Ctr_Diam[findall(x-> x== Level, Block_Range_Level[:,3]),:]

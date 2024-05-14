@@ -11,7 +11,7 @@ function main_H(StiffnessMatrixShear, StiffnessMatrixNormal,
     ExternalStressExist=0;
 
     
-    ################ Define HMat Parallelization ################
+    ################ Optimizing and Initializing Hmatrix ################
 
     ThreadCount = 24
     Epsilon_MaxDiffRatio = 1e-7
@@ -19,15 +19,24 @@ function main_H(StiffnessMatrixShear, StiffnessMatrixNormal,
     MaxIteration = 50
 
     BlockCount = length(Ranks)
-    Par_ElementDivision = ParallelOptimization(ShearStiffness_H, ElementRange_SR, 
+    Par_ElementDivision_Shear = ParallelOptimization(ShearStiffness_H, ElementRange_SR, 
                                 FaultCount, BlockCount, ThreadCount, MaxRatioAllowed, MaxIteration)
 
     LoadingStiffnessH, K_Self= StiffnessTransitionToLoading(ShearStiffness_H, ElementRange_SR, FaultCount)
-
+    
     println("Initializing")
     InitialShearStress = InitialNormalStress .* FrictionI;
-    Far_Load_Disp_Initial = SolveAx_b(LoadingStiffnessH, K_Self, InitialShearStress, ElementRange_SR, FaultCount, Par_ElementDivision, ThreadCount, Epsilon_MaxDiffRatio)
-
+    Far_Load_Disp_Initial = zeros(FaultCount)
+    if LoadingFaultCount > 0
+        Par_ElementDivision_ShearNoLoading = copy(Par_ElementDivision_Shear)
+        Par_ElementDivision_ShearNoLoading[end] = Par_ElementDivision_ShearNoLoading[end]-1
+        Far_Load_Disp_Initial[1:end-LoadingFaultCount] = 
+                SolveAx_b(LoadingStiffnessH[2:end], K_Self[1:end-LoadingFaultCount], InitialShearStress[1:end-LoadingFaultCount],
+                         ElementRange_SR[2:end,:], FaultCount - LoadingFaultCount, Par_ElementDivision_ShearNoLoading, ThreadCount, Epsilon_MaxDiffRatio)
+    else
+        Far_Load_Disp_Initial = SolveAx_b(LoadingStiffnessH, K_Self, InitialShearStress, ElementRange_SR, FaultCount, 
+        Par_ElementDivision_Shear, ThreadCount, Epsilon_MaxDiffRatio)
+    end
 
     # Far_Load_Disp_Initial=-(StiffnessMatrixShear\InitialShearStress); # initial load point
     ##############################################################
@@ -291,7 +300,7 @@ function main_H(StiffnessMatrixShear, StiffnessMatrixNormal,
                 
                 NetDisp = Far_Load_Disp_Initial - DispOld
                 Elastic_Load_Disp = HmatSolver_Pararllel(NetDisp, LoadingStiffnessH, ElementRange_SR, FaultCount,
-                                     Par_ElementDivision, ThreadCount) ./ -K_Self
+                                     Par_ElementDivision_Shear, ThreadCount) ./ -K_Self
 
                 if PlanarFault == 0
                     EffNormalStressMatrixProduct = StiffnessMatrixNormal * DispOld

@@ -82,13 +82,15 @@ function BuildInputFromBulkGeometry_H()
     Input_Segment = BulkToSegment(Input_Bulk);
     FaultCount=   size(Input_Segment,1)
     Input_Segment = [Input_Segment ones(FaultCount) zeros(FaultCount)]
+    Input_Segment = Input_Segment[sortperm(Input_Segment[:, 16]), :] # move the loading faults to the end
+    
 
 
 
     ################################# Group and Sort #################################
     HowManyDivisionEachLevel = 2
     
-    Block_Ctr_Diam, Block_Range_Level, Input_Segment = 
+    Block_Ctr_Diam, Block_Range_Level, Input_Segment, LoadingFaultExist = 
         GroupAndSort_AllLevel(HowManyDivisionEachLevel, TotalHierarchyLevel, MinimumElementsToCut,
                             ArrangePoint, FaultCount, Input_Segment)
     println("Grouping and Sorting Done")
@@ -98,7 +100,7 @@ function BuildInputFromBulkGeometry_H()
 
     ############################## Build Hierarchy ####################################
     
-    Admissible, ElementRange_SR = BuildHierarchy(Block_Range_Level, Block_Ctr_Diam, DistDiamRatioCrit, TotalHierarchyLevel) 
+    Admissible, ElementRange_SR = BuildHierarchy(Block_Range_Level, Block_Ctr_Diam, DistDiamRatioCrit, TotalHierarchyLevel, LoadingFaultExist) 
 
 
 
