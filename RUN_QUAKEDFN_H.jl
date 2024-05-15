@@ -90,9 +90,11 @@ function RunRSFDFN3D(TotalStep, RecordStep,
     LoadingFaultCount= load(LoadingInputFileName, "LoadingFaultCount")
     FaultMass= load(LoadingInputFileName, "FaultMass")
     MinimumNormalStress = load(LoadingInputFileName, "MinimumNormalStress")
-    Ranks= load(LoadingInputFileName, "Ranks") # figure(11); plot(Ranks)
+    Ranks_Shear= load(LoadingInputFileName, "Ranks_Shear") # figure(11); plot(Ranks)
+    Ranks_Normal= load(LoadingInputFileName, "Ranks_Normal") # figure(11); plot(Ranks)
     ElementRange_SR = load(LoadingInputFileName, "ElementRange_SR")
     ShearStiffness_H = load(LoadingInputFileName, "ShearStiffness_H")
+    NormalStiffness_H = load(LoadingInputFileName, "NormalStiffness_H")
 
     ########^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^########
     ################################################################################
@@ -202,7 +204,7 @@ function RunRSFDFN3D(TotalStep, RecordStep,
     "Fault_Theta_i", Fault_Theta_i, "Fault_V_i", Fault_V_i, "Fault_Friction_i", Fault_Friction_i, "Fault_NormalStress", Fault_NormalStress, 
     "Fault_V_Const", Fault_V_Const, "Fault_BulkIndex", Fault_BulkIndex, "FaultLengthStrike_Bulk", FaultLengthStrike_Bulk, 
     "FaultLengthDip_Bulk", FaultLengthDip_Bulk, "FaultCount", FaultCount, "LoadingFaultCount", LoadingFaultCount, "FaultMass", FaultMass, "MinimumNormalStress", MinimumNormalStress,
-    "Ranks", Ranks, "ElementRange_SR", ElementRange_SR, "ShearStiffness_H", ShearStiffness_H)
+    "Ranks_Shear", Ranks_Shear, "Ranks_Normal", Ranks_Normal,  "ElementRange_SR", ElementRange_SR, "NormalStiffness_H", NormalStiffness_H, "ShearStiffness_H", ShearStiffness_H)
     
 
     
@@ -214,7 +216,7 @@ function RunRSFDFN3D(TotalStep, RecordStep,
     TotalStep, RecordStep, SwitchV, TimeStepping, SaveResultFileName,RockDensity,
     FaultCenter,FaultLengthStrike, FaultLengthDip, FaultStrikeAngle, FaultDipAngle, FaultLLRR, SaveStep,
     HMatrixCompress, HMatrix_atol_Shear, HMatrix_atol_Normal, HMatrix_eta, TimeStepOnlyBasedOnUnstablePatch, MinimumNormalStress, Alpha_Evo,
-    Ranks, ElementRange_SR, ShearStiffness_H)  
+    Ranks_Shear, Ranks_Normal, ElementRange_SR, NormalStiffness_H, ShearStiffness_H)  
 
 
     ########^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^########

@@ -772,7 +772,7 @@ end
 
 function SaveResults_H(ReducedStiffnessMatrixShear, ReducedStiffnessMatrixNormal, ReducedInput_Segment,
     OutputFileName, ShearModulus, PoissonRatio, RockDensity, Switch_StrikeSlip_or_ReverseNormal, MinimumNS,
-    Ranks, ElementRange_SR, ShearStiffness_H, Admissible)
+    Ranks_Shear, Ranks_Normal, ElementRange_SR, ShearStiffness_H, NormalStiffness_H, Admissible)
 
 
 
@@ -820,7 +820,7 @@ function SaveResults_H(ReducedStiffnessMatrixShear, ReducedStiffnessMatrixNormal
     "Fault_V_Const", Fault_V_Const, "Fault_BulkIndex", Fault_BulkIndex, "FaultLengthStrike_Bulk", FaultLengthStrike_Bulk, 
     "FaultLengthDip_Bulk", FaultLengthDip_Bulk, "FaultCount", FaultCount, "LoadingFaultCount", LoadingFaultCount, "FaultMass", FaultMass,
     "Switch_StrikeSlip_or_ReverseNormal", Switch_StrikeSlip_or_ReverseNormal, "MinimumNormalStress", MinimumNS,
-    "Ranks", Ranks, "ElementRange_SR", ElementRange_SR, "ShearStiffness_H",ShearStiffness_H, "Admissible", Admissible)
+    "Ranks_Shear", Ranks_Shear, "Ranks_Normal",Ranks_Normal,"ElementRange_SR", ElementRange_SR, "ShearStiffness_H",ShearStiffness_H, "NormalStiffness_H", NormalStiffness_H, "Admissible", Admissible)
     println("Saved File Name: ",OutputFileName)
 
 

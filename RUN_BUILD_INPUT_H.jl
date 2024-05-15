@@ -187,25 +187,32 @@ function BuildInputFromBulkGeometry_H()
     ################################## Approximate ######################################
     BlockCount = length(ElementRange_SR[:,1])
     ShearStiffness_H = Any[0]
+    Ranks_Shear = zeros(Int, BlockCount)
+    NormalStiffness_H = Any[0]
+    Ranks_Normal = zeros(Int, BlockCount)
     BlockIndex = 0
-    Ranks = zeros(Int, BlockCount)
-    # Ranks = Ranks .* 2
     println("compressing")
     for i=1:BlockCount
         BlockIndex = BlockIndex + 1
         
         if Admissible[BlockIndex] > 0
             OrigianlMatrixToApproximate = StiffnessMatrixShearOriginal[ElementRange_SR[i,1]:ElementRange_SR[i,2],ElementRange_SR[i,3]:ElementRange_SR[i,4]]
-            ApproxMatrix = pqrfact(OrigianlMatrixToApproximate, atol = Tolerance)
-            push!(ShearStiffness_H,ApproxMatrix)
-            Ranks[BlockIndex] = size(ApproxMatrix[:Q],2)
+            ApproxMatrixS = pqrfact(OrigianlMatrixToApproximate, atol = Tolerance)
+            push!(ShearStiffness_H,ApproxMatrixS)
+            Ranks_Shear[BlockIndex] = size(ApproxMatrixS[:Q],2)
             
+            OrigianlMatrixToApproximate = StiffnessMatrixNormalOriginal[ElementRange_SR[i,1]:ElementRange_SR[i,2],ElementRange_SR[i,3]:ElementRange_SR[i,4]]
+            ApproxMatrixN = pqrfact(OrigianlMatrixToApproximate, atol = Tolerance)
+            push!(NormalStiffness_H,ApproxMatrixN)
+            Ranks_Normal[BlockIndex] = size(ApproxMatrixN[:Q],2)
         else 
             push!(ShearStiffness_H,StiffnessMatrixShearOriginal[ElementRange_SR[i,1]:ElementRange_SR[i,2],ElementRange_SR[i,3]:ElementRange_SR[i,4]])
+            push!(NormalStiffness_H,StiffnessMatrixNormalOriginal[ElementRange_SR[i,1]:ElementRange_SR[i,2],ElementRange_SR[i,3]:ElementRange_SR[i,4]])
         end
 
     end
     ShearStiffness_H = ShearStiffness_H[2:end]
+    NormalStiffness_H = NormalStiffness_H[2:end]
 
 
 
@@ -219,7 +226,7 @@ function BuildInputFromBulkGeometry_H()
 
     SaveResults_H(StiffnessMatrixShearOriginal, StiffnessMatrixNormalOriginal, Input_Segment,
          OutputFileName, ShearModulus, PoissonRatio, RockDensity, Switch_StrikeSlip_or_ReverseNormal, MinimumNS,
-         Ranks, ElementRange_SR, ShearStiffness_H, Admissible)
+         Ranks_Shear, Ranks_Normal, ElementRange_SR, ShearStiffness_H, NormalStiffness_H, Admissible)
 
 end
 

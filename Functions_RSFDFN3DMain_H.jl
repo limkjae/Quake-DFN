@@ -6,7 +6,7 @@ function main_H(StiffnessMatrixShear, StiffnessMatrixNormal,
     TotalStep, RecordStep, SwitchV, TimeStepping, SaveResultFileName,RockDensity,
     FaultCenter,FaultLengthStrike, FaultLengthDip, FaultStrikeAngle, FaultDipAngle, FaultLLRR, SaveStep,
     HMatrixCompress, HMatrix_atol_Shear, HMatrix_atol_Normal, HMatrix_eta, TimeStepOnlyBasedOnUnstablePatch, MinimumNormalStress, Alpha_Evo,
-    Ranks, ElementRange_SR, ShearStiffness_H)  
+    Ranks_Shear, Ranks_Normal, ElementRange_SR, NormalStiffness_H, ShearStiffness_H)  
     
     ExternalStressExist=0;
 
@@ -18,13 +18,17 @@ function main_H(StiffnessMatrixShear, StiffnessMatrixNormal,
     MaxRatioAllowed = 1.5
     MaxIteration = 50
 
-    BlockCount = length(Ranks)
+    BlockCount = length(Ranks_Shear)
+    println("Shear Stiffness")
     Par_ElementDivision_Shear = ParallelOptimization(ShearStiffness_H, ElementRange_SR, 
+                                FaultCount, BlockCount, ThreadCount, MaxRatioAllowed, MaxIteration)
+    println("Normal Stiffness")
+    Par_ElementDivision_Normal = ParallelOptimization(NormalStiffness_H, ElementRange_SR, 
                                 FaultCount, BlockCount, ThreadCount, MaxRatioAllowed, MaxIteration)
 
     LoadingStiffnessH, K_Self= StiffnessTransitionToLoading(ShearStiffness_H, ElementRange_SR, FaultCount)
     
-    println("Initializing")
+    println("Finding initial slip distribution")
     InitialShearStress = InitialNormalStress .* FrictionI;
     Far_Load_Disp_Initial = zeros(FaultCount)
     if LoadingFaultCount > 0
@@ -303,7 +307,8 @@ function main_H(StiffnessMatrixShear, StiffnessMatrixNormal,
                                      Par_ElementDivision_Shear, ThreadCount) ./ -K_Self
 
                 if PlanarFault == 0
-                    EffNormalStressMatrixProduct = StiffnessMatrixNormal * DispOld
+                    EffNormalStressMatrixProduct = HmatSolver_Pararllel(DispOld, NormalStiffness_H, ElementRange_SR, FaultCount,
+                                    Par_ElementDivision_Normal, ThreadCount)                    
                     EffNormalStress_i = EffNormalStressMatrixProduct + InitialNormalStress + D_EffStress_Normal
                 else 
                     EffNormalStress_i = InitialNormalStress + D_EffStress_Normal
