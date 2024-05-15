@@ -13,7 +13,7 @@ function main_H(StiffnessMatrixShear, StiffnessMatrixNormal,
     
     ################ Optimizing and Initializing Hmatrix ################
 
-    ThreadCount = 24
+    ThreadCount = Threads.nthreads()
     Epsilon_MaxDiffRatio = 1e-7
     MaxRatioAllowed = 1.5
     MaxIteration = 50
