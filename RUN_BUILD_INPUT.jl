@@ -70,18 +70,19 @@ function BuildInputFromBulkGeometry()
 
     ########################## Build Stiffness Matrix ##############################
 
+    ElementPartRoughCount = 2000
     StiffnessMatrixShearOriginal=zeros(FaultCount,FaultCount)
     StiffnessMatrixNormalOriginal=zeros(FaultCount,FaultCount)
 
     if Switch_StrikeSlip_or_ReverseNormal == 1
         println("Preparing for discretization")
-        StiffnessMatrixShearOriginal, StiffnessMatrixNormalOriginal =
-            Function_StiffnessMatrixStrikeSlip_Vector(Input_Segment, ShearModulus, PoissonRatio)
-
+        StiffnessMatrixShearOriginal, StiffnessMatrixNormalOriginal = 
+            BuildMatrixByPartsShear(FaultCount, ElementPartRoughCount, Input_Segment,  ShearModulus, PoissonRatio)
+        
     elseif Switch_StrikeSlip_or_ReverseNormal == 2
         println("Preparing for discretization")
-        StiffnessMatrixShearOriginal, StiffnessMatrixNormalOriginal =
-            Function_StiffnessMatrixReverseNormal_Vector(Input_Segment, ShearModulus, PoissonRatio)
+        StiffnessMatrixShearOriginal, StiffnessMatrixNormalOriginal = 
+            BuildMatrixByPartsNormal(FaultCount, ElementPartRoughCount, Input_Segment,  ShearModulus, PoissonRatio)
 
     else
         println("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
