@@ -1,11 +1,10 @@
 
-function main_H(StiffnessMatrixShear, StiffnessMatrixNormal, 
-    ShearModulus, FaultCount, LoadingFaultCount, Mass,
+function main_H(ShearModulus, FaultCount, LoadingFaultCount, Mass, NormalStiffnessZero,
     a, b, Dc, ThetaI, Vini, FrictionI,
     InitialNormalStress, LoadingRate, 
     TotalStep, RecordStep, SwitchV, TimeStepping, SaveResultFileName,RockDensity,
     FaultCenter,FaultLengthStrike, FaultLengthDip, FaultStrikeAngle, FaultDipAngle, FaultLLRR, SaveStep,
-    HMatrixCompress, HMatrix_atol_Shear, HMatrix_atol_Normal, HMatrix_eta, TimeStepOnlyBasedOnUnstablePatch, MinimumNormalStress, Alpha_Evo,
+    TimeStepOnlyBasedOnUnstablePatch, MinimumNormalStress, Alpha_Evo,
     Ranks_Shear, Ranks_Normal, ElementRange_SR, NormalStiffness_H, ShearStiffness_H)  
     
     ExternalStressExist=0;
@@ -108,64 +107,11 @@ function main_H(StiffnessMatrixShear, StiffnessMatrixNormal,
     end
 
     PlanarFault=0
-    if minimum(StiffnessMatrixNormal) - maximum(StiffnessMatrixNormal) == 0
+    if NormalStiffnessZero == 1
         PlanarFault=1
-        println("The fault is planar. Stiffness Matrix Normal is all zero")
+        println("Stiffness Matrix Normal is all zero")
     end
     
-
-
-
-
-
-    if HMatrixCompress == 1
-        Point3D = SVector{3,Float64}
-        XCenter = YCenter = [Point3D(FaultCenter[i,:]) for i =1: FaultCount]
-
-        comp = PartialACA(;atol=HMatrix_atol_Shear)
-        Xclt = Yclt = ClusterTree(XCenter)
-        # adm = StrongAdmissibilityStd()
-        adm = StrongAdmissibilityStd(;eta=HMatrix_eta)
-        TestX=ones(FaultCount)
-
-        # Build Shear Hmatrix
-        Original = ElasticLoadingShearMatrix * TestX
-        ElasticLoadingShearMatrix = assemble_hmat(ElasticLoadingShearMatrix,Xclt,Yclt;adm,comp)
-        
-        println(ElasticLoadingShearMatrix)
-        
-        Approx = ElasticLoadingShearMatrix * TestX
-        Error = abs(maximum((Original-Approx) ./ Original))
-        println("Max Shear HMatrix approximation error is ", Error)
-        if Error > 1e-8
-            println("Warning!!! Your HMatrix_atol may be too large")
-            println("Consider smaller HMatrix_atol \n")
-        end
-
-        # Build Normal Hmatrix
-        if PlanarFault ==0
-            XCenter = YCenter = [Point3D(FaultCenter[i,:]) for i =1: FaultCount]
-            comp = PartialACA(;atol=HMatrix_atol_Normal)
-            Xclt = Yclt = ClusterTree(XCenter)
-            adm = StrongAdmissibilityStd()
-
-            Original = StiffnessMatrixNormal * TestX
-            StiffnessMatrixNormal = assemble_hmat(StiffnessMatrixNormal,Xclt,Yclt;adm,comp)
-            println(StiffnessMatrixNormal)
-                
-            Approx = StiffnessMatrixNormal * TestX
-            Error = abs(maximum((Original-Approx) ./ Original))
-            println("Max Normal HMatrix approximation error is ", Error)
-                if Error > 1e-6
-                    println("Warning!!! Your HMatrix_atol may be too large")
-                    println("Consider smaller HMatrix_atol \n")
-                end
-            else
-                println("Planar fault: No H-matrix compression for Normal Stress")
-        end
-
-    end
-
 
 
     Friction0=FrictionI-a.*log.(Vini./V0)-b.*log.(ThetaI.*V0./Dc); # Initial friction

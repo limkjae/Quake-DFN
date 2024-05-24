@@ -56,9 +56,9 @@ function RunPlotInput(LoadingInputFileName)
     ################################################################################
     ######++++++++++++++++++++++ Apply Adjust Parameters +++++++++++++++++++++######
     LoadingFaultCount, FaultMass, Fault_a, Fault_b, Fault_Dc, Fault_Theta_i, Fault_V_i, Fault_Friction_i,
-    Fault_NormalStress, Fault_V_Const, StiffnessMatrixShear, StiffnessMatrixNormal, FaultCenter, FaultIndex_Adjusted = 
+    Fault_NormalStress, Fault_V_Const, FaultCenter, FaultIndex_Adjusted = 
         ParameterAdj(LoadingFaultCount, FaultMass, Fault_a, Fault_b, Fault_Dc, Fault_Theta_i, Fault_V_i, 
-        Fault_Friction_i, Fault_NormalStress, Fault_V_Const, StiffnessMatrixShear, StiffnessMatrixNormal, 
+        Fault_Friction_i, Fault_NormalStress, Fault_V_Const, 
         FaultStrikeAngle, FaultDipAngle, FaultCenter, Fault_BulkIndex, FaultLLRR, MinimumNormalStress)
         
     ########^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^########
@@ -97,9 +97,9 @@ function RunPlotInput(LoadingInputFileName)
         # PlotInput = log10.(Fault_Theta_i); ColorMinMax = 0 
         # PlotInput = log10.(Fault_V_i); ColorMinMax = 0  
         # PlotInput =Fault_NormalStress; ColorMinMax = 0    
-        # PlotInput =KoverKC ;ColorMinMax=[0,5]
+        PlotInput =KoverKC ;ColorMinMax=[0,5]
         # PlotInput =UnderResolved ;ColorMinMax=[0,1]
-        PlotInput = Fault_a - Fault_b; ColorMinMax = 0  
+        # PlotInput = Fault_a - Fault_b; ColorMinMax = 0  
         # PlotInput =  Fault_BulkIndex; ColorMinMax = 0  
         # PlotInput = Fault_Dc; ColorMinMax = 0  
         # PlotInput = FaultLLRR; ColorMinMax = 0  

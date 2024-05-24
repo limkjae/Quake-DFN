@@ -6,7 +6,6 @@ using JLD2
 using LinearAlgebra
 using Printf
 using SpecialFunctions
-using HMatrices
 using StaticArrays
 using LowRankApprox
 using Distributed
@@ -26,8 +25,8 @@ LoadingInputFileName="Input_Discretized.jld2"
 
 
 ########################## Simulation Time Set ################################
-TotalStep = 1000 # Total simulation step
-SaveStep = 1000 # Automatically saved every this step
+TotalStep = 5000 # Total simulation step
+SaveStep = 5000 # Automatically saved every this step
 RecordStep = 10 # Simulation sampling rate
 
 
@@ -39,16 +38,6 @@ TimeStepPreset = 3 # 1: conservative --> 4: optimistic
 TimeSteppingAdj =   
         [0.0  0.0  0.0  0.0;   # Time step size
          0.0  0.0  0.0  0.0]   # Velocity
-
-
-############################### H-Matrix ? #####################################
-###############!!!!!! The H-Matrix is still under development !!!!!!############
-HMatrixCompress = 0 # 1 for using HMatrix. No HMatrix compression if not 1
-HMatrix_eta = 1.0
-HMatrix_atol_Shear = 1e-10 # if smaller, better accuracy but slower Calculation (become unstable if too low)
-HMatrix_atol_Normal = 1e-10 # if smaller, better accuracy but slower Calculation (become unstable if too low)
-# The stiffness matrices will be compressed to HMatrix if HMatrixCompress=1. 
-# We recommend to use only if the element size is larger than 5000  
 
 
 ############################# Plots before run? ################################
@@ -64,8 +53,8 @@ function RunRSFDFN3D(TotalStep, RecordStep,
 
     ############################### Load Input Files ###############################
     ######++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++######
-    StiffnessMatrixShear= load(LoadingInputFileName, "StiffnessMatrixShear")
-    StiffnessMatrixNormal= load(LoadingInputFileName, "StiffnessMatrixNormal")
+    # StiffnessMatrixShear= load(LoadingInputFileName, "StiffnessMatrixShear")
+    # StiffnessMatrixNormal= load(LoadingInputFileName, "StiffnessMatrixNormal")
     FaultCenter= load(LoadingInputFileName, "FaultCenter")
     ShearModulus= load(LoadingInputFileName, "ShearModulus")
     RockDensity= load(LoadingInputFileName, "RockDensity")
@@ -95,7 +84,7 @@ function RunRSFDFN3D(TotalStep, RecordStep,
     ElementRange_SR = load(LoadingInputFileName, "ElementRange_SR")
     ShearStiffness_H = load(LoadingInputFileName, "ShearStiffness_H")
     NormalStiffness_H = load(LoadingInputFileName, "NormalStiffness_H")
-
+    NormalStiffnessZero = load(LoadingInputFileName, "NormalStiffnessZero")
     ########^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^########
     ################################################################################
 
@@ -123,9 +112,9 @@ function RunRSFDFN3D(TotalStep, RecordStep,
     Alpha_Evo = 0.0
 
     LoadingFaultCount, FaultMass, Fault_a, Fault_b, Fault_Dc, Fault_Theta_i, Fault_V_i, 
-    Fault_Friction_i, Fault_NormalStress, Fault_V_Const, StiffnessMatrixShear, StiffnessMatrixNormal, FaultCenter, FaultIndex_Adjusted, MinimumNormalStress = 
+    Fault_Friction_i, Fault_NormalStress, Fault_V_Const, FaultCenter, FaultIndex_Adjusted, MinimumNormalStress = 
         ParameterAdj(LoadingFaultCount, FaultMass, Fault_a, Fault_b, Fault_Dc, Fault_Theta_i, Fault_V_i, 
-        Fault_Friction_i, Fault_NormalStress, Fault_V_Const, StiffnessMatrixShear, StiffnessMatrixNormal, 
+        Fault_Friction_i, Fault_NormalStress, Fault_V_Const, 
         FaultStrikeAngle, FaultDipAngle, FaultCenter, Fault_BulkIndex, FaultLLRR, MinimumNormalStress)
     
     # if AdjustStiffnessPlot == 1 # 1 will plot dt vs maxV
@@ -146,8 +135,9 @@ function RunRSFDFN3D(TotalStep, RecordStep,
 
     ######+++++++++++++++++++++++++   Time Step Set   ++++++++++++++++++++++++######
     Period=zeros(FaultCount)
+    K_Self  = GetKself(ShearStiffness_H, ElementRange_SR, FaultCount)
     for i=1:FaultCount
-        Period[i]=sqrt(FaultMass[i]/abs(StiffnessMatrixShear[i,i]))
+        Period[i]=sqrt(FaultMass[i]/abs(K_Self[i]))
     end
     RecTimeStep=minimum(Period)/10
     println("Recommended TimeStep: ",RecTimeStep)
@@ -209,13 +199,12 @@ function RunRSFDFN3D(TotalStep, RecordStep,
 
     
     ######+++++++++++++++++++++++++         Run       ++++++++++++++++++++++++######
-    main_H(StiffnessMatrixShear, StiffnessMatrixNormal, 
-    ShearModulus, FaultCount, LoadingFaultCount, FaultMass,
+    main_H(ShearModulus, FaultCount, LoadingFaultCount, FaultMass, NormalStiffnessZero,
     Fault_a, Fault_b, Fault_Dc, Fault_Theta_i, Fault_V_i, Fault_Friction_i,
     Fault_NormalStress, Fault_V_Const,
     TotalStep, RecordStep, SwitchV, TimeStepping, SaveResultFileName,RockDensity,
     FaultCenter,FaultLengthStrike, FaultLengthDip, FaultStrikeAngle, FaultDipAngle, FaultLLRR, SaveStep,
-    HMatrixCompress, HMatrix_atol_Shear, HMatrix_atol_Normal, HMatrix_eta, TimeStepOnlyBasedOnUnstablePatch, MinimumNormalStress, Alpha_Evo,
+    TimeStepOnlyBasedOnUnstablePatch, MinimumNormalStress, Alpha_Evo,
     Ranks_Shear, Ranks_Normal, ElementRange_SR, NormalStiffness_H, ShearStiffness_H)  
 
 

@@ -96,39 +96,44 @@ for CurrentLevel = 1:TotalHierarchyLevel
         Block_Ctr_Diam = [Block_Ctr_Diam; AddedBlock_Ctr_Diam]
         BlockCountPrevLevel[CurrentLevel] = length(Block_Ctr_Diam[:,1])
 
-        if LoadingFaultExist == 0 
-            Block_Range_Level = Block_Range_Level[2:end,:]
-            Block_Ctr_Diam = Block_Ctr_Diam[2:end,:]
-            LevelBeign =1 
-            LevelEnd = length(Block_Ctr_Diam[:,1])
-        else 
+        # if LoadingFaultExist == 0 
+        #     Block_Range_Level = Block_Range_Level[2:end,:]
+        #     Block_Ctr_Diam = Block_Ctr_Diam[2:end,:]
+        #     LevelBeign =1 
+        #     LevelEnd = length(Block_Ctr_Diam[:,1])
+        # else 
             LevelBeign =2
             LevelEnd = length(Block_Ctr_Diam[:,1])
-        end
+        # end
         
     else 
         for highLevelidx = LevelBeign : LevelEnd
-        BlockBegin = Int(Block_Range_Level[highLevelidx,1])
-        BlockEnd = Int(Block_Range_Level[highLevelidx,2])
-        if BlockEnd - BlockBegin < MinimumElementsToCut
-            DivisionThisTime = 1
-        else
-            DivisionThisTime = HowManyDivisionEachLevel
-        end
-            HierarchyLevelHistory = Block_Range_Level[highLevelidx,4:end]
-            InitialBlockIdx = Input_Segment[BlockBegin,20]
-            Input_Segment[BlockEnd:end,20] = Input_Segment[BlockEnd:end,20] .+ (DivisionThisTime -1 )
+            BlockBegin = Int(Block_Range_Level[highLevelidx,1])
+            BlockEnd = Int(Block_Range_Level[highLevelidx,2])
+            if BlockEnd - BlockBegin < MinimumElementsToCut
+                DivisionThisTime = 1
+            else
+                DivisionThisTime = HowManyDivisionEachLevel
+            end
+                HierarchyLevelHistory = Block_Range_Level[highLevelidx,4:end]
+                InitialBlockIdx = Input_Segment[BlockBegin,20]
+                Input_Segment[BlockEnd:end,20] = Input_Segment[BlockEnd:end,20] .+ (DivisionThisTime -1 )
 
-            Input_Segment[BlockBegin:BlockEnd,:], ClusterCenter, GroupOrder, ClusterSize, Diameter, 
-                AddedBlock_Range_Level, AddedBlock_Ctr_Diam = 
-                GroupAndSort(Input_Segment[BlockBegin:BlockEnd,:], DivisionThisTime, 
-                                ArrangePoint, InitialBlockIdx, BlockBegin, TotalHierarchyLevel, CurrentLevel, HierarchyLevelHistory)
+                Input_Segment[BlockBegin:BlockEnd,:], ClusterCenter, GroupOrder, ClusterSize, Diameter, 
+                    AddedBlock_Range_Level, AddedBlock_Ctr_Diam = 
+                    GroupAndSort(Input_Segment[BlockBegin:BlockEnd,:], DivisionThisTime, 
+                                    ArrangePoint, InitialBlockIdx, BlockBegin, TotalHierarchyLevel, CurrentLevel, HierarchyLevelHistory)
 
-            Block_Range_Level = [Block_Range_Level; AddedBlock_Range_Level]
-            Block_Ctr_Diam = [Block_Ctr_Diam; AddedBlock_Ctr_Diam]
-        
+                Block_Range_Level = [Block_Range_Level; AddedBlock_Range_Level]
+                Block_Ctr_Diam = [Block_Ctr_Diam; AddedBlock_Ctr_Diam]
+            
         end
         BlockCountPrevLevel[CurrentLevel] = length(Block_Ctr_Diam[:,1]) - sum(BlockCountPrevLevel[1:CurrentLevel-1])
+        # if LoadingFaultExist == 0 
+        #     LevelBeign =  sum(BlockCountPrevLevel[1:CurrentLevel-1]) 
+        # else
+        #     LevelBeign =  sum(BlockCountPrevLevel[1:CurrentLevel-1]) +1 
+        # end
         LevelBeign =  sum(BlockCountPrevLevel[1:CurrentLevel-1]) +1 
         LevelEnd = length(Block_Ctr_Diam[:,1])
     end
@@ -420,6 +425,21 @@ function StiffnessTransitionToLoading(ShearStiffness_H, ElementRange_SR, FaultCo
     return LoadingSiffnessH, K_Self
 end
 
+
+function GetKself(ShearStiffness_H, ElementRange_SR, FaultCount)
+    TotalBlock = size(ElementRange_SR, 1)
+    K_Self = zeros(FaultCount)
+    for i=1:TotalBlock 
+        if ElementRange_SR[i,1] == ElementRange_SR[i,3] && 
+            ElementRange_SR[i,2] == ElementRange_SR[i,4]
+            ElementStartsAt = ElementRange_SR[i,1]
+            for j = 1:size(ShearStiffness_H[i],1)
+                K_Self[ElementStartsAt+j-1] = -ShearStiffness_H[i][j,j] 
+            end
+        end
+    end
+    return K_Self
+end
 
 
 function HMatBlockPlot(FaultCenter,FaultLengthStrike, FaultLengthDip, FaultStrikeAngle,

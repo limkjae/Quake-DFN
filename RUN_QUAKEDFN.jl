@@ -7,7 +7,6 @@ using JLD2
 using LinearAlgebra
 using Printf
 using SpecialFunctions
-using HMatrices
 using StaticArrays
 pygui(true)
 
@@ -23,8 +22,8 @@ LoadingInputFileName="Input_Discretized.jld2"
 
 
 ########################## Simulation Time Set ################################
-TotalStep = 1000 # Total simulation step
-SaveStep = 1000 # Automatically saved every this step
+TotalStep = 5000 # Total simulation step
+SaveStep = 5000 # Automatically saved every this step
 RecordStep = 10 # Simulation sampling rate
 
 
@@ -87,6 +86,7 @@ function RunRSFDFN3D(TotalStep, RecordStep,
     LoadingFaultCount= load(LoadingInputFileName, "LoadingFaultCount")
     FaultMass= load(LoadingInputFileName, "FaultMass")
     MinimumNormalStress = load(LoadingInputFileName, "MinimumNormalStress")
+    NormalStiffnessZero = load(LoadingInputFileName, "NormalStiffness_H")
     ########^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^########
     ################################################################################
 
@@ -114,9 +114,9 @@ function RunRSFDFN3D(TotalStep, RecordStep,
     Alpha_Evo = 0.0
 
     LoadingFaultCount, FaultMass, Fault_a, Fault_b, Fault_Dc, Fault_Theta_i, Fault_V_i, 
-    Fault_Friction_i, Fault_NormalStress, Fault_V_Const, StiffnessMatrixShear, StiffnessMatrixNormal, FaultCenter, FaultIndex_Adjusted, MinimumNormalStress = 
+    Fault_Friction_i, Fault_NormalStress, Fault_V_Const,  FaultCenter, FaultIndex_Adjusted, MinimumNormalStress = 
         ParameterAdj(LoadingFaultCount, FaultMass, Fault_a, Fault_b, Fault_Dc, Fault_Theta_i, Fault_V_i, 
-        Fault_Friction_i, Fault_NormalStress, Fault_V_Const, StiffnessMatrixShear, StiffnessMatrixNormal, 
+        Fault_Friction_i, Fault_NormalStress, Fault_V_Const, 
         FaultStrikeAngle, FaultDipAngle, FaultCenter, Fault_BulkIndex, FaultLLRR, MinimumNormalStress)
     
     # if AdjustStiffnessPlot == 1 # 1 will plot dt vs maxV
@@ -198,13 +198,13 @@ function RunRSFDFN3D(TotalStep, RecordStep,
     
 
     ######+++++++++++++++++++++++++         Run       ++++++++++++++++++++++++######
-    main(StiffnessMatrixShear, StiffnessMatrixNormal, 
+    main(StiffnessMatrixShear, StiffnessMatrixNormal, NormalStiffnessZero,
     ShearModulus, FaultCount, LoadingFaultCount, FaultMass,
     Fault_a, Fault_b, Fault_Dc, Fault_Theta_i, Fault_V_i, Fault_Friction_i,
     Fault_NormalStress, Fault_V_Const,
     TotalStep, RecordStep, SwitchV, TimeStepping, SaveResultFileName,RockDensity,
     FaultCenter,FaultLengthStrike, FaultLengthDip, FaultStrikeAngle, FaultDipAngle, FaultLLRR, SaveStep,
-    HMatrixCompress, HMatrix_atol_Shear, HMatrix_atol_Normal, HMatrix_eta, TimeStepOnlyBasedOnUnstablePatch, MinimumNormalStress, Alpha_Evo)  
+    TimeStepOnlyBasedOnUnstablePatch, MinimumNormalStress, Alpha_Evo)  
 
 
     ########^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^########
