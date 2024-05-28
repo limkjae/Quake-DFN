@@ -33,7 +33,7 @@ RecordStep = 10 # Simulation sampling rate
 ########################## Time Stepping Setup ################################
 TimeStepOnlyBasedOnUnstablePatch = 3 # if 1, time step is calculated only based on the unstable patch
 TimeStepPreset = 3 # 1: conservative --> 4: optimistic
-RuptureTimeStepMultiple = 10
+RuptureTimeStepMultiple = 1
 
 # Manually adjust time step below. No change when 0.0
 TimeSteppingAdj =   
