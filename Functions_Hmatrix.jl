@@ -211,20 +211,14 @@ end
 
 function HmatSolver_Pararllel(NetDisp, ShearStiffness_H, ElementRange_SR, FaultCount, Par_ElementDivision, ThreadCount)
 
-    Elastic_Load_DispPart = zeros(FaultCount,ThreadCount)
-    
-        # for i=1:ThreadCount; #println(i);              
-        #     @time Elastic_Load_DispPart[:,i] = SolveEachThread(Par_ElementDivision[i]+1, Par_ElementDivision[i+1], ElementRange_SR, ShearStiffness_H, NetDisp, FaultCount)
-        # end  
-
+    Elastic_Load_DispPart = zeros(FaultCount,ThreadCount)    
     @sync begin
-        Threads.@threads for i=1:ThreadCount 
-             Elastic_Load_DispPart[:,i] = SolveEachThread(Par_ElementDivision[i]+1, Par_ElementDivision[i+1], ElementRange_SR, ShearStiffness_H, NetDisp, FaultCount)
+        @inbounds Threads.@threads for i=1:ThreadCount 
+            Elastic_Load_DispPart[:,i] = SolveEachThread(Par_ElementDivision[i]+1, Par_ElementDivision[i+1], ElementRange_SR, ShearStiffness_H, NetDisp, FaultCount)
         end
     end
-
-
     Elastic_Load_DispP = sum(Elastic_Load_DispPart, dims=2)
+  
     return Elastic_Load_DispP
 end
 
@@ -279,9 +273,9 @@ end
 function SolveEachThread(BlockI, BlockF, ElementRange_SR, ShearStiffness_H, NetDisp, FaultCount)
     Elastic_Load_D = zeros(FaultCount)
 
-    for Blockidx = BlockI:BlockF
+    @inbounds for Blockidx = BlockI:BlockF
         Elastic_Load_D[ElementRange_SR[Blockidx,1]:ElementRange_SR[Blockidx,2]] +=
-         ShearStiffness_H[Blockidx] * NetDisp[ElementRange_SR[Blockidx,3]:ElementRange_SR[Blockidx,4]]
+         ShearStiffness_H[Blockidx] * @view(NetDisp[ElementRange_SR[Blockidx,3]:ElementRange_SR[Blockidx,4]])
     end
     return Elastic_Load_D
 end

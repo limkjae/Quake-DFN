@@ -25,19 +25,21 @@ LoadingInputFileName="Input_Discretized.jld2"
 
 
 ########################## Simulation Time Set ################################
-TotalStep = 5000 # Total simulation step
-SaveStep = 5000 # Automatically saved every this step
+TotalStep = 1000 # Total simulation step
+SaveStep = 1000 # Automatically saved every this step
 RecordStep = 10 # Simulation sampling rate
 
 
 ########################## Time Stepping Setup ################################
-TimeStepOnlyBasedOnUnstablePatch = 1 # if 1, time step is calculated only based on the unstable patch
+TimeStepOnlyBasedOnUnstablePatch = 3 # if 1, time step is calculated only based on the unstable patch
 TimeStepPreset = 3 # 1: conservative --> 4: optimistic
+RuptureTimeStepMultiple = 10
 
 # Manually adjust time step below. No change when 0.0
 TimeSteppingAdj =   
         [0.0  0.0  0.0  0.0;   # Time step size
          0.0  0.0  0.0  0.0]   # Velocity
+
 
 
 ############################# Plots before run? ################################
@@ -47,7 +49,7 @@ GeometryPlot = 0 # 1 will plot a-b
 
 
 
-function RunRSFDFN3D(TotalStep, RecordStep, 
+function RunRSFDFN3D(TotalStep, RecordStep, RuptureTimeStepMultiple,
     LoadingInputFileName, SaveResultFileName)
 
 
@@ -139,7 +141,7 @@ function RunRSFDFN3D(TotalStep, RecordStep,
     for i=1:FaultCount
         Period[i]=sqrt(FaultMass[i]/abs(K_Self[i]))
     end
-    RecTimeStep=minimum(Period)/10
+    RecTimeStep=minimum(Period)/10 * RuptureTimeStepMultiple
     println("Recommended TimeStep: ",RecTimeStep)
 
     if TimeStepPreset ==1
@@ -214,7 +216,7 @@ function RunRSFDFN3D(TotalStep, RecordStep,
 end
 
 
-RunRSFDFN3D(TotalStep, RecordStep, 
+RunRSFDFN3D(TotalStep, RecordStep, RuptureTimeStepMultiple,
     LoadingInputFileName, SaveResultFileName)
 
 
