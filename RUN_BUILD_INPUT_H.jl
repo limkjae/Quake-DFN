@@ -29,7 +29,7 @@ function BuildInputFromBulkGeometry_H()
     MinimumElementsToCut = 100
     DistDiamRatioCrit = 1.0    
     ArrangePoint = [-50000,-50000,0] ### Arrange point
-    SaveOriginalMatrix = 1 # Not implemented yet 
+    SaveOriginalMatrix = 0 # 1: save Original Matrix (very large), 0: Discard Original Matrix 
 
     #####---------   HMatrix Plots?  --------#####
     PlotHMat = 1 # HMatrix structure plot
@@ -231,7 +231,7 @@ function BuildInputFromBulkGeometry_H()
     if HMatrixCompress ==1
         SaveResults_H(StiffnessMatrixShearOriginal, StiffnessMatrixNormalOriginal, Input_Segment, NormalStiffnessZero,
             OutputFileName, ShearModulus, PoissonRatio, RockDensity, Switch_StrikeSlip_or_ReverseNormal, MinimumNS,
-            Ranks_Shear, Ranks_Normal, ElementRange_SR, ShearStiffness_H, NormalStiffness_H, Admissible)
+            Ranks_Shear, Ranks_Normal, ElementRange_SR, ShearStiffness_H, NormalStiffness_H, Admissible, SaveOriginalMatrix)
 
     else 
         SaveResults(StiffnessMatrixShearOriginal, StiffnessMatrixNormalOriginal, Input_Segment, NormalStiffnessZero,
