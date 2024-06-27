@@ -11,4 +11,4 @@ Simulation Demonstration (after 21 minute) : https://www.youtube.com/watch?v=SHn
 To use, (1) clone the repository (or download the file) and (2) follow the installation guide. It is strongly recommended to follow the example simulations video if you have any plans to use this code. This is the best way to understand and test the code. 
 
 refer to: <br />
-Im and Avouac (2024) Quake-DFN, A software for Simulating Sequences of Induced Earthquakes in a Discrete Fault Network, _Under-Review_
+Im, K., Avouac, J.-P. (2024). Quake-DFN: A Software for Simulating Sequences of Induced Earthquakes in a Discrete Fault Network. https://doi.org/10.1785/0120230299
