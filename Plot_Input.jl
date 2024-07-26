@@ -9,12 +9,14 @@ using Printf
 using SpecialFunctions
 using HMatrices
 using StaticArrays
+using LowRankApprox
 pygui(true)
 
 include("Functions_Solvers.jl")
 include("Functions_RSFDFN3DMain_D.jl")
 include("Results/Functions_Plot.jl")
 include("QuickParameterAdjust.jl")
+include("Functions_Hmatrix.jl")
 
 LoadingInputFileName="Input_Discretized.jld2" #only Needed when BuildStiffnessMatrix=2
 
@@ -23,8 +25,8 @@ function RunPlotInput(LoadingInputFileName)
 
     ################################################################################
     ############################### Load Input Files ###############################
-    StiffnessMatrixShear= load(LoadingInputFileName, "StiffnessMatrixShear")
-    StiffnessMatrixNormal= load(LoadingInputFileName, "StiffnessMatrixNormal")
+    # StiffnessMatrixShear= load(LoadingInputFileName, "StiffnessMatrixShear")
+    # StiffnessMatrixNormal= load(LoadingInputFileName, "StiffnessMatrixNormal")
     FaultCenter= load(LoadingInputFileName, "FaultCenter")
     FaultLengthStrike= load(LoadingInputFileName, "FaultLengthStrike")
     FaultLengthDip= load(LoadingInputFileName, "FaultLengthDip")
@@ -64,8 +66,17 @@ function RunPlotInput(LoadingInputFileName)
     ########^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^########
     ################################################################################
 
-    
+    K_Self=[]
+    if haskey(load(LoadingInputFileName), "ShearStiffness_H")
+        ShearStiffness_H = load(LoadingInputFileName, "ShearStiffness_H")
+        ElementRange_SR = load(LoadingInputFileName, "ElementRange_SR")
+        LoadingStiffnessH, K_Self= StiffnessTransitionToLoading(ShearStiffness_H, ElementRange_SR, FaultCount)
+        K_Self = -K_Self
+    else 
 
+        K_Self= diag(load(LoadingInputFileName, "StiffnessMatrixShear"))
+
+    end
 
 
     ################################################################################
@@ -74,7 +85,7 @@ function RunPlotInput(LoadingInputFileName)
         UnderResolved = zeros(FaultCount)
         for i=1:FaultCount
             
-            KoverKC[i] =  -StiffnessMatrixShear[i,i]/((Fault_b[i] - Fault_a[i])*Fault_NormalStress[i]/Fault_Dc[i]) 
+            KoverKC[i] =  -K_Self[i]/((Fault_b[i] - Fault_a[i])*Fault_NormalStress[i]/Fault_Dc[i]) 
             if KoverKC[i] < 0
                 KoverKC[i] = 100
             end
@@ -168,16 +179,3 @@ RunPlotInput(LoadingInputFileName)
 
 
 
-
-
-
-    
-# ResultTime=load("Results/Result.jld","History_Time")
-# ResultDisp=load("Results/Result.jld","History_Disp")
-# ResultV=load("Results/Result.jld","History_V")
-
-# figure(3)
-# clf()
-# PyPlot.plot(ResultTime[1:end-1], log10.(ResultV[1:end-1,:]), linewidth=1)
-# figure(4)
-# PyPlot.plot( log10.(ResultV[1:end-1,:]), linewidth=1)

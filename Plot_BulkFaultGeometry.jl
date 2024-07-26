@@ -19,8 +19,8 @@ Transparent = 1 # 1 for transparent fault plot
 Edge = 1 # 0 for no element boudary 
 MinMax_Axis=0
 LoadingFaultCount=0 # 1 to plot constant velocity faults. 
-
-PlotInput=Input_Bulk[:,8]; ColorMinMax=0 
+Input_Bulk = Input_Bulk[1:end-2,:]
+PlotInput=Input_Bulk[:,17]; ColorMinMax=0 
 # PlotInput=log10.(Input_Bulk[:,13]); ColorMinMax=0
 
 ##### Input Code

@@ -25,20 +25,20 @@ LoadingInputFileName="Input_Discretized.jld2"
 
 
 ########################## Simulation Time Set ################################
-TotalStep = 5000 # Total simulation step
-SaveStep = 5000 # Automatically saved every this step
-RecordStep = 10 # Simulation sampling rate
+TotalStep = 200000 # Total simulation step
+SaveStep = 100000 # Automatically saved every this step
+RecordStep = 100 # Simulation sampling rate !! should be a factor of SaveStep !!
 
 
 ########################## Time Stepping Setup ################################
 TimeStepOnlyBasedOnUnstablePatch = 3 # if 1, time step is calculated only based on the unstable patch
 TimeStepPreset = 3 # 1: conservative --> 4: optimistic
-RuptureTimeStepMultiple = 1
+RuptureTimeStepMultiple = 3
 
 # Manually adjust time step below. No change when 0.0
 TimeSteppingAdj =   
-        [0.0  0.0  0.0  0.0;   # Time step size
-         0.0  0.0  0.0  0.0]   # Velocity
+        [0.0  2e2  0.0  0.0;   # Time step size
+         0.0  0.0  5e-3 0.0]   # Velocity
 
 
 
@@ -53,8 +53,9 @@ function RunRSFDFN3D(TotalStep, RecordStep, RuptureTimeStepMultiple,
     LoadingInputFileName, SaveResultFileName)
 
 
+    ################################################################################
     ############################### Load Input Files ###############################
-    ######++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++######
+
     # StiffnessMatrixShear= load(LoadingInputFileName, "StiffnessMatrixShear")
     # StiffnessMatrixNormal= load(LoadingInputFileName, "StiffnessMatrixNormal")
     FaultCenter= load(LoadingInputFileName, "FaultCenter")
@@ -87,10 +88,13 @@ function RunRSFDFN3D(TotalStep, RecordStep, RuptureTimeStepMultiple,
     ShearStiffness_H = load(LoadingInputFileName, "ShearStiffness_H")
     NormalStiffness_H = load(LoadingInputFileName, "NormalStiffness_H")
     NormalStiffnessZero = load(LoadingInputFileName, "NormalStiffnessZero")
-    ########^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^########
+    ############################### Load Input Files ###############################
     ################################################################################
+    
 
 
+    ################################################################################
+    ################################# Plot Geometry ################################
     if GeometryPlot==1
         PlotRotation=[45,-45]
         Transparent=0
@@ -104,67 +108,71 @@ function RunRSFDFN3D(TotalStep, RecordStep, RuptureTimeStepMultiple,
             PlotRotation, MinMax_Axis, ColorMinMax, Transparent, Edge, LoadingFaultCount)
         figure(1).canvas.draw()
     end
+    ################################# Plot Geometry ################################
+    ################################################################################
+
+
+
     
-    ################################ Run Simulation ################################
-    ######++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++######
+
+    ################################################################################
+    ############################### Adjust Parameters ##############################
+
+    #####----- Mass Calucation from element Size -----#####
+    VerticalLengthScaleforM = minimum([minimum(FaultLengthStrike), minimum(FaultLengthDip)])
+    FaultMass .= VerticalLengthScaleforM * RockDensity
+    # FaultMass .= 1e6  
 
 
-    ######+++++++++++++++++++++++++ Adjust Parameters ++++++++++++++++++++++++######
-    FaultMass .= 1e6 
+    #####----------- Alpha in Evolution Law ----------#####
     Alpha_Evo = 0.0
 
+    
+    ##########----------- Logical adjust ----------########
     LoadingFaultCount, FaultMass, Fault_a, Fault_b, Fault_Dc, Fault_Theta_i, Fault_V_i, 
     Fault_Friction_i, Fault_NormalStress, Fault_V_Const, FaultCenter, FaultIndex_Adjusted, MinimumNormalStress = 
         ParameterAdj(LoadingFaultCount, FaultMass, Fault_a, Fault_b, Fault_Dc, Fault_Theta_i, Fault_V_i, 
         Fault_Friction_i, Fault_NormalStress, Fault_V_Const, 
         FaultStrikeAngle, FaultDipAngle, FaultCenter, Fault_BulkIndex, FaultLLRR, MinimumNormalStress)
+
+    ############################### Adjust Parameters ##############################
+    ################################################################################
     
-    # if AdjustStiffnessPlot == 1 # 1 will plot dt vs maxV
-    #     PlotRotation=[45,-45]
-    #     Transparent=0
-    #     MinMax_Axis=[-3000 3000; -3000 3000; -4000 0]
-    #     ColorMinMax=0
-    #     PlotInput=Fault_a - Fault_b    
-    #     clf()
-        
-    #     MaxVaule, MinValue = FaultPlot_3D_Color_SelectedElements(FaultCenter,FaultLengthStrike, FaultLengthDip,
-    #     FaultStrikeAngle, FaultDipAngle, FaultLLRR, PlotInput, 
-    #     PlotRotation, MinMax_Axis, ColorMinMax, Transparent, FaultIndex_Adjusted)
-    #     figure(1).canvas.draw()
-    # end
 
 
+    ################################################################################
+    ################################ Time Step Set  ################################
 
-    ######+++++++++++++++++++++++++   Time Step Set   ++++++++++++++++++++++++######
     Period=zeros(FaultCount)
     K_Self  = GetKself(ShearStiffness_H, ElementRange_SR, FaultCount)
     for i=1:FaultCount
         Period[i]=sqrt(FaultMass[i]/abs(K_Self[i]))
     end
-    RecTimeStep=minimum(Period)/10 * RuptureTimeStepMultiple
+    RecTimeStep=minimum(Period)/10 
     println("Recommended TimeStep: ",RecTimeStep)
+    RuptureDt = RecTimeStep* RuptureTimeStepMultiple
 
     if TimeStepPreset ==1
         global TimeStepping =
-        [1e4 1e1 RecTimeStep RecTimeStep;
+        [1e4 1e1 RuptureDt RuptureDt;
         1e-7 1e-5  1e-3 1e-2]
 
     elseif TimeStepPreset ==2
 
         global TimeStepping =
-        [1e5 1e1 RecTimeStep*2 RecTimeStep;
+        [1e5 1e1 RuptureDt RuptureDt;
         1e-7 1e-5  1e-3 1e-2]
                 
     elseif TimeStepPreset ==3
 
         global TimeStepping =
-        [1e6 RecTimeStep*1000 RecTimeStep*2 RecTimeStep;
+        [1e6 RecTimeStep*1000 RuptureDt RuptureDt;
         1e-9 1e-5  1e-3 1e-2]
 
     elseif TimeStepPreset ==4
 
         global TimeStepping =
-        [1e6 RecTimeStep*1000 RecTimeStep*5 RecTimeStep*3;
+        [1e6 RecTimeStep*1000 RuptureDt RuptureDt;
         1e-9 1e-5  1e-3 1e-2]
     end
 
@@ -186,8 +194,16 @@ function RunRSFDFN3D(TotalStep, RecordStep, RuptureTimeStepMultiple,
         println(" ***           This Can Generate Errors              ***")
         println(" *******************************************************")
     end
+    ################################ Time Step Set  ################################
+    ################################################################################
 
-    ######+++++++++++++++++++++++++ Save Input Files ++++++++++++++++++++++++######
+
+
+
+
+
+    ###############################################################################
+    ############################### Save Input Files ##############################
     save(SaveInputInfoFileName, 
     # "StiffnessMatrixShear", StiffnessMatrixShear, "StiffnessMatrixNormal", StiffnessMatrixNormal, 
     "FaultCenter", FaultCenter, "ShearModulus", ShearModulus, "RockDensity", RockDensity, "PoissonRatio", PoissonRatio,
@@ -198,9 +214,12 @@ function RunRSFDFN3D(TotalStep, RecordStep, RuptureTimeStepMultiple,
     "FaultLengthDip_Bulk", FaultLengthDip_Bulk, "FaultCount", FaultCount, "LoadingFaultCount", LoadingFaultCount, "FaultMass", FaultMass, "MinimumNormalStress", MinimumNormalStress,
     "Ranks_Shear", Ranks_Shear, "Ranks_Normal", Ranks_Normal,  "ElementRange_SR", ElementRange_SR, "NormalStiffness_H", NormalStiffness_H, "ShearStiffness_H", ShearStiffness_H)
     
+    ############################### Save Input Files ##############################
+    ###############################################################################
 
     
-    ######+++++++++++++++++++++++++         Run       ++++++++++++++++++++++++######
+    ###############################################################################
+    ################################ Run Simulation ###############################
     main_H(ShearModulus, FaultCount, LoadingFaultCount, FaultMass, NormalStiffnessZero,
     Fault_a, Fault_b, Fault_Dc, Fault_Theta_i, Fault_V_i, Fault_Friction_i,
     Fault_NormalStress, Fault_V_Const,
@@ -209,9 +228,10 @@ function RunRSFDFN3D(TotalStep, RecordStep, RuptureTimeStepMultiple,
     TimeStepOnlyBasedOnUnstablePatch, MinimumNormalStress, Alpha_Evo,
     Ranks_Shear, Ranks_Normal, ElementRange_SR, NormalStiffness_H, ShearStiffness_H)  
 
+    ################################ Run Simulation ###############################
+    ###############################################################################
 
-    ########^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^########
-    ################################################################################
+
 
 end
 
@@ -221,17 +241,3 @@ RunRSFDFN3D(TotalStep, RecordStep, RuptureTimeStepMultiple,
 
 
 
-
-
-
-
-    
-# ResultTime=load("Results/Result.jld","History_Time")
-# ResultDisp=load("Results/Result.jld","History_Disp")
-# ResultV=load("Results/Result.jld","History_V")
-
-# figure(3)
-# clf()
-# PyPlot.plot(ResultTime[1:end-1], log10.(ResultV[1:end-1,:]), linewidth=1)
-# figure(4)
-# PyPlot.plot( log10.(ResultV[1:end-1,:]), linewidth=1)

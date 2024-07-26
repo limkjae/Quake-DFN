@@ -37,12 +37,12 @@ function BuildBulk()
     Unstable_b=0.03
     Unstable_Dc=0.14
     Unstable_Theta=1e9
-    UntableMaximumSegLength=2000.0
+    UntableMaximumSegLength=4000.0
 
     Stable_a=0.04
     Stable_b=0.03
     Stable_Dc=0.14 
-    StableMaximumSegLength=2000.0;
+    StableMaximumSegLength=4000.0;
 
 
     ############################# Write Bulk Input #################################

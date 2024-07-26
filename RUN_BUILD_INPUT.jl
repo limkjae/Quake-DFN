@@ -22,19 +22,24 @@ function BuildInputFromBulkGeometry_H()
     InputBulkFileName="Input_BulkFaultGeometry.txt"
     OutputFileName="Input_Discretized.jld2"
 
+    ##########################################################################
     ########################## Hmatrix compress? #############################
-    HMatrixCompress = 1 # If this is 1, stiffness Matrix will be compressed
+    HMatrixCompress = 1 # If this is 1, stiffness Matrix will be compressed by Hmatrix
+    SaveOriginalMatrix = 0 # 1: save Original Matrix (can be very large), 0: Discard Original Matrix 
+    
+    #####----- Hmatrix compression detail ----#####
     Tolerance = 1e3 # pascal for 1m slip (More approximaion for higher Tolerance)
     TotalHierarchyLevel = 8
     MinimumElementsToCut = 100
     DistDiamRatioCrit = 1.0    
     ArrangePoint = [-50000,-50000,0] ### Arrange point
-    SaveOriginalMatrix = 0 # 1: save Original Matrix (very large), 0: Discard Original Matrix 
 
     #####---------   HMatrix Plots?  --------#####
     PlotHMat = 1 # HMatrix structure plot
     PlotBlock3D = 0 
-    ###########################################################################
+    ##########################################################################
+    ##########################################################################
+    
 
     ElementPartRoughCount = 2000
     
