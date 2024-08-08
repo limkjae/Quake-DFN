@@ -212,8 +212,9 @@ end
 function HmatSolver_Pararllel(NetDisp, ShearStiffness_H, ElementRange_SR, FaultCount, Par_ElementDivision, ThreadCount)
 
     Elastic_Load_DispPart = zeros(FaultCount,ThreadCount)    
+    
     @sync begin
-        @inbounds Threads.@threads for i=1:ThreadCount 
+        Threads.@threads for i=1:ThreadCount 
             Elastic_Load_DispPart[:,i] = SolveEachThread(Par_ElementDivision[i]+1, Par_ElementDivision[i+1], ElementRange_SR, ShearStiffness_H, NetDisp, FaultCount)
         end
     end
@@ -272,10 +273,9 @@ end
 
 function SolveEachThread(BlockI, BlockF, ElementRange_SR, ShearStiffness_H, NetDisp, FaultCount)
     Elastic_Load_D = zeros(FaultCount)
-
-    @inbounds for Blockidx = BlockI:BlockF
+    for Blockidx = BlockI:BlockF
         Elastic_Load_D[ElementRange_SR[Blockidx,1]:ElementRange_SR[Blockidx,2]] +=
-         ShearStiffness_H[Blockidx] * @view(NetDisp[ElementRange_SR[Blockidx,3]:ElementRange_SR[Blockidx,4]])
+         ShearStiffness_H[Blockidx] * (NetDisp[ElementRange_SR[Blockidx,3]:ElementRange_SR[Blockidx,4]])
     end
     return Elastic_Load_D
 end
@@ -284,7 +284,6 @@ end
 function  ParallelOptimization(ShearStiffness_H, ElementRange_SR, 
     FaultCount, BlockCount, ThreadCount, MaxRatioAllowed, MaxIteration)
     println("Parallel Calculation Optimizing")
-
     ############## calculating initial guess for division ##############
     RepeatCount=10
     NetDisp = ones(FaultCount)
@@ -337,64 +336,71 @@ function  ParallelOptimization(ShearStiffness_H, ElementRange_SR,
     Termination = 1
 
     while Termination ==1
-            iteration=iteration+1
-            for i=1:ThreadCount
-                if ElapsedTime[i] > AverageTime
-                    ElapsedOverAverage = ElapsedTime[i] / AverageTime
-                    ElementCountPerDivision[i] = round(Int,ElementCountPerDivision[i] * (1 - (1- 1/ElapsedOverAverage)*0.5))
-                else 
-                    ElapsedOverAverage = ElapsedTime[i] / AverageTime
-                    if ElementCountPerDivision[i] ==1 
-                        ElementCountPerDivision[i] = round(Int,ElementCountPerDivision[i] * (1 - (1- 1/ElapsedOverAverage)))
-                    else
-                    ElementCountPerDivision[i] = round(Int,ElementCountPerDivision[i] * (1 - (1- 1/ElapsedOverAverage)*0.03))
-                    end
-                end        
-                if ElementCountPerDivision[i] < 1
-                    ElementCountPerDivision[i] = 1
+        iteration=iteration+1
+        for i=1:ThreadCount
+            if ElapsedTime[i] > AverageTime
+                ElapsedOverAverage = ElapsedTime[i] / AverageTime
+                ElementCountPerDivision[i] = round(Int,ElementCountPerDivision[i] * (1 - (1- 1/ElapsedOverAverage)*0.5))
+            else 
+                ElapsedOverAverage = ElapsedTime[i] / AverageTime
+                if ElementCountPerDivision[i] ==1 
+                    ElementCountPerDivision[i] = round(Int,ElementCountPerDivision[i] * (1 - (1- 1/ElapsedOverAverage)))
+                else
+                ElementCountPerDivision[i] = round(Int,ElementCountPerDivision[i] * (1 - (1- 1/ElapsedOverAverage)*0.03))
                 end
+            end        
+            if ElementCountPerDivision[i] < 1
+                ElementCountPerDivision[i] = 1
             end
-        
-            ElementCountPerDivision = round.(Int, ElementCountPerDivision * BlockCount / sum(ElementCountPerDivision))
-        
-            for i=1:ThreadCount -1 
-                Par_ElementDivision[i+1] = ElementCountPerDivision[i] + Par_ElementDivision[i]
-            end
-            Par_ElementDivision[end]= BlockCount
-        
-            for i=1:ThreadCount
-                ElementCountPerDivision[i] = Par_ElementDivision[i+1] - Par_ElementDivision[i] 
-            end
-        
-        
-            ElapsedTime = HmatSolver_SpeedTest(NetDisp, ShearStiffness_H, ElementRange_SR, FaultCount, Par_ElementDivision, ThreadCount)
-        
-            Maxindex = argmax(ElapsedTime, dims=1)[1]
-            AverageTime = mean(ElapsedTime)
-            maxAverageTimeRatio = maximum(ElapsedTime/AverageTime)
-            println(iteration, ", Maxtime / Average: ", maxAverageTimeRatio)
-        
-            if maxAverageTimeRatio < Minimum_ElapsedTimeRatio
-                Minimum_ElapsedTimeRatio = copy(maxAverageTimeRatio)
-                Minimum_Par_ElementDivision = copy(Par_ElementDivision)
-            end
-        
-            if maxAverageTimeRatio < MaxRatioAllowed
-                Termination = 0
-                println(Par_ElementDivision)
-            elseif iteration == MaxIteration
-                Termination = 0
-                Par_ElementDivision = copy(Minimum_Par_ElementDivision)
-                println(Par_ElementDivision)
-            end
-        
-            # figure(11)
-            # plot(ElapsedTime)
-            # plot([0,ThreadCount],[AverageTime,AverageTime])
-            # figure(12)
-            # plot(log10.(ElementCountPerDivision))
-            
         end
+    
+        ElementCountPerDivision = round.(Int, ElementCountPerDivision * BlockCount / sum(ElementCountPerDivision))
+    
+        for i=1:ThreadCount -1 
+            Par_ElementDivision[i+1] = ElementCountPerDivision[i] + Par_ElementDivision[i]
+        end
+        Par_ElementDivision[end]= BlockCount
+
+        for i=1:ThreadCount -1 
+            if Par_ElementDivision[end-i] > Par_ElementDivision[end-i+1] 
+                Par_ElementDivision[end-i] = Par_ElementDivision[end-i+1] 
+            end
+        end
+
+
+        for i=1:ThreadCount
+            ElementCountPerDivision[i] = Par_ElementDivision[i+1] - Par_ElementDivision[i] 
+        end
+    
+    
+        ElapsedTime = HmatSolver_SpeedTest(NetDisp, ShearStiffness_H, ElementRange_SR, FaultCount, Par_ElementDivision, ThreadCount)
+    
+        Maxindex = argmax(ElapsedTime, dims=1)[1]
+        AverageTime = mean(ElapsedTime)
+        maxAverageTimeRatio = maximum(ElapsedTime/AverageTime)
+        println(iteration, ", Maxtime / Average: ", maxAverageTimeRatio)
+    
+        if maxAverageTimeRatio < Minimum_ElapsedTimeRatio
+            Minimum_ElapsedTimeRatio = copy(maxAverageTimeRatio)
+            Minimum_Par_ElementDivision = copy(Par_ElementDivision)
+        end
+    
+        if maxAverageTimeRatio < MaxRatioAllowed
+            Termination = 0
+            println(Par_ElementDivision)
+        elseif iteration == MaxIteration
+            Termination = 0
+            Par_ElementDivision = copy(Minimum_Par_ElementDivision)
+            println(Par_ElementDivision)
+        end
+    
+        # figure(11)
+        # plot(ElapsedTime)
+        # plot([0,ThreadCount],[AverageTime,AverageTime])
+        # figure(12)
+        # plot(log10.(ElementCountPerDivision))
+            
+    end
     return Par_ElementDivision
 end
 

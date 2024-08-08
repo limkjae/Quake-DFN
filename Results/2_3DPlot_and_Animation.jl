@@ -10,8 +10,8 @@ include("Functions_Plot.jl")
 ResultName="Result"
 FileName="Results/" * ResultName * ".jld2"
 FileNameInput="Results/" * ResultName * "_Input.jld2"
-ResultTime, ResultV, ResultDisp, ResultPressure, Result_NormalStress =
-    load(FileName,"History_Time", "History_V", "History_Disp", "History_Pressure", "History_NormalStress")
+ResultTime, ResultV, ResultDisp, Result_NormalStress =
+    load(FileName,"History_Time", "History_V", "History_Disp", "History_NormalStress")
 ResultV[ResultV.<=0] .= 1e-100
 
 #######################################################################################

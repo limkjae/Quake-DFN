@@ -204,28 +204,14 @@ function main(StiffnessMatrixShear, StiffnessMatrixNormal, NormalStiffnessZero,
                 ##########    Shear and Normal Stress Change    ###########
 
 
-                if HMatrixCompress == 1
-                    BLAS.set_num_threads(1)
-                    mul!(Elastic_Load_Disp, ElasticLoadingShearMatrix, Far_Load_Disp_Initial - DispOld, threads=false)
-                    if PlanarFault == 0
-                        mul!(EffNormalStressMatrixProduct, StiffnessMatrixNormal, DispOld; threads=false)
-                        EffNormalStress_i = EffNormalStressMatrixProduct + InitialNormalStress + D_EffStress_Normal
-                    else 
-                        EffNormalStress_i = InitialNormalStress + D_EffStress_Normal
-                    end
-
-                    BLAS.set_num_threads(Sys.CPU_THREADS)
+                Elastic_Load_Disp=ElasticLoadingShearMatrix * (Far_Load_Disp_Initial-DispOld) 
+                if PlanarFault == 0
+                    EffNormalStressMatrixProduct = StiffnessMatrixNormal * DispOld
+                    EffNormalStress_i = EffNormalStressMatrixProduct + InitialNormalStress + D_EffStress_Normal
                 else 
-                    Elastic_Load_Disp=ElasticLoadingShearMatrix * (Far_Load_Disp_Initial-DispOld) 
-                    if PlanarFault == 0
-                        EffNormalStressMatrixProduct = StiffnessMatrixNormal * DispOld
-                        EffNormalStress_i = EffNormalStressMatrixProduct + InitialNormalStress + D_EffStress_Normal
-                    else 
-                        EffNormalStress_i = InitialNormalStress + D_EffStress_Normal
-                    end
-
+                    EffNormalStress_i = InitialNormalStress + D_EffStress_Normal
                 end
-                
+
                 for iii=1:FaultCount
                     if EffNormalStress_i[iii] < MinimumNormalStress
                         EffNormalStress_i[iii] = MinimumNormalStress;

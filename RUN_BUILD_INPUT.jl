@@ -25,12 +25,12 @@ function BuildInputFromBulkGeometry_H()
     ##########################################################################
     ########################## Hmatrix compress? #############################
     HMatrixCompress = 1 # If this is 1, stiffness Matrix will be compressed by Hmatrix
-    SaveOriginalMatrix = 0 # 1: save Original Matrix (can be very large), 0: Discard Original Matrix 
+    SaveOriginalMatrix = 1 # 1: save Original Matrix (can be very large), 0: Discard Original Matrix 
     
     #####----- Hmatrix compression detail ----#####
     Tolerance = 1e3 # pascal for 1m slip (More approximaion for higher Tolerance)
     TotalHierarchyLevel = 8
-    MinimumElementsToCut = 100
+    MinimumElementsToCut = 10
     DistDiamRatioCrit = 1.0    
     ArrangePoint = [-50000,-50000,0] ### Arrange point
 

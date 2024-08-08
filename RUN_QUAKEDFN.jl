@@ -22,9 +22,9 @@ LoadingInputFileName="Input_Discretized.jld2"
 
 
 ########################## Simulation Time Set ################################
-TotalStep = 10000 # Total simulation step
-SaveStep = 5000 # Automatically saved every this step
-RecordStep = 100 # Simulation sampling rate
+TotalStep = 20000 # Total simulation step
+SaveStep = 10000 # Automatically saved every this step
+RecordStep = 1 # Simulation sampling rate
 
 
 ########################## Time Stepping Setup ################################
@@ -37,14 +37,6 @@ TimeSteppingAdj =
          0.0  0.0  0.0  0.0]   # Velocity
 
 
-############################### H-Matrix ? #####################################
-###############!!!!!! The H-Matrix is still under development !!!!!!############
-HMatrixCompress = 0 # 1 for using HMatrix. No HMatrix compression if not 1
-HMatrix_eta = 1.0
-HMatrix_atol_Shear = 1e-10 # if smaller, better accuracy but slower Calculation (become unstable if too low)
-HMatrix_atol_Normal = 1e-10 # if smaller, better accuracy but slower Calculation (become unstable if too low)
-# The stiffness matrices will be compressed to HMatrix if HMatrixCompress=1. 
-# We recommend to use only if the element size is larger than 5000  
 
 
 ############################# Plots before run? ################################

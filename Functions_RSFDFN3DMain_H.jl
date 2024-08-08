@@ -33,6 +33,12 @@ function main_H(ShearModulus, FaultCount, LoadingFaultCount, Mass, NormalStiffne
     if LoadingFaultCount > 0
         Par_ElementDivision_ShearNoLoading = copy(Par_ElementDivision_Shear)
         Par_ElementDivision_ShearNoLoading[end] = Par_ElementDivision_ShearNoLoading[end]-1
+        
+        for i=1:ThreadCount -1 
+            if Par_ElementDivision_ShearNoLoading[end-i] > Par_ElementDivision_ShearNoLoading[end-i+1] 
+                Par_ElementDivision_ShearNoLoading[end-i] = Par_ElementDivision_ShearNoLoading[end-i+1] 
+            end
+        end
         Far_Load_Disp_Initial[1:end-LoadingFaultCount] = 
                 SolveAx_b(LoadingStiffnessH[2:end], K_Self[1:end-LoadingFaultCount], InitialShearStress[1:end-LoadingFaultCount],
                          ElementRange_SR[2:end,:], FaultCount - LoadingFaultCount, Par_ElementDivision_ShearNoLoading, ThreadCount, Epsilon_MaxDiffRatio)
@@ -346,9 +352,9 @@ function main_H(ShearModulus, FaultCount, LoadingFaultCount, Mass, NormalStiffne
                 if rem(i,SaveStep)==0
                     
                     save(SaveResultFileName, 
-                    "History_V", History_V, "History_Disp", History_Disp, "History_Pressure", History_Pressure,
-                    "History_Time", History_Time, "History_Theta", History_Theta, "History_NormalStress", History_NormalStress,
-                    # "History_External_Shear", History_External_Shear, "History_External_Normal", History_External_Normal,
+                    "History_V", History_V, "History_Disp", History_Disp, "History_Theta", History_Theta,
+                    "History_Time", History_Time,  "History_NormalStress", History_NormalStress,
+                    # "History_External_Shear", History_External_Shear, "History_External_Normal", History_External_Normal,"History_Pressure", History_Pressure,
                     ) 
                     println("Saved Upto Here")
                     #writedlm("geek.txt", History_V')

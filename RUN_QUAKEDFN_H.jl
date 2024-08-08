@@ -25,20 +25,21 @@ LoadingInputFileName="Input_Discretized.jld2"
 
 
 ########################## Simulation Time Set ################################
-TotalStep = 200000 # Total simulation step
-SaveStep = 100000 # Automatically saved every this step
-RecordStep = 100 # Simulation sampling rate !! should be a factor of SaveStep !!
+TotalStep = 500000 # Total simulation step
+SaveStep = 250000 # Automatically saved every this step
+RecordStep = 200 # Simulation sampling rate !! should be a factor of SaveStep !!
 
 
 ########################## Time Stepping Setup ################################
-TimeStepOnlyBasedOnUnstablePatch = 3 # if 1, time step is calculated only based on the unstable patch
+TimeStepOnlyBasedOnUnstablePatch = 1 # if 1, time step is calculated only based on the unstable patch
 TimeStepPreset = 3 # 1: conservative --> 4: optimistic
-RuptureTimeStepMultiple = 3
+RuptureTimeStepMultiple = 1
+# VerticalLengthScaleforM = 0 # if 0, automatically decided based on the fault length
 
 # Manually adjust time step below. No change when 0.0
 TimeSteppingAdj =   
-        [0.0  2e2  0.0  0.0;   # Time step size
-         0.0  0.0  5e-3 0.0]   # Velocity
+    [0.0  0.0  0.0  0.0;   # Time step size
+    0.0  0.0  0.0  0.0]   # Velocity
 
 
 
@@ -119,9 +120,10 @@ function RunRSFDFN3D(TotalStep, RecordStep, RuptureTimeStepMultiple,
     ############################### Adjust Parameters ##############################
 
     #####----- Mass Calucation from element Size -----#####
-    VerticalLengthScaleforM = minimum([minimum(FaultLengthStrike), minimum(FaultLengthDip)])
-    FaultMass .= VerticalLengthScaleforM * RockDensity
-    # FaultMass .= 1e6  
+    # VerticalLengthScaleforM = minimum([minimum(FaultLengthStrike), minimum(FaultLengthDip)])
+    # FaultMass = minimum([FaultLengthStrike FaultLengthDip],dims = 2) * RockDensity ./ 5
+    # FaultMass .= VerticalLengthScaleforM * RockDensity /2
+    FaultMass .= 1e6  
 
 
     #####----------- Alpha in Evolution Law ----------#####
@@ -166,7 +168,7 @@ function RunRSFDFN3D(TotalStep, RecordStep, RuptureTimeStepMultiple,
     elseif TimeStepPreset ==3
 
         global TimeStepping =
-        [1e6 RecTimeStep*1000 RuptureDt RuptureDt;
+        [1e6 RecTimeStep*1000 RecTimeStep*2 RecTimeStep;
         1e-9 1e-5  1e-3 1e-2]
 
     elseif TimeStepPreset ==4
