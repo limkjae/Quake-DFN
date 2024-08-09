@@ -10,15 +10,16 @@ include("Functions_Plot.jl")
 ResultName="Result"
 FileName="Results/" * ResultName * ".jld2"
 FileNameInput="Results/" * ResultName * "_Input.jld2"
-ResultTime, ResultV, ResultDisp, Result_NormalStress =
-    load(FileName,"History_Time", "History_V", "History_Disp", "History_NormalStress")
+
+ResultTime, ResultV, ResultDisp, Result_NormalStress, History_Theta, =
+load(FileName,"History_Time", "History_V", "History_Disp", "History_NormalStress","History_Theta")
 ResultV[ResultV.<=0] .= 1e-100
 
 #######################################################################################
 ############################### Figure Configuration ##################################
 
 # figure(10); PyPlot.plot(log10.(ResultV[:,1:30:end])); xlabel("Record Step")
-PlotStep = 1000
+PlotStep = 990
 
 PlotRotation = [30,-30]
 Transparent = 0 # 1 for transparent fault plot. 0 for no-transparency

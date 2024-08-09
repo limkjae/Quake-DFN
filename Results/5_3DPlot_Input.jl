@@ -29,7 +29,10 @@ Fault_Friction_i= load(FileNameInput, "Fault_Friction_i")
 Fault_NormalStress= load(FileNameInput, "Fault_NormalStress")
 
 
-PlotInput =Fault_a 
+# PlotInput =Fault_a - Fault_b
+PlotInput =Fault_Dc
+
+
 PlotRotation=[45,-45]
 Transparent=1
 Edge= 0 

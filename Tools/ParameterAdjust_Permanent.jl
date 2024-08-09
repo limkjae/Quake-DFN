@@ -1,8 +1,42 @@
 
+using PyPlot
+using PyCall
+using DelimitedFiles
+using JLD2
+using LinearAlgebra
+using Printf
+using SpecialFunctions
+using StaticArrays
+using LowRankApprox
+using Distributed
+using Statistics
+pygui(true)
 
-function ParameterAdj(LoadingFaultCount, FaultMass, Fault_a, Fault_b, Fault_Dc, 
+
+
+LoadingInputFileName="Input_Discretized.jld2" 
+
+FaultCenter= load(LoadingInputFileName, "FaultCenter")
+FaultMass= load(LoadingInputFileName, "FaultMass")
+FaultStrikeAngle= load(LoadingInputFileName, "FaultStrikeAngle")
+FaultDipAngle= load(LoadingInputFileName, "FaultDipAngle")
+FaultLLRR= load(LoadingInputFileName, "FaultLLRR")
+Fault_a= load(LoadingInputFileName, "Fault_a")
+Fault_b= load(LoadingInputFileName, "Fault_b")
+Fault_Dc= load(LoadingInputFileName, "Fault_Dc")
+Fault_Theta_i= load(LoadingInputFileName, "Fault_Theta_i")
+Fault_V_i= load(LoadingInputFileName, "Fault_V_i")
+Fault_Friction_i= load(LoadingInputFileName, "Fault_Friction_i")
+Fault_NormalStress= load(LoadingInputFileName, "Fault_NormalStress")
+Fault_V_Const= load(LoadingInputFileName, "Fault_V_Const")
+Fault_BulkIndex= load(LoadingInputFileName, "Fault_BulkIndex")
+LoadingFaultCount= load(LoadingInputFileName, "LoadingFaultCount")
+MinimumNormalStress = load(LoadingInputFileName, "MinimumNormalStress")
+
+
+
+function ParameterAdj_permanent(LoadingFaultCount, FaultMass, Fault_a, Fault_b, Fault_Dc, 
     Fault_Theta_i, Fault_V_i, Fault_Friction_i, Fault_NormalStress, Fault_V_Const,
-     StiffnessMatrixShear, StiffnessMatrixNormal, 
      FaultStrikeAngle, FaultDipAngle, FaultCenter, Fault_BulkIndex, FaultLLRR, MinimumNormalStress)
 
     FaultMass_Original = copy(FaultMass)
@@ -21,36 +55,7 @@ function ParameterAdj(LoadingFaultCount, FaultMass, Fault_a, Fault_b, Fault_Dc,
     FaultIndex_Adjusted=0
 
 
-    ######################################################################################################
-    ############################    Alleviate the fault tip stress change ################################
 
-    # ShearAllow = 1.2
-    # NormalAllow = 1.2
-    # FaultCount=length(FaultMass)
-    # for i=1:FaultCount-LoadingFaultCount
-    #     for j=1:FaultCount-LoadingFaultCount
-    #             if i!=j
-    #             StressTransferRatio = abs((StiffnessMatrixShear[j,i]- 0.6 * StiffnessMatrixNormal[j,i])/StiffnessMatrixShear[i,i])
-    #             StressTransferRatioShear = abs((StiffnessMatrixShear[j,i])/StiffnessMatrixShear[i,i])
-    #             StressTransferRatioNormal = abs((StiffnessMatrixNormal[j,i])/StiffnessMatrixShear[i,i])
-
-    #                 if StressTransferRatioShear>ShearAllow
-    #                     Count=Count+1
-    #                     StiffnessMatrixShear[j,i]=StiffnessMatrixShear[i,i]*ShearAllow
-    #                     FaultIndex_Adjusted=[FaultIndex_Adjusted;i]
-    #                 end
-                    
-    #                 if StressTransferRatioNormal>NormalAllow
-    #                     Count=Count+1
-    #                     StiffnessMatrixNormal[j,i]=StiffnessMatrixShear[i,i]*NormalAllow
-    #                     FaultIndex_Adjusted=[FaultIndex_Adjusted;i]
-    #                 end
-    #         end
-    #     end
-    # end
-    # FaultIndex_Adjusted=FaultIndex_Adjusted[2:end]
-    # FaultIndex_Adjusted=unique(FaultIndex_Adjusted)
-    # println(FaultIndex_Adjusted)
 
     if FaultIndex_Adjusted == 0
         println("Adjusted Stiffness Count: 0")
@@ -62,8 +67,8 @@ function ParameterAdj(LoadingFaultCount, FaultMass, Fault_a, Fault_b, Fault_Dc,
     ######################################################################################################
 
 
-    ######################################################################################################
-    ##########################  Calculation of initial state from stress orientation #####################
+    #####################################################################################################
+    #########################  Calculation of initial state from stress orientation #####################
     
     # MaxStressOrientation = 150. # between 0-180 degree
     # StressRatioMaxOverMin = 0.5
@@ -71,7 +76,6 @@ function ParameterAdj(LoadingFaultCount, FaultMass, Fault_a, Fault_b, Fault_Dc,
 
     # StressGradAtMaxOrientation = 6000.0
     # SurfaceStressAtMaxOrientation = 2e6
-
     # Fault_Theta_i .= 1e10
     # Fault_V_i .= 0.0
     # Friction_0 = ones(FaultCount) * 0.32
@@ -83,8 +87,8 @@ function ParameterAdj(LoadingFaultCount, FaultMass, Fault_a, Fault_b, Fault_Dc,
     #             FaultStrikeAngle, FaultDipAngle, Fault_V_i, Fault_Theta_i, Fault_Friction_i, FaultLLRR,
     #             Fault_a, Fault_b, Fault_Dc, Fault_NormalStress, Friction_0, FaultCenter)
 
-    ##########^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^#############
-    ######################################################################################################
+    #########^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^#############
+    #####################################################################################################
     
     
 
@@ -97,14 +101,15 @@ function ParameterAdj(LoadingFaultCount, FaultMass, Fault_a, Fault_b, Fault_Dc,
     # end
     
     # for i=1:FaultCount
-    #     if 500 > FaultCenter[i,3] || FaultCenter[i,3] > 2000
-    #         Fault_a[i] = 0.01
+    #     if  FaultCenter[i,3] < 500  ||  3000 < FaultCenter[i,3] 
+    #         Fault_a[i] = 0.002
     #     end
     # end
 
-    # Fault_a .= 0.01
+    # Fault_Theta_i .= 1.5027018579405773e9
+    Fault_Dc .= 3e-3
+    # Fault_a .= 0.05
     # Fault_b .= 0.003
-    # Fault_Dc .= 10e-4
     # Fault_NormalStress .= 10e6
     # Fault_V_i .= 1e-13
     # Fault_Theta_i .= 1e10
@@ -115,44 +120,72 @@ function ParameterAdj(LoadingFaultCount, FaultMass, Fault_a, Fault_b, Fault_Dc,
     #####################################################################################################
 
 
+
+
+    file = jldopen(LoadingInputFileName, "a+")
+
     if FaultMass_Original != FaultMass
+        Base.delete!(file, "FaultMass") 
+        write(file, "FaultMass", FaultMass) 
         println("- Fault Mass Adjusted")
     end
     
     if Fault_a_Original != Fault_a
+        Base.delete!(file, "Fault_a") 
+        write(file, "Fault_a", Fault_a) 
         println("- Fault a Adjusted")
     end
     if Fault_b_Original != Fault_b
+        Base.delete!(file, "Fault_b") 
+        write(file, "Fault_b", Fault_b) 
         println("- Fault b Adjusted")
     end
     if Fault_Dc_Original != Fault_Dc
+        Base.delete!(file, "Fault_Dc") 
+        write(file, "Fault_Dc", Fault_Dc) 
         println("- Fault Dc Adjusted")
     end
     if Fault_Theta_i_Original != Fault_Theta_i
+        Base.delete!(file, "Fault_Theta_i") 
+        write(file, "Fault_Theta_i", Fault_Theta_i) 
         println("- Fault Theta_i Adjusted")
     end
     if Fault_V_i_Original != Fault_V_i
+        Base.delete!(file, "Fault_V_i") 
+        write(file, "Fault_V_i", Fault_V_i) 
         println("- Fault Fault_V_i Adjusted")
     end
     if Fault_Friction_i_Original != Fault_Friction_i
+        Base.delete!(file, "Fault_Friction_i") 
+        write(file, "Fault_Friction_i", Fault_Friction_i) 
         println("- Fault Friction_i Adjusted")
     end
     if Fault_NormalStress_Original != Fault_NormalStress
+        Base.delete!(file, "Fault_NormalStress") 
+        write(file, "Fault_NormalStress", Fault_NormalStress) 
         println("- Fault Normal stress Adjusted")
     end
     if Fault_V_Const_Original != Fault_V_Const
+        Base.delete!(file, "Fault_V_Const") 
+        write(file, "Fault_V_Const", Fault_V_Const) 
         println("- Fault V_Const Adjusted")
     end
     if FaultCenter_Original != FaultCenter
+        Base.delete!(file, "FaultCenter") 
+        write(file, "FaultCenter", FaultCenter) 
         println("- Fault Center Adjusted")
-    end
+    end 
 
     if MinimumNormalStress_Original != MinimumNormalStress
+        Base.delete!(file, "MinimumNormalStress") 
+        write(file, "MinimumNormalStress", MinimumNormalStress) 
         println("- Minimum NormalStress Adjusted")
     end
 
+    close(file)
+
     return LoadingFaultCount, FaultMass, Fault_a, Fault_b, Fault_Dc, Fault_Theta_i, Fault_V_i, 
-    Fault_Friction_i, Fault_NormalStress, Fault_V_Const, StiffnessMatrixShear, StiffnessMatrixNormal, FaultCenter, FaultIndex_Adjusted, MinimumNormalStress
+    Fault_Friction_i, Fault_NormalStress, Fault_V_Const, FaultCenter, FaultIndex_Adjusted, MinimumNormalStress
 
 
 end
@@ -192,3 +225,9 @@ function StressDependentFrictionParameters(MaxStressOrientation, StressRatioMaxO
     
     return Fault_Friction_i, Fault_NormalStress, Fault_V_i, Fault_Theta_i
 end
+
+
+
+ParameterAdj_permanent(LoadingFaultCount, FaultMass, Fault_a, Fault_b, Fault_Dc, 
+    Fault_Theta_i, Fault_V_i, Fault_Friction_i, Fault_NormalStress, Fault_V_Const,
+     FaultStrikeAngle, FaultDipAngle, FaultCenter, Fault_BulkIndex, FaultLLRR, MinimumNormalStress);

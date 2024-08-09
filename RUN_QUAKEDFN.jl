@@ -22,9 +22,9 @@ LoadingInputFileName="Input_Discretized.jld2"
 
 
 ########################## Simulation Time Set ################################
-TotalStep = 1000 # Total simulation step
-SaveStep = 1000 # Automatically saved every this step
-RecordStep = 1 # Simulation sampling rate
+TotalStep = 10000 # Total simulation step
+SaveStep = 5000 # Automatically saved every this step
+RecordStep = 10 # Simulation sampling rate
 
 
 ########################## Time Stepping Setup ################################
@@ -78,7 +78,7 @@ function RunRSFDFN3D(TotalStep, RecordStep,
     LoadingFaultCount= load(LoadingInputFileName, "LoadingFaultCount")
     FaultMass= load(LoadingInputFileName, "FaultMass")
     MinimumNormalStress = load(LoadingInputFileName, "MinimumNormalStress")
-    NormalStiffnessZero = load(LoadingInputFileName, "NormalStiffness_H")
+    NormalStiffnessZero = load(LoadingInputFileName, "NormalStiffnessZero")
     ########^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^########
     ################################################################################
 
