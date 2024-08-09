@@ -130,6 +130,12 @@ for EventFragmentIdx=1:EventCount_Fragment
                EventLocation_Merged = EventLocation_Fragment[EventFragmentIdx, :]'
                EventNumberMerged_forFragment[EventFragmentIdx] = EventCount_Merged
                Terminate = 1 
+          elseif CheckFragmentIdx < 1
+                    EventCount_Merged = EventCount_Merged + 1
+                    EventTime_Merged = [EventTime_Merged; EventTime_Fragment[EventFragmentIdx]]
+                    EventLocation_Merged = [EventLocation_Merged ; EventLocation_Fragment[EventFragmentIdx, :]']
+                    EventNumberMerged_forFragment[EventFragmentIdx] = EventCount_Merged
+                    Terminate = 1 
           elseif  EventTime_Fragment[EventFragmentIdx] -  EventTime_Fragment[CheckFragmentIdx] <  MergeTimeCriteria
                # if within the time range
                if norm(EventLocation_Fragment[EventFragmentIdx,:] - EventLocation_Fragment[CheckFragmentIdx,:]) < MergeDistanceCriteria

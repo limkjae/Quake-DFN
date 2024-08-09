@@ -8,7 +8,7 @@ pygui(true)
 include("Functions_Plot.jl")
 
 PlotBulkIndex = 2
-TimeIndex = 200
+TimeIndex = 900
 
 XPlotIndex = 2
 YPlotIndex = 3
@@ -19,8 +19,8 @@ for OneLoop = 1:1
     FileName="Results/" * ResultName * ".jld2"
     FileNameInput="Results/" * ResultName * "_Input.jld2"
 
-    ResultTime, ResultV, ResultDisp, ResultPressure, Result_NormalStress, Result_Theta =
-        load(FileName,"History_Time", "History_V", "History_Disp", "History_Pressure", "History_NormalStress", "History_Theta")
+    ResultTime, ResultV, ResultDisp, Result_NormalStress, Result_Theta =
+        load(FileName,"History_Time", "History_V", "History_Disp", "History_NormalStress", "History_Theta")
 
     FaultCount= load(FileNameInput, "FaultCount")
     FaultCenter= load(FileNameInput, "FaultCenter")

@@ -25,15 +25,15 @@ LoadingInputFileName="Input_Discretized.jld2"
 
 
 ########################## Simulation Time Set ################################
-TotalStep = 500000 # Total simulation step
-SaveStep = 250000 # Automatically saved every this step
-RecordStep = 200 # Simulation sampling rate !! should be a factor of SaveStep !!
+TotalStep = 1000 # Total simulation step
+SaveStep = 1000 # Automatically saved every this step
+RecordStep = 1 # Simulation sampling rate !! should be a factor of SaveStep !!
 
 
 ########################## Time Stepping Setup ################################
 TimeStepOnlyBasedOnUnstablePatch = 1 # if 1, time step is calculated only based on the unstable patch
 TimeStepPreset = 3 # 1: conservative --> 4: optimistic
-RuptureTimeStepMultiple = 1
+RuptureTimeStepMultiple = 3
 # VerticalLengthScaleforM = 0 # if 0, automatically decided based on the fault length
 
 # Manually adjust time step below. No change when 0.0
@@ -89,7 +89,6 @@ function RunRSFDFN3D(TotalStep, RecordStep, RuptureTimeStepMultiple,
     ShearStiffness_H = load(LoadingInputFileName, "ShearStiffness_H")
     NormalStiffness_H = load(LoadingInputFileName, "NormalStiffness_H")
     NormalStiffnessZero = load(LoadingInputFileName, "NormalStiffnessZero")
-    ############################### Load Input Files ###############################
     ################################################################################
     
 
@@ -109,7 +108,6 @@ function RunRSFDFN3D(TotalStep, RecordStep, RuptureTimeStepMultiple,
             PlotRotation, MinMax_Axis, ColorMinMax, Transparent, Edge, LoadingFaultCount)
         figure(1).canvas.draw()
     end
-    ################################# Plot Geometry ################################
     ################################################################################
 
 
@@ -130,7 +128,7 @@ function RunRSFDFN3D(TotalStep, RecordStep, RuptureTimeStepMultiple,
     Alpha_Evo = 0.0
 
     
-    ##########----------- Logical adjust ----------########
+    #######---------- Logical quick adjust ----------#######
     LoadingFaultCount, FaultMass, Fault_a, Fault_b, Fault_Dc, Fault_Theta_i, Fault_V_i, 
     Fault_Friction_i, Fault_NormalStress, Fault_V_Const, FaultCenter, FaultIndex_Adjusted, MinimumNormalStress = 
         ParameterAdj(LoadingFaultCount, FaultMass, Fault_a, Fault_b, Fault_Dc, Fault_Theta_i, Fault_V_i, 
@@ -155,6 +153,7 @@ function RunRSFDFN3D(TotalStep, RecordStep, RuptureTimeStepMultiple,
     RuptureDt = RecTimeStep* RuptureTimeStepMultiple
 
     if TimeStepPreset ==1
+
         global TimeStepping =
         [1e4 1e1 RuptureDt RuptureDt;
         1e-7 1e-5  1e-3 1e-2]
@@ -168,7 +167,7 @@ function RunRSFDFN3D(TotalStep, RecordStep, RuptureTimeStepMultiple,
     elseif TimeStepPreset ==3
 
         global TimeStepping =
-        [1e6 RecTimeStep*1000 RecTimeStep*2 RecTimeStep;
+        [1e6 RecTimeStep*1000 RuptureDt RuptureDt;
         1e-9 1e-5  1e-3 1e-2]
 
     elseif TimeStepPreset ==4

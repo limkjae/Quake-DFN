@@ -15,8 +15,9 @@ using Statistics
 @pyimport matplotlib.patches as patches
 pygui(true)
 
-############# Only Rank can be changed by adjusting Tolerance #############
-##################### Original Matrix Should Exists #######################
+####################### Original Matrix Should exists ##########################
+################ Only Rank can be changed by adjusting Tolerance ###############
+
 
 
 
