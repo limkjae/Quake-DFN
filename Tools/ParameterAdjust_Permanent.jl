@@ -107,7 +107,7 @@ function ParameterAdj_permanent(LoadingFaultCount, FaultMass, Fault_a, Fault_b, 
     # end
 
     # Fault_Theta_i .= 1.5027018579405773e9
-    Fault_Dc .= 3e-3
+    # Fault_Dc .= 3e-3
     # Fault_a .= 0.05
     # Fault_b .= 0.003
     # Fault_NormalStress .= 10e6
