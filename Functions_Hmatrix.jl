@@ -209,7 +209,9 @@ end
 
 
 
-function HmatSolver_Pararllel(NetDisp, ShearStiffness_H, ElementRange_SR, FaultCount, Par_ElementDivision, ThreadCount)
+
+
+function HmatSolver_Pararllel_Old(NetDisp, ShearStiffness_H, ElementRange_SR, FaultCount, Par_ElementDivision, ThreadCount)
 
     Elastic_Load_DispPart = zeros(FaultCount,ThreadCount)    
     
@@ -566,11 +568,31 @@ function SolveAx_b(LoadingStiffnessH, K_Self, InitialShearStress, ElementRange_S
         if iteration % 20 ==0
         println("Iteration until 1 > ",MaxDiff / Epsilon_MaxDiffRatio)
         end
-    EFTerm = HmatSolver_Pararllel(DispI_k, LoadingStiffnessH, ElementRange_SR, FaultCount, Par_ElementDivision, ThreadCount)
+    EFTerm = HmatSolver_Pararllel(DispI_k, LoadingStiffnessH, ElementRange_SR, Par_ElementDivision, ThreadCount, zeros(FaultCount, ThreadCount))
     
     DispI_kp1 = (EFTerm + InitialShearStress) ./ K_Self
     MaxDiff = maximum(abs.((DispI_k - DispI_kp1) ./ DispI_k))
     DispI_k=copy(DispI_kp1)
     end
     return DispI_k
+end
+
+
+
+
+function HmatSolver_Pararllel(NetDisp, Stiffness_H, ElementRange_SR, 
+    Par_ElementDivision, ThreadCount, Elastic_Load_EachThread)
+            
+        @inbounds Threads.@threads for ThreadIdx in 1:ThreadCount 
+
+            for Blockidx = Par_ElementDivision[ThreadIdx]+1:Par_ElementDivision[ThreadIdx+1]
+                @inbounds @views Elastic_Load_EachThread[ElementRange_SR[Blockidx,1]:ElementRange_SR[Blockidx,2], ThreadIdx] +=
+                    Stiffness_H[Blockidx] * NetDisp[ElementRange_SR[Blockidx,3]:ElementRange_SR[Blockidx,4]]
+            end   
+      
+                
+        end
+        Elastic_Load_DispP = sum(Elastic_Load_EachThread, dims=2)
+
+    return Elastic_Load_DispP
 end

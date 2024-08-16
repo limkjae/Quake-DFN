@@ -255,12 +255,12 @@ function main_H(ShearModulus, FaultCount, LoadingFaultCount, Mass, NormalStiffne
                 # Elastic_Load_Disp  = HmatSolver(NetDisp, ShearStiffness_H, BlockCount, ElementRange_SR, FaultCount)
                 
                 NetDisp = Far_Load_Disp_Initial - DispOld
-                Elastic_Load_Disp = HmatSolver_Pararllel(NetDisp, LoadingStiffnessH, ElementRange_SR, FaultCount,
-                                     Par_ElementDivision_Shear, ThreadCount) ./ -K_Self
+                Elastic_Load_Disp = HmatSolver_Pararllel(NetDisp, LoadingStiffnessH, ElementRange_SR, 
+                                     Par_ElementDivision_Shear, ThreadCount, zeros(FaultCount, ThreadCount)) ./ -K_Self
 
                 if PlanarFault == 0
-                    EffNormalStressMatrixProduct = HmatSolver_Pararllel(DispOld, NormalStiffness_H, ElementRange_SR, FaultCount,
-                                    Par_ElementDivision_Normal, ThreadCount)                    
+                    EffNormalStressMatrixProduct = HmatSolver_Pararllel(DispOld, NormalStiffness_H, ElementRange_SR, 
+                                    Par_ElementDivision_Normal, ThreadCount, zeros(FaultCount, ThreadCount))                    
                     EffNormalStress_i = EffNormalStressMatrixProduct + InitialNormalStress + D_EffStress_Normal
                 else 
                     EffNormalStress_i = InitialNormalStress + D_EffStress_Normal
