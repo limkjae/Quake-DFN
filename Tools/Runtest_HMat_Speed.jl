@@ -102,33 +102,36 @@ end
 hmat_speed_test()
 
 
+#=
 
 
-
-# ################################################################## 
-# NetDisp = rand(FaultCount)
-# Elastic_Load_D = zeros(FaultCount)
-# # Elastic_Load_EachThread = zeros(FaultCount, ThreadCount)
-# Elastic_Load_D_SingleThread = zeros(FaultCount)
-# Elastic_Load_D_FullMatrix  = zeros(FaultCount)
-#     # Threads.@threads for ThreadIdx=1:ThreadCount 
+################################################################## 
+NetDisp = rand(FaultCount)
+Elastic_Load_D = zeros(FaultCount)
 # Elastic_Load_EachThread = zeros(FaultCount, ThreadCount)
+Elastic_Load_D_SingleThread = zeros(FaultCount)
+Elastic_Load_D_FullMatrix  = zeros(FaultCount)
+    # Threads.@threads for ThreadIdx=1:ThreadCount 
+Elastic_Load_EachThread = zeros(FaultCount, ThreadCount)
         
-# Repeats=10
-# println("Parallel 1")
+Repeats=10
+println("Parallel 1")
 
 
 
 
-# for i=1:10
-# println()
+for i=1:10
+println()
+@time Elastic_Load_D = HmatSolver_Pararllel(NetDisp, ShearStiffness_H, ElementRange_SR, 
+         Par_ElementDivision_Shear, ThreadCount, zeros(FaultCount, ThreadCount))
+        #  println(Elastic_Load_EachThread[1,1])
 # @time Elastic_Load_D = HmatSolver_Pararllel(NetDisp, ShearStiffness_H, ElementRange_SR, 
-#          Par_ElementDivision_Shear, ThreadCount, zeros(FaultCount, ThreadCount))
-#         #  println(Elastic_Load_EachThread[1,1])
-# # @time Elastic_Load_D = HmatSolver_Pararllel(NetDisp, ShearStiffness_H, ElementRange_SR, 
-# # FaultCount, Par_ElementDivision_Shear, ThreadCount)
+# FaultCount, Par_ElementDivision_Shear, ThreadCount)
 
-# @time Elastic_Load_D_FullMatrix = StiffnessMatrixShear * NetDisp
+@time Elastic_Load_D_FullMatrix = StiffnessMatrixShear * NetDisp
 
 # plot(Elastic_Load_D - Elastic_Load_D_FullMatrix)
-# end
+end
+
+
+=#
