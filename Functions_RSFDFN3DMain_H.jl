@@ -5,14 +5,15 @@ function main_H(ShearModulus, FaultCount, LoadingFaultCount, Mass, NormalStiffne
     TotalStep, RecordStep, SwitchV, TimeStepping, SaveResultFileName,RockDensity,
     FaultCenter,FaultLengthStrike, FaultLengthDip, FaultStrikeAngle, FaultDipAngle, FaultLLRR, SaveStep,
     TimeStepOnlyBasedOnUnstablePatch, MinimumNormalStress, Alpha_Evo,
-    Ranks_Shear, Ranks_Normal, ElementRange_SR, NormalStiffness_H, ShearStiffness_H)  
+    Ranks_Shear, Ranks_Normal, ElementRange_SR, NormalStiffness_H, ShearStiffness_H, ThreadCount)  
     
     ExternalStressExist=0;
 
     
     ################ Optimizing and Initializing Hmatrix ################
-
-    ThreadCount = Threads.nthreads()
+    if ThreadCount == 0
+        ThreadCount = Threads.nthreads()
+    end
     Epsilon_MaxDiffRatio = 1e-7
     MaxRatioAllowed = 1.5
     MaxIteration = 50

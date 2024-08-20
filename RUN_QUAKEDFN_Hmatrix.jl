@@ -25,6 +25,7 @@ LoadingInputFileName="Input_Discretized.jld2"
 
 
 
+ThreadCount = 0 # if zero, it uses current thread count opened in REPL
 
 ########################## Simulation Time Set ################################
 TotalStep = 1000 # Total simulation step
@@ -233,7 +234,7 @@ function RunRSFDFN3D(TotalStep, RecordStep, RuptureTimeStepMultiple,
     TotalStep, RecordStep, SwitchV, TimeStepping, SaveResultFileName,RockDensity,
     FaultCenter,FaultLengthStrike, FaultLengthDip, FaultStrikeAngle, FaultDipAngle, FaultLLRR, SaveStep,
     TimeStepOnlyBasedOnUnstablePatch, MinimumNormalStress, Alpha_Evo,
-    Ranks_Shear, Ranks_Normal, ElementRange_SR, NormalStiffness_H, ShearStiffness_H)  
+    Ranks_Shear, Ranks_Normal, ElementRange_SR, NormalStiffness_H, ShearStiffness_H, ThreadCount)  
 
     ################################ Run Simulation ###############################
     ###############################################################################
