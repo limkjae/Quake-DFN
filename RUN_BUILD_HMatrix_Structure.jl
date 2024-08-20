@@ -1,5 +1,10 @@
 
 
+
+################################################################################
+###### This file generate Hmatrix Structure File from Bulk Fault Geometry ######
+###### H-matrix approximation should  be 
+
 using DelimitedFiles
 using Base
 using PyPlot
@@ -12,24 +17,23 @@ using LinearAlgebra
 
 pygui(true)
 
-include("../Functions_BuildInputFile.jl")
-include("../Functions_OKADA3D.jl")
-include("../Results/Functions_Plot.jl")
-include("../Functions_Hmatrix.jl")
+include("Functions_BuildInputFile.jl")
+include("Functions_OKADA3D.jl")
+include("Results/Functions_Plot.jl")
+include("Functions_Hmatrix.jl")
 
 function BuildHMatStructure()
 
     InputBulkFileName="Input_BulkFaultGeometry.txt"
-    OutputFileName="HmatrixStructure.jld2"
+    OutputFileName="Input_HmatrixStructure.jld2"
 
     ##########################################################################
     ########################## Hmatrix compress? #############################
     #####----- Hmatrix compression detail ----#####
-    Tolerance = 1e3 # pascal for 1m slip (More approximaion for higher Tolerance)
     TotalHierarchyLevel = 8
     MinimumElementsToCut = 50
-    DistDiamRatioCrit = 1.0    
-    ArrangePoint = [100,3000,0] ### Arrange point
+    DistDiamRatioCrit = 1.0     
+    ArrangePoint = [10000,000,0] ### Arrange point
     # ArrangePoint = [0,0,-1000] ### Arrange point
 
     #####---------   HMatrix Plots?  --------#####
