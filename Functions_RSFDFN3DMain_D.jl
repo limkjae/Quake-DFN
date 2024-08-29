@@ -184,44 +184,36 @@ function main(StiffnessMatrixShear, StiffnessMatrixNormal, NormalStiffnessZero,
             Iteration=0;
             SwitchTime=0;
 
+            
+            ##########    Shear and Normal Stress Change    ###########
+            Elastic_Load_Disp=ElasticLoadingShearMatrix * (Far_Load_Disp_Initial-DispOld) 
+            if PlanarFault == 0
+                EffNormalStressMatrixProduct = StiffnessMatrixNormal * DispOld
+            end
+
+
             while Terminate==0
                 Iteration=Iteration+1;
                 
                 Dt_All=ones(FaultCount,1)*Dt;
 
-
                 ###################################################
                 ##########    External Stress Change    ###########
                 if ExternalStressExist ==1
-                
-                    D_EffStress_Normal, D_EffStress_Shear, D_Pressure = InterpolateFromStressChange(TOld+Dt, FaultCount,
+                    D_EffStress_Normal, D_EffStress_Shear, D_Pressure = InterpolateFromStressChange(TOld, FaultCount,
                     ExternalStress_Normal, ExternalStress_Shear,ExternalStress_TimeArray, ExternalStress_Pressure)
-
                 end
-                               
 
-                
-                ##########    Shear and Normal Stress Change    ###########
-
-
-                Elastic_Load_Disp=ElasticLoadingShearMatrix * (Far_Load_Disp_Initial-DispOld) 
-                if PlanarFault == 0
-                    EffNormalStressMatrixProduct = StiffnessMatrixNormal * DispOld
-                    EffNormalStress_i = EffNormalStressMatrixProduct + InitialNormalStress + D_EffStress_Normal
-                else 
-                    EffNormalStress_i = InitialNormalStress + D_EffStress_Normal
-                end
+                EffNormalStress_i = EffNormalStressMatrixProduct + InitialNormalStress + D_EffStress_Normal
 
                 for iii=1:FaultCount
                     if EffNormalStress_i[iii] < MinimumNormalStress
                         EffNormalStress_i[iii] = MinimumNormalStress;
                     end
                 end    
-
-
-                Total_Loading_Disp=Far_Load_Disp_Initial + Elastic_Load_Disp           
                 
-
+                Total_Loading_Disp = Far_Load_Disp_Initial + Elastic_Load_Disp           
+                
                 ############ Solve It for One Step! ############
                 V,Friction,Disp,Theta,EffNormalStress,Dt_All,InstabilityThistime, FLAG_GoodToGo =
                 SolveOneTimeStep(ConvergenceCrit,DispOld,FrictionOld,
@@ -290,7 +282,7 @@ function main(StiffnessMatrixShear, StiffnessMatrixNormal, NormalStiffnessZero,
                 if rem(i,SaveStep)==0
                     
                     save(SaveResultFileName, 
-                    "History_V", History_V, "History_Disp", History_Disp, "History_Pressure", History_Pressure,
+                    "History_V", History_V, "History_Disp", History_Disp, 
                     "History_Time", History_Time, "History_Theta", History_Theta, "History_NormalStress", History_NormalStress,
                     # "History_External_Shear", History_External_Shear, "History_External_Normal", History_External_Normal,
                     ) 

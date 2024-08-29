@@ -224,6 +224,16 @@ function main_H(ShearModulus, FaultCount, LoadingFaultCount, Mass, NormalStiffne
             Iteration=0;
             SwitchTime=0;
 
+
+            NetDisp = Far_Load_Disp_Initial - DispOld
+            Elastic_Load_Disp = HmatSolver_Pararllel(NetDisp, LoadingStiffnessH, ElementRange_SR, 
+                                 Par_ElementDivision_Shear, ThreadCount, zeros(FaultCount, ThreadCount)) ./ -K_Self
+
+            if PlanarFault == 0
+                EffNormalStressMatrixProduct = HmatSolver_Pararllel(DispOld, NormalStiffness_H, ElementRange_SR, 
+                                Par_ElementDivision_Normal, ThreadCount, zeros(FaultCount, ThreadCount))  
+            end
+
             while Terminate==0
                 Iteration=Iteration+1;
                 
@@ -238,45 +248,9 @@ function main_H(ShearModulus, FaultCount, LoadingFaultCount, Mass, NormalStiffne
                     ExternalStress_Normal, ExternalStress_Shear,ExternalStress_TimeArray, ExternalStress_Pressure)
 
                 end
-                     
-                # ##########    Shear and Normal Stress Change    ###########
-                # @distributed for Blockidx in 1:BlockCount            
-                
-                # NetDisp = Far_Load_Disp_Initial - DispOld
-                # Elastic_Load_Disp = zeros(FaultCount)
-                # for Blockidx in 1:BlockCount        
-                #     # println(Blockidx)     
-                #     # println(NetDisp[ElementRange_SR[Blockidx,3]:ElementRange_SR[Blockidx,4]])
-                #     Elastic_Load_Disp[ElementRange_SR[Blockidx,1]:ElementRange_SR[Blockidx,2]] = 
-                #         Elastic_Load_Disp[ElementRange_SR[Blockidx,1]:ElementRange_SR[Blockidx,2]] + 
-                #         ShearStiffness_H[Blockidx] * NetDisp[ElementRange_SR[Blockidx,3]:ElementRange_SR[Blockidx,4]]
-                # end
-                
-                # NetDisp = Far_Load_Disp_Initial - DispOld
-                # Elastic_Load_Disp  = HmatSolver(NetDisp, ShearStiffness_H, BlockCount, ElementRange_SR, FaultCount)
-                
-
-                NetDisp = Far_Load_Disp_Initial - DispOld
-                Elastic_Load_Disp = HmatSolver_Pararllel(NetDisp, LoadingStiffnessH, ElementRange_SR, 
-                                     Par_ElementDivision_Shear, ThreadCount, zeros(FaultCount, ThreadCount)) ./ -K_Self
-
-                if PlanarFault == 0
-                    EffNormalStressMatrixProduct = HmatSolver_Pararllel(DispOld, NormalStiffness_H, ElementRange_SR, 
-                                    Par_ElementDivision_Normal, ThreadCount, zeros(FaultCount, ThreadCount))                    
-                    EffNormalStress_i = EffNormalStressMatrixProduct + InitialNormalStress + D_EffStress_Normal
-                else 
-                    EffNormalStress_i = InitialNormalStress + D_EffStress_Normal
-                end
-                
-                # Elastic_Load_Disp = ElasticLoadingShearMatrix * (Far_Load_Disp_Initial-DispOld) 
-
-                # println(maximum(Elastic_Load_Disp))
-                #  println(maximum(Elastic_Load_Disp1 - Elastic_Load_Disp))
-                # println(Elastic_Load_Disp1[1:100])
-                # EffNormalStress_i = InitialNormalStress + D_EffStress_Normal
-
-
-                
+                                     
+                EffNormalStress_i = EffNormalStressMatrixProduct + InitialNormalStress + D_EffStress_Normal
+                                
                 for iii=1:FaultCount
                     if EffNormalStress_i[iii] < MinimumNormalStress
                         EffNormalStress_i[iii] = MinimumNormalStress;
