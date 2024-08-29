@@ -25,7 +25,7 @@ function BuildInputFromBulkGeometry_H()
     HMatrixStructureFile = "Input_HmatrixStructure.jld2"
     ##########################################################################
     ########################## Hmatrix compress? #############################
-    HMatrixCompress = 1 # If this is 1, stiffness Matrix will be compressed using Input_HmatrixStructure.jld2
+    HMatrixCompress = 0 # If this is 1, stiffness Matrix will be compressed using Input_HmatrixStructure.jld2
     SaveOriginalMatrix = 1 # 1: save Original Matrix (can be very large), 0: Discard Original Matrix. 
     
     #####----- Hmatrix compression Tolerance ----#####
@@ -56,7 +56,12 @@ function BuildInputFromBulkGeometry_H()
 
         else 
             # println("H Matrix Structure File does not exist")
-            error("H Matrix Structure File does not exist")
+            println("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
+            println("!!!                        H Matrix Structure File does not exist                       !!!")
+            println("!!!              To use Hmatrix, Run 'RUN_BUILD_HMatrix_Structure.jl' first             !!!")
+            println("!!!                          Otherwise, set  HMatrixCompress = 0                        !!!")
+            println("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
+            error()
 
         end
     else

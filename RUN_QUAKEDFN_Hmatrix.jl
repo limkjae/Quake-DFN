@@ -24,13 +24,12 @@ SaveInputInfoFileName="Results/Result_Input.jld2"
 LoadingInputFileName="Input_Discretized.jld2" 
 
 
-
-ThreadCount = 0 # if zero, it uses current thread count opened in REPL
+ThreadCount = 16 # if zero, it uses current thread count opened in REPL
 
 ########################## Simulation Time Set ################################
-TotalStep = 1000 # Total simulation step
-SaveStep = 1000 # Automatically saved every this step
-RecordStep = 10 # Simulation sampling rate !! should be a factor of SaveStep !!
+TotalStep = 100 # Total simulation step
+SaveStep = 100 # Automatically saved every this step
+RecordStep = 1 # Simulation sampling rate !! should be a factor of SaveStep !!
 
 
 ########################## Time Stepping Setup ################################

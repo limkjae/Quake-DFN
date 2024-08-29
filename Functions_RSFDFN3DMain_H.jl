@@ -255,6 +255,7 @@ function main_H(ShearModulus, FaultCount, LoadingFaultCount, Mass, NormalStiffne
                 # NetDisp = Far_Load_Disp_Initial - DispOld
                 # Elastic_Load_Disp  = HmatSolver(NetDisp, ShearStiffness_H, BlockCount, ElementRange_SR, FaultCount)
                 
+
                 NetDisp = Far_Load_Disp_Initial - DispOld
                 Elastic_Load_Disp = HmatSolver_Pararllel(NetDisp, LoadingStiffnessH, ElementRange_SR, 
                                      Par_ElementDivision_Shear, ThreadCount, zeros(FaultCount, ThreadCount)) ./ -K_Self
