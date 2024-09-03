@@ -56,6 +56,8 @@ function BuildHMatStructure()
     ##  16. NoarmalStress Gradient [Pa] 17. V_Const     18. Minimum Segment Length
 
     Input_Bulk=readdlm(InputBulkFileName)
+    Input_BulkOriginal=copy(Input_Bulk)
+
     
     Switch_StrikeSlip_or_ReverseNormal = Input_Bulk[2,1] 
     ShearModulus = Input_Bulk[2,2]
@@ -179,7 +181,9 @@ function BuildHMatStructure()
     "RockDensity", RockDensity, 
     "DropCrit", DropCrit, 
     "DropCritNormalStressMultiplier", DropCritNormalStressMultiplier, 
-    "MinimumNS", MinimumNS)
+    "MinimumNS", MinimumNS,
+    "Input_Bulk", Input_BulkOriginal)
+
     
 
 end
