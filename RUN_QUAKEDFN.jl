@@ -22,22 +22,21 @@ LoadingInputFileName="Input_Discretized.jld2"
 
 
 ########################## Simulation Time Set ################################
-TotalStep = 100 # Total simulation step
-SaveStep = 100 # Automatically saved every this step
-RecordStep = 1 # Simulation sampling rate
+TotalStep = 1000 # Total simulation step
+SaveStep = 1000 # Automatically saved every this step
+RecordStep = 10 # Simulation sampling rate
 
 
 ########################## Time Stepping Setup ################################
 TimeStepOnlyBasedOnUnstablePatch = 1 # if 1, time step is calculated only based on the unstable patch
 TimeStepPreset = 3 # 1: conservative --> 4: optimistic
 RuptureTimeStepMultiple = 3
-VerticalLengthScaleforM = 0 
+VerticalLengthScaleforM = 0 # if 0, Mass is automatically determined based on the fault length (radiation damping dominated). If not, M = VerticalLengthScaleforM * density
 
 # Manually adjust time step below. No change when 0.0
 TimeSteppingAdj =   
         [0.0  0.0  0.0  0.0;   # Time step size
          0.0  0.0  0.0  0.0]   # Velocity
-
 
 
 
@@ -78,7 +77,6 @@ function RunRSFDFN3D(TotalStep, RecordStep,
     FaultLengthDip_Bulk= load(LoadingInputFileName, "FaultLengthDip_Bulk")
     FaultCount= load(LoadingInputFileName, "FaultCount")
     LoadingFaultCount= load(LoadingInputFileName, "LoadingFaultCount")
-    FaultMass= load(LoadingInputFileName, "FaultMass")
     MinimumNormalStress = load(LoadingInputFileName, "MinimumNormalStress")
     NormalStiffnessZero = load(LoadingInputFileName, "NormalStiffnessZero")
     ########^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^########
@@ -109,7 +107,7 @@ function RunRSFDFN3D(TotalStep, RecordStep,
     else 
         VertScale = VerticalLengthScaleforM
     end    
-    FaultMass .= VertScale * RockDensity / 2
+    FaultMass = ones(FaultCount) .* VertScale * RockDensity / 2
     Alpha_Evo = 0.0
 
     LoadingFaultCount, FaultMass, Fault_a, Fault_b, Fault_Dc, Fault_Theta_i, Fault_V_i, 

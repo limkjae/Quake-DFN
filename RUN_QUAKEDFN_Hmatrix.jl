@@ -27,9 +27,9 @@ LoadingInputFileName="Input_Discretized.jld2"
 ThreadCount = 16 # if zero, it uses current thread count opened in REPL
 
 ########################## Simulation Time Set ################################
-TotalStep = 100 # Total simulation step
-SaveStep = 100 # Automatically saved every this step
-RecordStep = 1 # Simulation sampling rate !! should be a factor of SaveStep !!
+TotalStep = 1000 # Total simulation step
+SaveStep = 1000 # Automatically saved every this step
+RecordStep = 10 # Simulation sampling rate !! should be a factor of SaveStep !!
 
 
 ########################## Time Stepping Setup ################################
@@ -83,7 +83,6 @@ function RunRSFDFN3D(TotalStep, RecordStep, RuptureTimeStepMultiple,
     FaultLengthDip_Bulk= load(LoadingInputFileName, "FaultLengthDip_Bulk")
     FaultCount= load(LoadingInputFileName, "FaultCount")
     LoadingFaultCount= load(LoadingInputFileName, "LoadingFaultCount")
-    FaultMass= load(LoadingInputFileName, "FaultMass")
     MinimumNormalStress = load(LoadingInputFileName, "MinimumNormalStress")
     Ranks_Shear= load(LoadingInputFileName, "Ranks_Shear") # figure(11); plot(Ranks)
     Ranks_Normal= load(LoadingInputFileName, "Ranks_Normal") # figure(11); plot(Ranks)
@@ -125,7 +124,7 @@ function RunRSFDFN3D(TotalStep, RecordStep, RuptureTimeStepMultiple,
     else 
         VertScale = VerticalLengthScaleforM
     end    
-    FaultMass .= VertScale * RockDensity / 2
+    FaultMass = ones(FaultCount) .* VertScale * RockDensity / 2
     # FaultMass = minimum([FaultLengthStrike FaultLengthDip],dims = 2) * RockDensity ./ 3
     # FaultMass .= 1e6  
 

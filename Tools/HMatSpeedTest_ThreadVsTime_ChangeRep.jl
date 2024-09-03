@@ -30,8 +30,13 @@ ElementRange_SR = load(LoadingInputFileName, "ElementRange_SR")
 ShearStiffness_H = load(LoadingInputFileName, "ShearStiffness_H")
 NormalStiffness_H = load(LoadingInputFileName, "NormalStiffness_H")
 NormalStiffnessZero = load(LoadingInputFileName, "NormalStiffnessZero")
-StiffnessMatrixShear= load(LoadingInputFileName, "StiffnessMatrixShear")
-StiffnessMatrixNormal= load(LoadingInputFileName, "StiffnessMatrixNormal")
+
+SaveOriginalMatrix = load(LoadingInputFileName, "SaveOriginalMatrix")
+
+if SaveOriginalMatrix == 1
+    StiffnessMatrixShear= load(LoadingInputFileName, "StiffnessMatrixShear")
+    StiffnessMatrixNormal= load(LoadingInputFileName, "StiffnessMatrixNormal")
+end
 
 
 
@@ -57,14 +62,16 @@ function hmat_speed_test()
 
     GC.gc(false)
     TestVector = rand(FaultCount)
-    ElapseTime_OriginalMatShear = @elapsed for i=1:Repeats
-        SoluationOrignialShear = StiffnessMatrixShear * TestVector
+    if SaveOriginalMatrix == 1
+        ElapseTime_OriginalMatShear = @elapsed for i=1:Repeats
+            SoluationOrignialShear = StiffnessMatrixShear * TestVector
+        end
+        ElapseTime_OrigianlMatNormal = @elapsed for i=1:Repeats
+            SoluationOrignialNormal = StiffnessMatrixNormal * TestVector
+        end
+        ElapseTime_OriginalMatShear  = ElapseTime_OriginalMatShear/Repeats
+        ElapseTime_OrigianlMatNormal  = ElapseTime_OrigianlMatNormal/Repeats
     end
-    ElapseTime_OrigianlMatNormal = @elapsed for i=1:Repeats
-        SoluationOrignialNormal = StiffnessMatrixNormal * TestVector
-    end
-    ElapseTime_OriginalMatShear  = ElapseTime_OriginalMatShear/Repeats
-    ElapseTime_OrigianlMatNormal  = ElapseTime_OrigianlMatNormal/Repeats
     GC.gc(true)
 
     for Tindex in eachindex(ThreadCountAll)
@@ -114,15 +121,19 @@ function hmat_speed_test()
         # # plot(SoluationHMatShear - SoluationOrignialShear)        
     end
 
-    TotalOriginal = ElapseTime_OriginalMatShear + ElapseTime_OrigianlMatNormal
     TotalElapsedTime = ElapseTime_HMatShear + ElapseTime_HMatNormal
     TotalAverage = sum(TotalElapsedTime, dims=2) / Repeats
-    MaxTimeInPlot = maximum([TotalAverage;TotalOriginal])
     figure(1)
     clf()
     plot(ThreadCountAll, TotalElapsedTime,"ko",markerfacecolor="none" )
     plot(ThreadCountAll,TotalAverage,"k")
-    plot([0,maximum(ThreadCountAll)],[TotalOriginal,TotalOriginal],"b")
+    if SaveOriginalMatrix == 1
+        TotalOriginal = ElapseTime_OriginalMatShear + ElapseTime_OrigianlMatNormal
+        plot([0,maximum(ThreadCountAll)],[TotalOriginal,TotalOriginal],"b")
+        MaxTimeInPlot = maximum([TotalAverage;TotalOriginal])
+    else 
+        MaxTimeInPlot = maximum(TotalAverage)
+    end
     plot([ThreadREPL,ThreadREPL],[0,MaxTimeInPlot*1.1],"r")
     ylim([0, MaxTimeInPlot*1.2])
 

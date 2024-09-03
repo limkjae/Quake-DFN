@@ -29,7 +29,7 @@ function BuildBulk()
     MinFriction = 0.2
     
     Faultcount=3
-    MaxDiscritLength=100.0
+    MaxDiscritLength=200.0
     
     MaxSigSurface = 2e6
     MaxSigGrad = 6000.0 #Pa/m

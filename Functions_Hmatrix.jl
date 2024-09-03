@@ -276,8 +276,8 @@ end
 function SolveEachThread(BlockI, BlockF, ElementRange_SR, ShearStiffness_H, NetDisp, FaultCount)
     Elastic_Load_D = zeros(FaultCount)
     for Blockidx = BlockI:BlockF
-        Elastic_Load_D[ElementRange_SR[Blockidx,1]:ElementRange_SR[Blockidx,2]] +=
-         ShearStiffness_H[Blockidx] * (NetDisp[ElementRange_SR[Blockidx,3]:ElementRange_SR[Blockidx,4]])
+        Elastic_Load_D[ElementRange_SR[Blockidx,3]:ElementRange_SR[Blockidx,4]] +=
+         ShearStiffness_H[Blockidx] * (NetDisp[ElementRange_SR[Blockidx,1]:ElementRange_SR[Blockidx,2]])
     end
     return Elastic_Load_D
 end
@@ -296,8 +296,8 @@ function  ParallelOptimization(ShearStiffness_H, ElementRange_SR,
         for Blockidx = 1 : BlockCount       
             for RepeatTime = 1:RepeatCount        
                 ElapsedTime= @elapsed begin
-                    Elastic_Load_DispPart[ElementRange_SR[Blockidx,1]:ElementRange_SR[Blockidx,2]] += 
-                    ShearStiffness_H[Blockidx] * NetDisp[ElementRange_SR[Blockidx,3]:ElementRange_SR[Blockidx,4]]
+                    Elastic_Load_DispPart[ElementRange_SR[Blockidx,3]:ElementRange_SR[Blockidx,4]] += 
+                    ShearStiffness_H[Blockidx] * NetDisp[ElementRange_SR[Blockidx,1]:ElementRange_SR[Blockidx,2]]
                 end
                 TimeEachRepeat[RepeatTime] = ElapsedTime
             end
@@ -586,8 +586,8 @@ function HmatSolver_Pararllel(NetDisp, Stiffness_H, ElementRange_SR,
         @inbounds Threads.@threads for ThreadIdx in 1:ThreadCount 
 
             for Blockidx = Par_ElementDivision[ThreadIdx]+1:Par_ElementDivision[ThreadIdx+1]
-                @inbounds @views Elastic_Load_EachThread[ElementRange_SR[Blockidx,1]:ElementRange_SR[Blockidx,2], ThreadIdx] +=
-                    Stiffness_H[Blockidx] * NetDisp[ElementRange_SR[Blockidx,3]:ElementRange_SR[Blockidx,4]]
+                @inbounds @views Elastic_Load_EachThread[ElementRange_SR[Blockidx,3]:ElementRange_SR[Blockidx,4], ThreadIdx] +=
+                    Stiffness_H[Blockidx] * NetDisp[ElementRange_SR[Blockidx,1]:ElementRange_SR[Blockidx,2]]
             end   
       
                 

@@ -25,7 +25,7 @@ pygui(true)
 
 
 ######################## Recompression Tolerance ##########################
-Tolerance = 1e5 # pascal for 1m slip (More approximaion for higher Tolerance)
+Tolerance = 1e3 # pascal for 1m slip (More approximaion for higher Tolerance)
 PlotHMat = 0 # HMatrix structure plot
 ###########################################################################
 

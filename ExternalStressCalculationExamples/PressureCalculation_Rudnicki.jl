@@ -37,7 +37,6 @@ FaultLengthStrike_Bulk= load(LoadingInputFileName, "FaultLengthStrike_Bulk")
 FaultLengthDip_Bulk= load(LoadingInputFileName, "FaultLengthDip_Bulk")
 FaultCount= load(LoadingInputFileName, "FaultCount")
 LoadingFaultCount= load(LoadingInputFileName, "LoadingFaultCount")
-FaultMass= load(LoadingInputFileName, "FaultMass")
 Switch_StrikeSlip_or_ReverseNormal = load(LoadingInputFileName, "Switch_StrikeSlip_or_ReverseNormal")
 
 ########^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^########

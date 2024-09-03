@@ -29,6 +29,8 @@ ElementRange_SR = load(LoadingInputFileName, "ElementRange_SR")
 ShearStiffness_H = load(LoadingInputFileName, "ShearStiffness_H")
 NormalStiffness_H = load(LoadingInputFileName, "NormalStiffness_H")
 NormalStiffnessZero = load(LoadingInputFileName, "NormalStiffnessZero")
+
+
 StiffnessMatrixShear= load(LoadingInputFileName, "StiffnessMatrixShear")
 StiffnessMatrixNormal= load(LoadingInputFileName, "StiffnessMatrixNormal")
 
@@ -91,7 +93,7 @@ function hmat_speed_test()
         ElapseTime_OrigianlMatNormal = @elapsed for i=1:Repeats
             SoluationOrignialNormal = StiffnessMatrixNormal * TestVector
         end
-            
+            # plot(SoluationHMatShear-SoluationOrignialShear)
     println("\nResults")
     println("Shear Product Hmat: ", ElapseTime_HMatShear, " Original Matrix: ", ElapseTime_OriginalMatShear, " Ratio: ", ElapseTime_HMatShear/ElapseTime_OriginalMatShear)
     println("Normal Product Hmat: ", ElapseTime_HMatNormal, " Original Matrix: ", ElapseTime_OrigianlMatNormal, " Ratio: ", ElapseTime_HMatNormal/ElapseTime_OrigianlMatNormal)
