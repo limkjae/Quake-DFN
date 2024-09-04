@@ -482,7 +482,7 @@ function StiffnessMatrix_ByParts_Calculation_NormalReverse(Input_SegmentSource, 
     StiffnessMatrixNormal = zeros(FaultCountReceiver,FaultCountSource)
     
     for SourceIndex=1:FaultCountSource;
-        println(SourceIndex,"  ",CurrentPart,"/",TotalParts)
+        # println(SourceIndex,"  ",CurrentPart,"/",TotalParts)
             
 
         ####################################
@@ -587,7 +587,7 @@ function StiffnessMatrix_ByParts_Calculation_NormalReverse(Input_SegmentSource, 
             # println(SourceDipAngle,"  ",Z,"  ",DEPTH, " ", StressZZ_SourceFrame, "  ",Stress_Receiver[3,3])
         end
     end                  
-    print("\033c")
+    # print("\033c")
 
 
 return StiffnessMatrixShear, StiffnessMatrixNormal 

@@ -8,6 +8,7 @@ using JLD2
 using LowRankApprox
 using Clustering
 using LinearAlgebra
+using Distributed
 @pyimport matplotlib.patches as patches
 
 pygui(true)
@@ -67,7 +68,7 @@ function BuildInputFromBulkGeometry_H()
             # println("H Matrix Structure File does not exist")
             println("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
             println("!!!                        H Matrix Structure File does not exist                       !!!")
-            println("!!!              To use Hmatrix, Run 'RUN_BUILD_HMatrix_Structure.jl' first             !!!")
+            println("!!!      To use Hmatrix apploximation, Run 'RUN_BUILD_HMatrix_Structure.jl' first       !!!")
             println("!!!                          Otherwise, set  HMatrixCompress = 0                        !!!")
             println("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
             error()
@@ -188,14 +189,14 @@ function BuildInputFromBulkGeometry_H()
             println("Full Matrix Will not be saved")
             println("Preparing for discretization")
             BlockSize = 0.0
+            
+            # @sync Threads.@threads for BlockIndex = 1: BlockCount
             for BlockIndex = 1: BlockCount
                 
                 Input_SegmentS = Input_Segment[ElementRange_SR[BlockIndex,1]:ElementRange_SR[BlockIndex,2],:]
                 Input_SegmentR = Input_Segment[ElementRange_SR[BlockIndex,3]:ElementRange_SR[BlockIndex,4],:]
                 SourceCount = length(Input_SegmentS[:,1])
                 ReceiverCount = length(Input_SegmentR[:,1])
-                BlockSize = BlockSize + SourceCount * ReceiverCount
-                println("BlockIndex: ",BlockIndex, "/",BlockCount," ",BlockSize/TotalElments)
                 StiffnessMatrixShearThisBlock=zeros(ReceiverCount,SourceCount)
                 StiffnessMatrixNormalThisBlock=zeros(ReceiverCount,SourceCount)
 
@@ -216,6 +217,8 @@ function BuildInputFromBulkGeometry_H()
                         Fin_R = j*PartedElementCountR
                         if i == DivisionCountS; Fin_S = SourceCount; end
                         if j == DivisionCountR; Fin_R = ReceiverCount; end
+                        BlockSize = BlockSize + (Fin_S - Init_S) * (Fin_R - Init_R)
+                        println("Part: ", CurrentPart,"/",DivisionCountS*DivisionCountR, " BlockIndex: ",BlockIndex, "/",BlockCount," Progress:",BlockSize/TotalElments)
 
                         if Switch_StrikeSlip_or_ReverseNormal == 1
                         StiffnessMatrixShearThisBlock[Init_R:Fin_R,Init_S:Fin_S], StiffnessMatrixNormalThisBlock[Init_R:Fin_R,Init_S:Fin_S] = 
