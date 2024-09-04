@@ -15,7 +15,7 @@ ResultV[ResultV.<=0] .= 1e-100
 
 
 
-figure(3)
+figure(2)
 clf()
 # PyPlot.plot(ResultTime/60/60/24, log10.(ResultV[:,:]), linewidth=1)
 xlabel("Day")

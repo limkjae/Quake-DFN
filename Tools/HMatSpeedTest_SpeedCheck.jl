@@ -29,11 +29,12 @@ ElementRange_SR = load(LoadingInputFileName, "ElementRange_SR")
 ShearStiffness_H = load(LoadingInputFileName, "ShearStiffness_H")
 NormalStiffness_H = load(LoadingInputFileName, "NormalStiffness_H")
 NormalStiffnessZero = load(LoadingInputFileName, "NormalStiffnessZero")
+SaveOriginalMatrix =  load(LoadingInputFileName, "SaveOriginalMatrix")
 
-
-StiffnessMatrixShear= load(LoadingInputFileName, "StiffnessMatrixShear")
-StiffnessMatrixNormal= load(LoadingInputFileName, "StiffnessMatrixNormal")
-
+if SaveOriginalMatrix == 1 
+    StiffnessMatrixShear= load(LoadingInputFileName, "StiffnessMatrixShear")
+    StiffnessMatrixNormal= load(LoadingInputFileName, "StiffnessMatrixNormal")
+end
 
 
 
@@ -78,11 +79,6 @@ function hmat_speed_test()
             # println("end")
             end
 
-
-        ElapseTime_OriginalMatShear = @elapsed for i=1:Repeats
-            SoluationOrignialShear = StiffnessMatrixShear * TestVector
-        end
-
         ElapseTime_HMatNormal = @elapsed for i=1:Repeats
             Elastic_Load_EachThread = zeros(FaultCount, ThreadCount)
             SoluationHMatNormal = HmatSolver_Pararllel(TestVector, NormalStiffness_H, ElementRange_SR, 
@@ -90,15 +86,29 @@ function hmat_speed_test()
         # println("end")
         end
 
-        ElapseTime_OrigianlMatNormal = @elapsed for i=1:Repeats
-            SoluationOrignialNormal = StiffnessMatrixNormal * TestVector
-        end
+
+        if SaveOriginalMatrix == 1 
+            ElapseTime_OriginalMatShear = @elapsed for i=1:Repeats
+                SoluationOrignialShear = StiffnessMatrixShear * TestVector
+            end
+
+            ElapseTime_OrigianlMatNormal = @elapsed for i=1:Repeats
+                SoluationOrignialNormal = StiffnessMatrixNormal * TestVector
+            end
+        end 
             # plot(SoluationHMatShear-SoluationOrignialShear)
-    println("\nResults")
-    println("Shear Product Hmat: ", ElapseTime_HMatShear, " Original Matrix: ", ElapseTime_OriginalMatShear, " Ratio: ", ElapseTime_HMatShear/ElapseTime_OriginalMatShear)
-    println("Normal Product Hmat: ", ElapseTime_HMatNormal, " Original Matrix: ", ElapseTime_OrigianlMatNormal, " Ratio: ", ElapseTime_HMatNormal/ElapseTime_OrigianlMatNormal)
-    println("Hmat Total: ", ElapseTime_HMatShear+ElapseTime_HMatNormal, " Original Matrix Total: ", ElapseTime_OriginalMatShear+ElapseTime_OrigianlMatNormal, 
-                " Ratio: ", (ElapseTime_HMatShear+ElapseTime_HMatNormal)/(ElapseTime_OriginalMatShear+ElapseTime_OrigianlMatNormal))
+            
+        if SaveOriginalMatrix == 1 
+            println("\nResults")
+            println("Shear Product Hmat: ", ElapseTime_HMatShear, " Original Matrix: ", ElapseTime_OriginalMatShear, " Ratio: ", ElapseTime_HMatShear/ElapseTime_OriginalMatShear)
+            println("Normal Product Hmat: ", ElapseTime_HMatNormal, " Original Matrix: ", ElapseTime_OrigianlMatNormal, " Ratio: ", ElapseTime_HMatNormal/ElapseTime_OrigianlMatNormal)
+            println("Hmat Total: ", ElapseTime_HMatShear+ElapseTime_HMatNormal, " Original Matrix Total: ", ElapseTime_OriginalMatShear+ElapseTime_OrigianlMatNormal, 
+                        " Ratio: ", (ElapseTime_HMatShear+ElapseTime_HMatNormal)/(ElapseTime_OriginalMatShear+ElapseTime_OrigianlMatNormal))
+        else 
+            println("\nResults")
+            println("Shear Product Hmat: ", ElapseTime_HMatShear)
+            println("Normal Product Hmat: ", ElapseTime_HMatNormal)
+        end
     # plot(SoluationHMatShear - SoluationOrignialShear)
     
     GC.gc(true)
