@@ -38,7 +38,7 @@ clf()
 MaxVaule, MinValue = FaultPlot_3D_Color_General(Input_Bulk[:,1:3],
     Input_Bulk[:,4], Input_Bulk[:,5], Input_Bulk[:,6], Input_Bulk[:,7], Input_Bulk[:,8], PlotInput, 
     PlotRotation, MinMax_Axis, ColorMinMax, Transparent, Edge, LoadingFaultCount)
-    ax = gca(projection="3d")
+    ax = subplot(projection="3d")
     xlabel("x")
     ylabel("y")
 plotforcbar=  scatter([1,1],[1,1],0.1, [MinValue,MaxVaule], cmap="jet")

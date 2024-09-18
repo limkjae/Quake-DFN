@@ -102,7 +102,7 @@ function FaultPlot_3D_Color_General(FaultCenter,FaultLengthStrike, FaultLengthDi
         p3c = PyObject(art3d.Poly3DCollection(verts2, linewidths=1))
         # ReMidVel[PlotStep,FaultIdx]/MaxVel))
 
-        ax = gca(projection="3d")
+        ax = subplot(projection="3d")
         pycall(ax.add_collection3d, PyAny, p3c)
         xlim(xmin,xmax )
         ylim(ymin,ymax )

@@ -36,7 +36,7 @@ function BuildInputFromBulkGeometry_H()
     ##########################################################################
 
     #####---------   Plots?  --------#####
-    Plot_HMatStructure = 0 # HMatrix structure plot
+    Plot_HMatStructure = 1 # HMatrix structure plot
     Plot3D_HMatrixBlock = 0 # Blocks in 3D plot
     Plot3D_DiscretizedBlock = 0 # 3D discritized block
     

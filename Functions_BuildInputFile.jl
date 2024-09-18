@@ -63,7 +63,7 @@ function FaultPlot_3D(FaultCenter,FaultLengthStrike, FaultLengthDip, FaultStrike
         verts2 = ([tuple(p1...); tuple(p2...); tuple(p3...); tuple(p4...)],)
 
         p3c = PyObject(art3d.Poly3DCollection(verts2, linewidths=1, alpha=0.5))
-        ax = gca(projection="3d")
+        ax = subplot(projection="3d")
         pycall(ax.add_collection3d, PyAny, p3c)
         xlim(xmin,xmax )
         ylim(ymin,ymax )
