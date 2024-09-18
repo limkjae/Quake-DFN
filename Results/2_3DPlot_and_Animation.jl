@@ -81,7 +81,7 @@ MaxVaule, MinValue = FaultPlot_3D_Color_General(FaultCenter,FaultLengthStrike, F
     FaultStrikeAngle, FaultDipAngle, FaultLLRR, PlotInput, 
     PlotRotation, MinMax_Axis, ColorMinMax, Transparent, Edge, LoadingFaultCount)
 
-    ax = gca(projection="3d")
+    ax = subplot(projection="3d")
     PlotTime=ResultTime[PlotStep]/60/60/24
     if ShowDay ==1 
     # ax.text(-5000, 10, 1300, "Day: ",size=10)

@@ -31,7 +31,7 @@ function BuildHMatStructure()
     ########################## Hmatrix compress? #############################
     #####----- Hmatrix compression detail ----#####
     TotalHierarchyLevel = 8
-    MinimumElementsToCut = 100
+    MinimumElementsToCut = 50
     DistDiamRatioCrit = 1.0     
     ArrangePoint = [10000,000,0] ### Arrange point
     # ArrangePoint = [0,0,-1000] ### Arrange point
@@ -145,11 +145,11 @@ function BuildHMatStructure()
         # ax[:set_aspect]("equal")
         for i=1:length(ElementRange_SR[:,1])
             if Admissible[i] > 0   
-                c = PyObject(patches.Rectangle((ElementRange_SR[i,3]-1, -ElementRange_SR[i,1]+1), ElementRange_SR[i,4] - ElementRange_SR[i,3]+1, 
-                            -ElementRange_SR[i,2] + ElementRange_SR[i,1]-1, linewidth=1, edgecolor="k", facecolor=[0.4  0.4  1]))    
+                c = PyObject(patches.Rectangle((ElementRange_SR[i,1]-1, -ElementRange_SR[i,3]+1), ElementRange_SR[i,2] - ElementRange_SR[i,1]+1, 
+                            -ElementRange_SR[i,4] + ElementRange_SR[i,3]-1, linewidth=1, edgecolor="k", facecolor=[0.4  0.4  1]))    
             else           
-                c = PyObject(patches.Rectangle((ElementRange_SR[i,3]-1, -ElementRange_SR[i,1]+1), ElementRange_SR[i,4] - ElementRange_SR[i,3]+1, 
-                            -ElementRange_SR[i,2] + ElementRange_SR[i,1]-1, linewidth=1, edgecolor="k", facecolor=[1 0.4 0.4]))
+                  c = PyObject(patches.Rectangle((ElementRange_SR[i,1]-1, -ElementRange_SR[i,3]+1), ElementRange_SR[i,2] - ElementRange_SR[i,1]+1, 
+                            -ElementRange_SR[i,4] + ElementRange_SR[i,3]-1, linewidth=1, edgecolor="k",  facecolor=[1 0.4 0.4]))
             end
             # ax.text( (ElementRange_SR[i,3] + ElementRange_SR[i,4])/2, -(ElementRange_SR[i,1] + ElementRange_SR[i,2])/2, i ,size=8, horizontalalignment="center", verticalalignment="center", color="k") 
             ax.add_patch(c) 

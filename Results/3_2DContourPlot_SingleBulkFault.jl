@@ -8,7 +8,7 @@ pygui(true)
 include("Functions_Plot.jl")
 
 PlotBulkIndex = 2
-TimeIndex = 180
+TimeIndex = 100
 
 XPlotIndex = 2
 YPlotIndex = 3

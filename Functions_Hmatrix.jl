@@ -151,7 +151,7 @@ function BuildHierarchy(Block_Range_Level, Block_Ctr_Diam, DistDiamRatioCrit, To
 
     if LoadingFaultExist ==1 
         Admissible = [Admissible 0]
-        Added = [1     Block_Range_Level[1,1]-1      Block_Range_Level[1,1]      Block_Range_Level[1,2] ]
+        Added = [Block_Range_Level[1,1]     Block_Range_Level[1,2]     1     Block_Range_Level[1,1]-1 ]
         ElementRange_SR = [ElementRange_SR; Added] 
     end
 

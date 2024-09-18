@@ -6,11 +6,9 @@ using JLD2
 using LinearAlgebra
 using Printf
 using SpecialFunctions
-using HMatrices
 using StaticArrays
 using LowRankApprox
 using Distributed
-using LoopVectorization
 using Statistics
 pygui(true)
 
@@ -109,7 +107,7 @@ function hmat_speed_test()
             println("Shear Product Hmat: ", ElapseTime_HMatShear)
             println("Normal Product Hmat: ", ElapseTime_HMatNormal)
         end
-    # plot(SoluationHMatShear - SoluationOrignialShear)
+    plot(SoluationHMatShear - SoluationOrignialShear)
     
     GC.gc(true)
 end
