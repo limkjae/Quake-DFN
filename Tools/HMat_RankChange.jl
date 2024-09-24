@@ -6,11 +6,9 @@ using JLD2
 using LinearAlgebra
 using Printf
 using SpecialFunctions
-using HMatrices
 using StaticArrays
 using LowRankApprox
 using Distributed
-using LoopVectorization
 using Statistics
 @pyimport matplotlib.patches as patches
 pygui(true)
@@ -26,7 +24,7 @@ pygui(true)
 
 ######################## Recompression Tolerance ##########################
 Tolerance = 1e3 # pascal for 1m slip (More approximaion for higher Tolerance)
-PlotHMat = 0 # HMatrix structure plot
+PlotHMat = 1 # HMatrix structure plot
 ###########################################################################
 
 include("../Functions_Solvers.jl")
@@ -71,11 +69,11 @@ function rank_change()
         # ax[:set_aspect]("equal")
         for i=1:length(ElementRange_SR[:,1])
             if Admissible[i] > 0   
-                c = PyObject(patches.Rectangle((ElementRange_SR[i,3]-1, -ElementRange_SR[i,1]+1), ElementRange_SR[i,4] - ElementRange_SR[i,3]+1, 
-                            -ElementRange_SR[i,2] + ElementRange_SR[i,1]-1, linewidth=1, edgecolor="k", facecolor=[0.4  0.4  1]))    
+                c = PyObject(patches.Rectangle((ElementRange_SR[i,1]-1, -ElementRange_SR[i,3]+1), ElementRange_SR[i,2] - ElementRange_SR[i,1]+1, 
+                            -ElementRange_SR[i,4] + ElementRange_SR[i,3]-1, linewidth=1, edgecolor="k", facecolor=[0.4  0.4  1]))    
             else           
-                c = PyObject(patches.Rectangle((ElementRange_SR[i,3]-1, -ElementRange_SR[i,1]+1), ElementRange_SR[i,4] - ElementRange_SR[i,3]+1, 
-                            -ElementRange_SR[i,2] + ElementRange_SR[i,1]-1, linewidth=1, edgecolor="k", facecolor=[1 0.4 0.4]))
+                  c = PyObject(patches.Rectangle((ElementRange_SR[i,1]-1, -ElementRange_SR[i,3]+1), ElementRange_SR[i,2] - ElementRange_SR[i,1]+1, 
+                            -ElementRange_SR[i,4] + ElementRange_SR[i,3]-1, linewidth=1, edgecolor="k",  facecolor=[1 0.4 0.4]))
             end
             # ax.text( (ElementRange_SR[i,3] + ElementRange_SR[i,4])/2, -(ElementRange_SR[i,1] + ElementRange_SR[i,2])/2, i ,size=8, horizontalalignment="center", verticalalignment="center", color="k") 
             ax.add_patch(c) 
@@ -100,18 +98,19 @@ function rank_change()
             BlockIndex = BlockIndex + 1
             
             if Admissible[BlockIndex] > 0
-                OrigianlMatrixToApproximate = StiffnessMatrixShear[ElementRange_SR[i,1]:ElementRange_SR[i,2],ElementRange_SR[i,3]:ElementRange_SR[i,4]]
+                
+                OrigianlMatrixToApproximate = StiffnessMatrixShear[ElementRange_SR[i,3]:ElementRange_SR[i,4],ElementRange_SR[i,1]:ElementRange_SR[i,2]]
                 ApproxMatrixS = pqrfact(OrigianlMatrixToApproximate, atol = Tolerance)
                 push!(ShearStiffness_H,ApproxMatrixS)
                 Ranks_Shear[BlockIndex] = size(ApproxMatrixS[:Q],2)
                 
-                OrigianlMatrixToApproximate = StiffnessMatrixNormal[ElementRange_SR[i,1]:ElementRange_SR[i,2],ElementRange_SR[i,3]:ElementRange_SR[i,4]]
+                OrigianlMatrixToApproximate = StiffnessMatrixNormal[ElementRange_SR[i,3]:ElementRange_SR[i,4],ElementRange_SR[i,1]:ElementRange_SR[i,2]]
                 ApproxMatrixN = pqrfact(OrigianlMatrixToApproximate, atol = Tolerance)
                 push!(NormalStiffness_H,ApproxMatrixN)
                 Ranks_Normal[BlockIndex] = size(ApproxMatrixN[:Q],2)
             else 
-                push!(ShearStiffness_H,StiffnessMatrixShear[ElementRange_SR[i,1]:ElementRange_SR[i,2],ElementRange_SR[i,3]:ElementRange_SR[i,4]])
-                push!(NormalStiffness_H,StiffnessMatrixNormal[ElementRange_SR[i,1]:ElementRange_SR[i,2],ElementRange_SR[i,3]:ElementRange_SR[i,4]])
+                push!(ShearStiffness_H,StiffnessMatrixShear[ElementRange_SR[i,3]:ElementRange_SR[i,4],ElementRange_SR[i,1]:ElementRange_SR[i,2]])
+                push!(NormalStiffness_H,StiffnessMatrixNormal[ElementRange_SR[i,3]:ElementRange_SR[i,4],ElementRange_SR[i,1]:ElementRange_SR[i,2]])
             end
 
         end
