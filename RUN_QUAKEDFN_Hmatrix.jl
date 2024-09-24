@@ -36,12 +36,12 @@ RecordStep = 10 # Simulation sampling rate !! should be a factor of SaveStep !!
 TimeStepOnlyBasedOnUnstablePatch = 1 # if 1, time step is calculated only based on the unstable patch
 TimeStepPreset = 3 # 1: conservative --> 4: optimistic
 RuptureTimeStepMultiple = 3
-VerticalLengthScaleforM = 0 # if 0, Mass is automatically determined based on the fault length (radiation damping dominated). If not, M = VerticalLengthScaleforM * density
+VerticalLengthScaleforM = 0 # if 0, Mass is automatically determined based on the fault length (radiation damping dominated). If not, M = VerticalLengthScaleforM * density / 2
 
 # Manually adjust time step below. No change when 0.0
 TimeSteppingAdj =   
     [0.0  0.0  0.0  0.0;   # Time step size
-    0.0  0.0  0.0  0.0]   # Velocity
+     0.0  0.0  0.0  0.0]   # Velocity
 
 
 

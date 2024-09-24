@@ -28,7 +28,6 @@ function BuildHMatStructure()
     OutputFileName="Input_HmatrixStructure.jld2"
 
     ##########################################################################
-    ########################## Hmatrix compress? #############################
     #####----- Hmatrix compression detail ----#####
     TotalHierarchyLevel = 8
     MinimumElementsToCut = 100
@@ -39,7 +38,6 @@ function BuildHMatStructure()
     #####---------   HMatrix Plots?  --------#####
     PlotHMat = 1 # HMatrix structure plot
     PlotBlock3D = 0
-    ##########################################################################
     ##########################################################################
     
 
