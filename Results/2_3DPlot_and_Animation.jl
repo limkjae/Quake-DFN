@@ -19,7 +19,7 @@ ResultV[ResultV.<=0] .= 1e-100
 ############################### Figure Configuration ##################################
 
 # figure(10); clf(); PyPlot.plot(log10.(ResultV[:,1:30:end])); xlabel("Record Step")
-PlotStep = 100
+PlotStep = 30
 
 PlotRotation = [30,-30]
 Transparent = 0 # 1 for transparent fault plot. 0 for no-transparency
@@ -28,7 +28,7 @@ MinMax_Axis = 0 # 0 for automatically selected axis minimim and maximum
 # MinMax_Axis=[-2000 2000; -2000 2000; -4000 0]
 LoadingFaultPlot = 0 # 1 to plot constant velocity faults. 
 
-ShowDay = 1 # If 1, day is shown in the location 
+ShowDay = 0 # If 1, day is shown in the location 
 DayLocation = [0,0,1000]
 
 
