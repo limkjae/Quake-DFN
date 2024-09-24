@@ -92,7 +92,7 @@ function RunRSFDFN3D(TotalStep, RecordStep, RuptureTimeStepMultiple,
     NormalStiffnessZero = load(LoadingInputFileName, "NormalStiffnessZero")
     ################################################################################
     
-
+    # NormalStiffnessZero = 1
 
     ################################################################################
     ################################# Plot Geometry ################################
