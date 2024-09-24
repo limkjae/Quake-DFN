@@ -19,7 +19,7 @@ figure(2)
 clf()
 # PyPlot.plot(ResultTime/60/60/24, log10.(ResultV[:,:]), linewidth=1)
 xlabel("Day")
-PyPlot.plot(ResultTime/60/60/24/365, log10.(ResultV[:,1:10:end]), linewidth=1)
+PyPlot.plot(ResultTime/60/60/24, log10.(ResultV[:,1:1:end]), linewidth=1)
 # #  PyPlot.plot(ResultTime[1:end-1]/60/60/24, log10.(ResultV[1:end-1,1:930]), linewidth=1)
 # #  PyPlot.plot(ResultTime[1:end-1]/60/60/24, log10.(ResultV[1:end-1,findall( x -> x == 1, Fault_BulkIndex )]), linewidth=1)
 
