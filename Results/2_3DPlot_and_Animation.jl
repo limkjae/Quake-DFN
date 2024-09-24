@@ -18,7 +18,7 @@ ResultV[ResultV.<=0] .= 1e-100
 #######################################################################################
 ############################### Figure Configuration ##################################
 
-# figure(10); PyPlot.plot(log10.(ResultV[:,1:30:end])); xlabel("Record Step")
+# figure(10); clf(); PyPlot.plot(log10.(ResultV[:,1:30:end])); xlabel("Record Step")
 PlotStep = 100
 
 PlotRotation = [30,-30]
