@@ -19,7 +19,7 @@ ResultV[ResultV.<=0] .= 1e-100
 ############################### Figure Configuration ##################################
 
 # figure(10); clf(); PyPlot.plot(log10.(ResultV[:,1:30:end])); xlabel("Record Step")
-PlotStep = 30
+PlotStep = 50
 
 PlotRotation = [30,-30]
 Transparent = 0 # 1 for transparent fault plot. 0 for no-transparency
@@ -42,9 +42,9 @@ PlotInput=log10.(ResultV[PlotStep,:]); ColorMinMax=[-12,0]
 
 
 ############# Saving Multiple Figures ###############
-Animation_Save = 0 # 1 for save
-StepBegin = 100 # first record step
-StepEnd = 200
+Animation_Save = 1 # 1 for save
+StepBegin = 10 # first record step
+StepEnd = 100
 StepInterval = 10
 ###################^^^^^^^^^^^^^^^###################
 
@@ -110,7 +110,7 @@ if Animation_Save == 1
         FaultStrikeAngle, FaultDipAngle, FaultLLRR, PlotInput, 
         PlotRotation, MinMax_Axis, ColorMinMax, Transparent, Edge, LoadingFaultCount)
         figure(1).canvas.draw()
-        ax = gca(projection="3d")
+        ax = subplot(projection="3d")
         PlotTime=ResultTime[PlotStep]/60/60/24
         if ShowDay ==1 
         # ax.text(-5000, 10, 1300, "Day: ",size=10)
