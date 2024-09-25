@@ -64,7 +64,7 @@ function ParameterAdj(LoadingFaultCount, FaultMass, Fault_a, Fault_b, Fault_Dc,
     ######################################################################################################
     ##########################  Calculation of initial state from stress orientation #####################
     
-    # MaxStressOrientation = 150. # between 0-180 degree
+    # MaxStressOrientation = 85. # between 0-180 degree
     # StressRatioMaxOverMin = 0.5
     # MinFrictionAllowed = 0.1 # smaller than this friction is not allowed
 
@@ -72,7 +72,7 @@ function ParameterAdj(LoadingFaultCount, FaultMass, Fault_a, Fault_b, Fault_Dc,
     # SurfaceStressAtMaxOrientation = 2e6
     # Fault_Theta_i .= 1e10
     # Fault_V_i .= 0.0
-    # Friction_0 = ones(FaultCount) * 0.32
+    # Friction_0 = ones(FaultCount) * 0.30
     # V0=1e-9;
 
     # Fault_Friction_i, Fault_NormalStress, Fault_V_i, Fault_Theta_i = 
@@ -177,7 +177,7 @@ function StressDependentFrictionParameters(MaxStressOrientation, StressRatioMaxO
         if Fault_Friction_i[i] < MinFrictionAllowed
             Fault_Friction_i[i] = MinFrictionAllowed
         end
-        Fault_NormalStress[i] = StressGradAtMaxOrientation * NormalStressParameter[i] * FaultCenter[i,3] + SurfaceStressAtMaxOrientation
+        Fault_NormalStress[i] = (StressGradAtMaxOrientation * FaultCenter[i,3] + SurfaceStressAtMaxOrientation) * NormalStressParameter[i] 
     end
     
     if iszero(Fault_V_i)

@@ -24,7 +24,7 @@ SaveInputInfoFileName="Results/Result_Input.jld2"
 LoadingInputFileName="Input_Discretized.jld2" 
 
 
-ThreadCount = 16 # if zero, it uses current thread count opened in REPL
+ThreadCount = 8 # if zero, it uses current thread count opened in REPL
 
 ########################## Simulation Time Set ################################
 TotalStep = 10000 # Total simulation step
