@@ -295,7 +295,7 @@ function BuildBulk()
     println("Discretized Element Count will be ", TotalSegmentCount)
     
 
-    println("Total ",size(InputFile,1)," Faults Generated (", size(Stable_Faults,1), " Regular faults, ", size(Loading_Faults,1)," Loading Faults)" )
+    println("Total ",size(InputFile,1)," Faults Generated (", size(Stable_Faults,1)+size(Transition_Faults,1)+size(Unstable_Faults,1), " Regular faults, ", size(Loading_Faults,1)," Loading Faults)" )
 
     open(OutputFileName, "w") do io
         write(io,"SwitchSS/RN\tShearMod\tPoissonRatio\tR_Density\tCrit_TooClose\tTooCloseNormal_Multiplier\tMinimum_NS\n")

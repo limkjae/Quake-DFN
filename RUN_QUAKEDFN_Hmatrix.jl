@@ -27,8 +27,8 @@ LoadingInputFileName="Input_Discretized.jld2"
 ThreadCount = 16 # if zero, it uses current thread count opened in REPL
 
 ########################## Simulation Time Set ################################
-TotalStep = 1000 # Total simulation step
-SaveStep = 1000 # Automatically saved every this step
+TotalStep = 10000 # Total simulation step
+SaveStep = 5000 # Automatically saved every this step
 RecordStep = 10 # Simulation sampling rate !! should be a factor of SaveStep !!
 
 
@@ -176,7 +176,7 @@ function RunRSFDFN3D(TotalStep, RecordStep, RuptureTimeStepMultiple,
         global TimeStepping =
         [1e7 RecTimeStep*1000 RuptureDt RuptureDt;
         1e-9 1e-5  1e-3 1e-2]
-        
+
     end
 
     for i=1:length(TimeStepping[:,1])

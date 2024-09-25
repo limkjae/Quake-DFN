@@ -99,7 +99,7 @@ function BulkToSegment(Input_Bulk)
     end
     FaultSegmentCount=FaultSegmentCount[2:end,:]
     TotalSegmentCount=sum(Int64,FaultSegmentCount[:,1].*FaultSegmentCount[:,2])
-    println("TotalSegment Count is ", TotalSegmentCount)
+    println("Total element count is ", TotalSegmentCount)
     
     Input_Segment=zeros(TotalSegmentCount,19)
 
@@ -482,7 +482,7 @@ function StiffnessMatrix_ByParts_Calculation_NormalReverse(Input_SegmentSource, 
     StiffnessMatrixNormal = zeros(FaultCountReceiver,FaultCountSource)
     
     for SourceIndex=1:FaultCountSource;
-        # println(SourceIndex,"  ",CurrentPart,"/",TotalParts)
+        println(SourceIndex,"  ",CurrentPart,"/",TotalParts)
             
 
         ####################################
