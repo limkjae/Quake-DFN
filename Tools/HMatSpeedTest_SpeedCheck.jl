@@ -107,7 +107,7 @@ function hmat_speed_test()
             println("Shear Product Hmat: ", ElapseTime_HMatShear)
             println("Normal Product Hmat: ", ElapseTime_HMatNormal)
         end
-    plot(SoluationHMatShear - SoluationOrignialShear)
+    # plot(SoluationHMatShear - SoluationOrignialShear)
     
     GC.gc(true)
 end
