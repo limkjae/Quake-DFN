@@ -7,7 +7,6 @@ using JLD2
 using LinearAlgebra
 using Printf
 using SpecialFunctions
-using HMatrices
 using StaticArrays
 using LowRankApprox
 pygui(true)
@@ -46,7 +45,8 @@ function RunPlotInput(LoadingInputFileName)
     FaultLengthDip_Bulk= load(LoadingInputFileName, "FaultLengthDip_Bulk")
     FaultCount= load(LoadingInputFileName, "FaultCount")
     LoadingFaultCount= load(LoadingInputFileName, "LoadingFaultCount")
-    FaultMass= load(LoadingInputFileName, "FaultMass")
+    # FaultMass= load(LoadingInputFileName, "FaultMass")
+    FaultMass = ones(FaultCount)
     MinimumNormalStress = load(LoadingInputFileName, "MinimumNormalStress")
     ########^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^########
     ################################################################################

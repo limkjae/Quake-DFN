@@ -19,9 +19,9 @@ ResultV[ResultV.<=0] .= 1e-100
 ############################### Figure Configuration ##################################
 
 # figure(10); clf(); PyPlot.plot(log10.(ResultV[:,1:30:end])); xlabel("Record Step")
-PlotStep = 50
+PlotStep = 700
 
-PlotRotation = [30,-30]
+PlotRotation = [35,-30]
 Transparent = 0 # 1 for transparent fault plot. 0 for no-transparency
 Edge = 0 # 0 for no element boudary. 1 for plotting element boundary
 MinMax_Axis = 0 # 0 for automatically selected axis minimim and maximum 
@@ -42,7 +42,7 @@ PlotInput=log10.(ResultV[PlotStep,:]); ColorMinMax=[-12,0]
 
 
 ############# Saving Multiple Figures ###############
-Animation_Save = 1 # 1 for save
+Animation_Save = 0 # 1 for save
 StepBegin = 10 # first record step
 StepEnd = 100
 StepInterval = 10

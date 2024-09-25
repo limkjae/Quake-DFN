@@ -158,28 +158,25 @@ function RunRSFDFN3D(TotalStep, RecordStep, RuptureTimeStepMultiple,
     RuptureDt = RecTimeStep* RuptureTimeStepMultiple
 
     if TimeStepPreset ==1
-
         global TimeStepping =
         [1e4 1e1 RuptureDt RuptureDt;
         1e-7 1e-5  1e-3 1e-2]
 
     elseif TimeStepPreset ==2
-
         global TimeStepping =
         [1e5 1e1 RuptureDt RuptureDt;
-        1e-7 1e-5  1e-3 1e-2]
+        1e-8 1e-5  1e-3 1e-2]
                 
     elseif TimeStepPreset ==3
-
         global TimeStepping =
         [1e6 RecTimeStep*1000 RuptureDt RuptureDt;
-        1e-8 1e-5  1e-3 1e-2]
+        1e-9 1e-5  1e-3 1e-2]
 
     elseif TimeStepPreset ==4
-
         global TimeStepping =
         [1e7 RecTimeStep*1000 RuptureDt RuptureDt;
         1e-9 1e-5  1e-3 1e-2]
+        
     end
 
     for i=1:length(TimeStepping[:,1])
