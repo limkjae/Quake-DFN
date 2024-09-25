@@ -105,7 +105,7 @@ Input_BulktoAdjust[:,4], Input_BulktoAdjust[:,5], Input_BulktoAdjust[:,6], Input
     # FaultStrikeAngle, FaultDipAngle, FaultLLRR, PlotInput, 
     # PlotRotation, MinMax_Axis, ColorMinMax, Transparent, Edge, LoadingFaultCount)
 
-    ax = gca(projection="3d")
+    ax = subplot(projection="3d")
     xlabel("x")
     ylabel("y")
 plotforcbar=  scatter([1,1],[1,1],0.1, [MinValue,MaxVaule], cmap="jet")
