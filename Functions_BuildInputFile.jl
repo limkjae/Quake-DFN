@@ -387,7 +387,6 @@ function StiffnessMatrix_ByParts_Calculation_StrikeSlip(Input_SegmentSource, Inp
             LameFirstParam=2*ShearModulus*PoissonRatio/(1-2*PoissonRatio);
             ALPHA=(LameFirstParam+ShearModulus)/(LameFirstParam+2*ShearModulus);
             
-
             #######################################################################
             ##### Calculate Receiver Point Relative to the Source and Source frame
             
@@ -448,7 +447,6 @@ function StiffnessMatrix_ByParts_Calculation_StrikeSlip(Input_SegmentSource, Inp
         
         end
         print("\033c")                  
-
 
     return StiffnessMatrixShear, StiffnessMatrixNormal 
 end
@@ -586,9 +584,8 @@ function StiffnessMatrix_ByParts_Calculation_NormalReverse(Input_SegmentSource, 
 
             # println(SourceDipAngle,"  ",Z,"  ",DEPTH, " ", StressZZ_SourceFrame, "  ",Stress_Receiver[3,3])
         end
-    end                  
+    end             
     # print("\033c")
-
 
 return StiffnessMatrixShear, StiffnessMatrixNormal 
 end
