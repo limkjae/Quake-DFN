@@ -2,7 +2,6 @@
 
 function ParameterAdj(LoadingFaultCount, FaultMass, Fault_a, Fault_b, Fault_Dc, 
     Fault_Theta_i, Fault_V_i, Fault_Friction_i, Fault_NormalStress, Fault_V_Const,
-     StiffnessMatrixShear, StiffnessMatrixNormal, 
      FaultStrikeAngle, FaultDipAngle, FaultCenter, Fault_BulkIndex, FaultLLRR, MinimumNormalStress)
 
     FaultMass_Original = copy(FaultMass)
@@ -65,16 +64,15 @@ function ParameterAdj(LoadingFaultCount, FaultMass, Fault_a, Fault_b, Fault_Dc,
     ######################################################################################################
     ##########################  Calculation of initial state from stress orientation #####################
     
-    # MaxStressOrientation = 150. # between 0-180 degree
+    # MaxStressOrientation = 85. # between 0-180 degree
     # StressRatioMaxOverMin = 0.5
     # MinFrictionAllowed = 0.1 # smaller than this friction is not allowed
 
     # StressGradAtMaxOrientation = 6000.0
     # SurfaceStressAtMaxOrientation = 2e6
-
     # Fault_Theta_i .= 1e10
     # Fault_V_i .= 0.0
-    # Friction_0 = ones(FaultCount) * 0.32
+    # Friction_0 = ones(FaultCount) * 0.30
     # V0=1e-9;
 
     # Fault_Friction_i, Fault_NormalStress, Fault_V_i, Fault_Theta_i = 
@@ -102,9 +100,10 @@ function ParameterAdj(LoadingFaultCount, FaultMass, Fault_a, Fault_b, Fault_Dc,
     #     end
     # end
 
-    # Fault_a .= 0.01
+    # Fault_Theta_i .= 1.5027018579405773e9
+    # Fault_Dc .= 2e-4
+    # Fault_a .= 0.05
     # Fault_b .= 0.003
-    # Fault_Dc .= 10e-4
     # Fault_NormalStress .= 10e6
     # Fault_V_i .= 1e-13
     # Fault_Theta_i .= 1e10
@@ -152,7 +151,7 @@ function ParameterAdj(LoadingFaultCount, FaultMass, Fault_a, Fault_b, Fault_Dc,
     end
 
     return LoadingFaultCount, FaultMass, Fault_a, Fault_b, Fault_Dc, Fault_Theta_i, Fault_V_i, 
-    Fault_Friction_i, Fault_NormalStress, Fault_V_Const, StiffnessMatrixShear, StiffnessMatrixNormal, FaultCenter, FaultIndex_Adjusted, MinimumNormalStress
+    Fault_Friction_i, Fault_NormalStress, Fault_V_Const, FaultCenter, FaultIndex_Adjusted, MinimumNormalStress
 
 
 end
@@ -178,7 +177,7 @@ function StressDependentFrictionParameters(MaxStressOrientation, StressRatioMaxO
         if Fault_Friction_i[i] < MinFrictionAllowed
             Fault_Friction_i[i] = MinFrictionAllowed
         end
-        Fault_NormalStress[i] = StressGradAtMaxOrientation * NormalStressParameter[i] * FaultCenter[i,3] + SurfaceStressAtMaxOrientation
+        Fault_NormalStress[i] = (StressGradAtMaxOrientation * FaultCenter[i,3] + SurfaceStressAtMaxOrientation) * NormalStressParameter[i] 
     end
     
     if iszero(Fault_V_i)

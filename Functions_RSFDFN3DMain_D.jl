@@ -1,11 +1,11 @@
 
-function main(StiffnessMatrixShear, StiffnessMatrixNormal, 
+function main(StiffnessMatrixShear, StiffnessMatrixNormal, NormalStiffnessZero,
     ShearModulus, FaultCount, LoadingFaultCount, Mass,
     a, b, Dc, ThetaI, Vini, FrictionI,
     InitialNormalStress, LoadingRate, 
     TotalStep, RecordStep, SwitchV, TimeStepping, SaveResultFileName,RockDensity,
     FaultCenter,FaultLengthStrike, FaultLengthDip, FaultStrikeAngle, FaultDipAngle, FaultLLRR, SaveStep,
-    HMatrixCompress, HMatrix_atol_Shear, HMatrix_atol_Normal, HMatrix_eta, TimeStepOnlyBasedOnUnstablePatch, MinimumNormalStress, Alpha_Evo)
+    TimeStepOnlyBasedOnUnstablePatch, MinimumNormalStress, Alpha_Evo)
     
     ExternalStressExist=0;
 
@@ -70,66 +70,15 @@ function main(StiffnessMatrixShear, StiffnessMatrixNormal,
     end
 
     PlanarFault=0
-    if minimum(StiffnessMatrixNormal) - maximum(StiffnessMatrixNormal) == 0
+    if NormalStiffnessZero == 1
         PlanarFault=1
-        println("The fault is planar. Stiffness Matrix Normal is all zero")
+        println("Stiffness Matrix Normal is all zero")
     end
     
 
 
+
     Far_Load_Disp_Initial=-(StiffnessMatrixShear\InitialShearStress); # initial load point
-
-
-
-    if HMatrixCompress == 1
-        Point3D = SVector{3,Float64}
-        XCenter = YCenter = [Point3D(FaultCenter[i,:]) for i =1: FaultCount]
-
-        comp = PartialACA(;atol=HMatrix_atol_Shear)
-        Xclt = Yclt = ClusterTree(XCenter)
-        # adm = StrongAdmissibilityStd()
-        adm = StrongAdmissibilityStd(;eta=HMatrix_eta)
-        TestX=ones(FaultCount)
-
-        # Build Shear Hmatrix
-        Original = ElasticLoadingShearMatrix * TestX
-        ElasticLoadingShearMatrix = assemble_hmat(ElasticLoadingShearMatrix,Xclt,Yclt;adm,comp)
-        
-        println(ElasticLoadingShearMatrix)
-        
-        Approx = ElasticLoadingShearMatrix * TestX
-        Error = abs(maximum((Original-Approx) ./ Original))
-        println("Max Shear HMatrix approximation error is ", Error)
-        if Error > 1e-8
-            println("Warning!!! Your HMatrix_atol may be too large")
-            println("Consider smaller HMatrix_atol \n")
-        end
-
-        # Build Normal Hmatrix
-        if PlanarFault ==0
-            XCenter = YCenter = [Point3D(FaultCenter[i,:]) for i =1: FaultCount]
-            comp = PartialACA(;atol=HMatrix_atol_Normal)
-            Xclt = Yclt = ClusterTree(XCenter)
-            adm = StrongAdmissibilityStd()
-
-            Original = StiffnessMatrixNormal * TestX
-            StiffnessMatrixNormal = assemble_hmat(StiffnessMatrixNormal,Xclt,Yclt;adm,comp)
-            println(StiffnessMatrixNormal)
-                
-            Approx = StiffnessMatrixNormal * TestX
-            Error = abs(maximum((Original-Approx) ./ Original))
-            println("Max Normal HMatrix approximation error is ", Error)
-                if Error > 1e-6
-                    println("Warning!!! Your HMatrix_atol may be too large")
-                    println("Consider smaller HMatrix_atol \n")
-                end
-            else
-                println("Planar fault: No H-matrix compression for Normal Stress")
-        end
-
-    end
-
-
 
 
     Friction0=FrictionI-a.*log.(Vini./V0)-b.*log.(ThetaI.*V0./Dc); # Initial friction
@@ -235,58 +184,36 @@ function main(StiffnessMatrixShear, StiffnessMatrixNormal,
             Iteration=0;
             SwitchTime=0;
 
+            
+            ##########    Shear and Normal Stress Change    ###########
+            Elastic_Load_Disp=ElasticLoadingShearMatrix * (Far_Load_Disp_Initial-DispOld) 
+            if PlanarFault == 0
+                EffNormalStressMatrixProduct = StiffnessMatrixNormal * DispOld
+            end
+
+
             while Terminate==0
                 Iteration=Iteration+1;
                 
                 Dt_All=ones(FaultCount,1)*Dt;
 
-
                 ###################################################
                 ##########    External Stress Change    ###########
                 if ExternalStressExist ==1
-                
-                    D_EffStress_Normal, D_EffStress_Shear, D_Pressure = InterpolateFromStressChange(TOld+Dt, FaultCount,
+                    D_EffStress_Normal, D_EffStress_Shear, D_Pressure = InterpolateFromStressChange(TOld, FaultCount,
                     ExternalStress_Normal, ExternalStress_Shear,ExternalStress_TimeArray, ExternalStress_Pressure)
-
                 end
-                               
 
-                
-                ##########    Shear and Normal Stress Change    ###########
+                EffNormalStress_i = EffNormalStressMatrixProduct + InitialNormalStress + D_EffStress_Normal
 
-
-                if HMatrixCompress == 1
-                    BLAS.set_num_threads(1)
-                    mul!(Elastic_Load_Disp, ElasticLoadingShearMatrix, Far_Load_Disp_Initial - DispOld, threads=false)
-                    if PlanarFault == 0
-                        mul!(EffNormalStressMatrixProduct, StiffnessMatrixNormal, DispOld; threads=false)
-                        EffNormalStress_i = EffNormalStressMatrixProduct + InitialNormalStress + D_EffStress_Normal
-                    else 
-                        EffNormalStress_i = InitialNormalStress + D_EffStress_Normal
-                    end
-
-                    BLAS.set_num_threads(Sys.CPU_THREADS)
-                else 
-                    Elastic_Load_Disp=ElasticLoadingShearMatrix * (Far_Load_Disp_Initial-DispOld) 
-                    if PlanarFault == 0
-                        EffNormalStressMatrixProduct = StiffnessMatrixNormal * DispOld
-                        EffNormalStress_i = EffNormalStressMatrixProduct + InitialNormalStress + D_EffStress_Normal
-                    else 
-                        EffNormalStress_i = InitialNormalStress + D_EffStress_Normal
-                    end
-
-                end
-                
                 for iii=1:FaultCount
                     if EffNormalStress_i[iii] < MinimumNormalStress
                         EffNormalStress_i[iii] = MinimumNormalStress;
                     end
                 end    
-
-
-                Total_Loading_Disp=Far_Load_Disp_Initial + Elastic_Load_Disp           
                 
-
+                Total_Loading_Disp = Far_Load_Disp_Initial + Elastic_Load_Disp           
+                
                 ############ Solve It for One Step! ############
                 V,Friction,Disp,Theta,EffNormalStress,Dt_All,InstabilityThistime, FLAG_GoodToGo =
                 SolveOneTimeStep(ConvergenceCrit,DispOld,FrictionOld,
@@ -355,7 +282,7 @@ function main(StiffnessMatrixShear, StiffnessMatrixNormal,
                 if rem(i,SaveStep)==0
                     
                     save(SaveResultFileName, 
-                    "History_V", History_V, "History_Disp", History_Disp, "History_Pressure", History_Pressure,
+                    "History_V", History_V, "History_Disp", History_Disp, 
                     "History_Time", History_Time, "History_Theta", History_Theta, "History_NormalStress", History_NormalStress,
                     # "History_External_Shear", History_External_Shear, "History_External_Normal", History_External_Normal,
                     ) 

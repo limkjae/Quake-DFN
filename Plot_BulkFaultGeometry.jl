@@ -19,7 +19,7 @@ Transparent = 1 # 1 for transparent fault plot
 Edge = 1 # 0 for no element boudary 
 MinMax_Axis=0
 LoadingFaultCount=0 # 1 to plot constant velocity faults. 
-
+Input_Bulk = Input_Bulk[1:end,:]
 PlotInput=Input_Bulk[:,8]; ColorMinMax=0 
 # PlotInput=log10.(Input_Bulk[:,13]); ColorMinMax=0
 
@@ -38,7 +38,7 @@ clf()
 MaxVaule, MinValue = FaultPlot_3D_Color_General(Input_Bulk[:,1:3],
     Input_Bulk[:,4], Input_Bulk[:,5], Input_Bulk[:,6], Input_Bulk[:,7], Input_Bulk[:,8], PlotInput, 
     PlotRotation, MinMax_Axis, ColorMinMax, Transparent, Edge, LoadingFaultCount)
-    ax = gca(projection="3d")
+    ax = subplot(projection="3d")
     xlabel("x")
     ylabel("y")
 plotforcbar=  scatter([1,1],[1,1],0.1, [MinValue,MaxVaule], cmap="jet")

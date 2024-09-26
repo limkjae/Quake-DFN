@@ -7,14 +7,15 @@ using JLD2
 using LinearAlgebra
 using Printf
 using SpecialFunctions
-using HMatrices
 using StaticArrays
+using LowRankApprox
 pygui(true)
 
 include("Functions_Solvers.jl")
 include("Functions_RSFDFN3DMain_D.jl")
 include("Results/Functions_Plot.jl")
 include("QuickParameterAdjust.jl")
+include("Functions_Hmatrix.jl")
 
 LoadingInputFileName="Input_Discretized.jld2" #only Needed when BuildStiffnessMatrix=2
 
@@ -23,8 +24,8 @@ function RunPlotInput(LoadingInputFileName)
 
     ################################################################################
     ############################### Load Input Files ###############################
-    StiffnessMatrixShear= load(LoadingInputFileName, "StiffnessMatrixShear")
-    StiffnessMatrixNormal= load(LoadingInputFileName, "StiffnessMatrixNormal")
+    # StiffnessMatrixShear= load(LoadingInputFileName, "StiffnessMatrixShear")
+    # StiffnessMatrixNormal= load(LoadingInputFileName, "StiffnessMatrixNormal")
     FaultCenter= load(LoadingInputFileName, "FaultCenter")
     FaultLengthStrike= load(LoadingInputFileName, "FaultLengthStrike")
     FaultLengthDip= load(LoadingInputFileName, "FaultLengthDip")
@@ -44,7 +45,8 @@ function RunPlotInput(LoadingInputFileName)
     FaultLengthDip_Bulk= load(LoadingInputFileName, "FaultLengthDip_Bulk")
     FaultCount= load(LoadingInputFileName, "FaultCount")
     LoadingFaultCount= load(LoadingInputFileName, "LoadingFaultCount")
-    FaultMass= load(LoadingInputFileName, "FaultMass")
+    # FaultMass= load(LoadingInputFileName, "FaultMass")
+    FaultMass = ones(FaultCount)
     MinimumNormalStress = load(LoadingInputFileName, "MinimumNormalStress")
     ########^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^########
     ################################################################################
@@ -56,16 +58,25 @@ function RunPlotInput(LoadingInputFileName)
     ################################################################################
     ######++++++++++++++++++++++ Apply Adjust Parameters +++++++++++++++++++++######
     LoadingFaultCount, FaultMass, Fault_a, Fault_b, Fault_Dc, Fault_Theta_i, Fault_V_i, Fault_Friction_i,
-    Fault_NormalStress, Fault_V_Const, StiffnessMatrixShear, StiffnessMatrixNormal, FaultCenter, FaultIndex_Adjusted = 
+    Fault_NormalStress, Fault_V_Const, FaultCenter, FaultIndex_Adjusted = 
         ParameterAdj(LoadingFaultCount, FaultMass, Fault_a, Fault_b, Fault_Dc, Fault_Theta_i, Fault_V_i, 
-        Fault_Friction_i, Fault_NormalStress, Fault_V_Const, StiffnessMatrixShear, StiffnessMatrixNormal, 
+        Fault_Friction_i, Fault_NormalStress, Fault_V_Const, 
         FaultStrikeAngle, FaultDipAngle, FaultCenter, Fault_BulkIndex, FaultLLRR, MinimumNormalStress)
         
     ########^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^########
     ################################################################################
 
-    
+    K_Self=[]
+    if haskey(load(LoadingInputFileName), "ShearStiffness_H")
+        ShearStiffness_H = load(LoadingInputFileName, "ShearStiffness_H")
+        ElementRange_SR = load(LoadingInputFileName, "ElementRange_SR")
+        LoadingStiffnessH, K_Self= StiffnessTransitionToLoading(ShearStiffness_H, ElementRange_SR, FaultCount)
+        K_Self = -K_Self
+    else 
 
+        K_Self= diag(load(LoadingInputFileName, "StiffnessMatrixShear"))
+
+    end
 
 
     ################################################################################
@@ -74,7 +85,7 @@ function RunPlotInput(LoadingInputFileName)
         UnderResolved = zeros(FaultCount)
         for i=1:FaultCount
             
-            KoverKC[i] =  -StiffnessMatrixShear[i,i]/((Fault_b[i] - Fault_a[i])*Fault_NormalStress[i]/Fault_Dc[i]) 
+            KoverKC[i] =  -K_Self[i]/((Fault_b[i] - Fault_a[i])*Fault_NormalStress[i]/Fault_Dc[i]) 
             if KoverKC[i] < 0
                 KoverKC[i] = 100
             end
@@ -97,9 +108,9 @@ function RunPlotInput(LoadingInputFileName)
         # PlotInput = log10.(Fault_Theta_i); ColorMinMax = 0 
         # PlotInput = log10.(Fault_V_i); ColorMinMax = 0  
         # PlotInput =Fault_NormalStress; ColorMinMax = 0    
-        # PlotInput =KoverKC ;ColorMinMax=[0,5]
+        PlotInput =KoverKC ;ColorMinMax=[0,5]
         # PlotInput =UnderResolved ;ColorMinMax=[0,1]
-        PlotInput = Fault_a - Fault_b; ColorMinMax = 0  
+        # PlotInput = Fault_a - Fault_b; ColorMinMax = 0  
         # PlotInput =  Fault_BulkIndex; ColorMinMax = 0  
         # PlotInput = Fault_Dc; ColorMinMax = 0  
         # PlotInput = FaultLLRR; ColorMinMax = 0  
@@ -143,15 +154,20 @@ function RunPlotInput(LoadingInputFileName)
 
     ################################################################################
     ############################ Single element locator ############################
-    
-    # figure(1)
-    # # SelectedElements = FaultIndex_Adjusted
-    # SelectedElements = [20]
-    # # clf()
-    # MaxVaule, MinValue = FaultPlot_3D_Color_SelectedElements(FaultCenter,FaultLengthStrike, FaultLengthDip,
-    #     FaultStrikeAngle, FaultDipAngle, FaultLLRR, PlotInput, 
-    #     PlotRotation, MinMax_Axis, ColorMinMax, Transparent, SelectedElements)
-
+    #=
+    figure(1)
+     # SelectedElements = FaultIndex_Adjusted
+    SelectedElements = [843]
+    PlotInput = Fault_a - Fault_b; ColorMinMax = 0  
+        PlotRotation=[45,-30]
+        Edge = 0
+        Transparent = 0
+        MinMax_Axis=0 # automatically detect max and min 
+    clf()
+     MaxVaule, MinValue = FaultPlot_3D_Color_SelectedElements(FaultCenter,FaultLengthStrike, FaultLengthDip,
+         FaultStrikeAngle, FaultDipAngle, FaultLLRR, PlotInput, 
+         PlotRotation, MinMax_Axis, ColorMinMax, Transparent, SelectedElements)
+    =#
     ########^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^########
     ################################################################################
         
@@ -163,16 +179,3 @@ RunPlotInput(LoadingInputFileName)
 
 
 
-
-
-
-    
-# ResultTime=load("Results/Result.jld","History_Time")
-# ResultDisp=load("Results/Result.jld","History_Disp")
-# ResultV=load("Results/Result.jld","History_V")
-
-# figure(3)
-# clf()
-# PyPlot.plot(ResultTime[1:end-1], log10.(ResultV[1:end-1,:]), linewidth=1)
-# figure(4)
-# PyPlot.plot( log10.(ResultV[1:end-1,:]), linewidth=1)

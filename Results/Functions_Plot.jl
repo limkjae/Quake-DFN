@@ -102,7 +102,7 @@ function FaultPlot_3D_Color_General(FaultCenter,FaultLengthStrike, FaultLengthDi
         p3c = PyObject(art3d.Poly3DCollection(verts2, linewidths=1))
         # ReMidVel[PlotStep,FaultIdx]/MaxVel))
 
-        ax = gca(projection="3d")
+        ax = subplot(projection="3d")
         pycall(ax.add_collection3d, PyAny, p3c)
         xlim(xmin,xmax )
         ylim(ymin,ymax )
@@ -250,3 +250,134 @@ end
 
 
 
+
+function get_event_fragments(FileName, FileNameInput)
+
+
+    ResultTime=load(FileName,"History_Time")
+    ResultDisp=load(FileName,"History_Disp")
+    ResultV=load(FileName,"History_V")
+    FaultCenter =load(FileNameInput,"FaultCenter")
+    FaultLengthStrike =load(FileNameInput, "FaultLengthStrike")
+    FaultLengthDip =load(FileNameInput, "FaultLengthDip")
+    ShearModulus=load(FileNameInput, "ShearModulus")
+
+
+
+    # DispRate = zeros(size(ResultDisp,1),size(ResultDisp,2))
+    EventCount_Fragment=1
+    EventTime_Fragment=[0;]
+    EventMoment_Fragment=[0;]
+    EventLocation_Fragment=[0 0 0]
+
+    for FaultIdx in eachindex(ResultDisp[1,:])
+         EventOnOrOff=0
+         for TimeIdx = 2:length(ResultDisp[:,1])
+ 
+              DispRate= (ResultDisp[TimeIdx,FaultIdx] - ResultDisp[TimeIdx-1,FaultIdx] ) / (ResultTime[TimeIdx] - ResultTime[TimeIdx-1])
+
+              if DispRate > DispRateCrits
+                   DispIncrement = ResultDisp[TimeIdx,FaultIdx] - ResultDisp[TimeIdx-1,FaultIdx]
+                   MomentIncrement = DispIncrement * FaultLengthStrike[FaultIdx] * FaultLengthDip[FaultIdx]  * ShearModulus     
+                   if EventOnOrOff == 0 # If this is a new event
+                        EventOnOrOff=1
+                        EventCount_Fragment=EventCount_Fragment+1
+                        EventTime_Fragment=[EventTime_Fragment; ResultTime[TimeIdx]]
+                        EventLocation_Fragment=[EventLocation_Fragment; FaultCenter[FaultIdx,:]']
+                        EventMoment_Fragment=[EventMoment_Fragment; MomentIncrement]
+                   else  # If this is not a new event
+                        EventMoment_Fragment[EventCount_Fragment] = EventMoment_Fragment[EventCount_Fragment] + MomentIncrement 
+                   end
+              else
+                   EventOnOrOff = 0 
+              end
+         end
+    end
+
+
+    EventCount_Fragment=EventCount_Fragment-1
+    EventTime_Fragment=EventTime_Fragment[2:end]
+    EventLocation_Fragment=EventLocation_Fragment[2:end,:]
+    EventMoment_Fragment=EventMoment_Fragment[2:end]
+
+
+    ######### Rearrange the fragments by time order ##########
+    SortOrder=sortperm(EventTime_Fragment)
+    EventTime_Fragment=[EventTime_Fragment[SortOrder];]
+    EventLocation_Fragment=EventLocation_Fragment[SortOrder , :]
+    EventMoment_Fragment=[EventMoment_Fragment[SortOrder];]
+
+
+    return  EventTime_Fragment, EventLocation_Fragment, EventMoment_Fragment, EventCount_Fragment
+end
+
+
+
+
+function merge_fragments(EventTime_Fragment, EventLocation_Fragment, EventMoment_Fragment, EventCount_Fragment, MergeTimeCriteria, MergeDistanceCriteria)
+
+    SegEventBackIdx=1
+    EventCount_Merged=0
+    EventTime_Merged=[0;]
+    EventLocation_Merged=[0 0 0]
+
+    EventNumberMerged_forFragment=zeros(Int, EventCount_Fragment)
+    SumMoment=0.0
+    CurrentBulkNumber=0
+    for EventFragmentIdx=1:EventCount_Fragment
+
+         Terminate = 0 
+         SegEventBackIdx = 1
+         while Terminate == 0 
+              CheckFragmentIdx = EventFragmentIdx - SegEventBackIdx # check fragment until given time 
+              if EventFragmentIdx == 1 # initial setting
+                   EventCount_Merged = 1
+                   EventTime_Merged = EventTime_Fragment[EventFragmentIdx]
+                   EventLocation_Merged = EventLocation_Fragment[EventFragmentIdx, :]'
+                   EventNumberMerged_forFragment[EventFragmentIdx] = EventCount_Merged
+                   Terminate = 1 
+              elseif CheckFragmentIdx < 1
+                        EventCount_Merged = EventCount_Merged + 1
+                        EventTime_Merged = [EventTime_Merged; EventTime_Fragment[EventFragmentIdx]]
+                        EventLocation_Merged = [EventLocation_Merged ; EventLocation_Fragment[EventFragmentIdx, :]']
+                        EventNumberMerged_forFragment[EventFragmentIdx] = EventCount_Merged
+                        Terminate = 1 
+              elseif  EventTime_Fragment[EventFragmentIdx] -  EventTime_Fragment[CheckFragmentIdx] <  MergeTimeCriteria
+                   # if within the time range
+                   if norm(EventLocation_Fragment[EventFragmentIdx,:] - EventLocation_Fragment[CheckFragmentIdx,:]) < MergeDistanceCriteria
+                        # if within the distance range -> This is same event to this event (time and distance satisfied)
+                        EventNumberMerged_forFragment[EventFragmentIdx] = EventNumberMerged_forFragment[CheckFragmentIdx] 
+                        Terminate = 1 
+                   else
+                        #this event is within the time range but not in distance range. keep checking
+                        SegEventBackIdx = SegEventBackIdx + 1
+                   end
+              else
+                   # Now time range exceeded without finding merged event
+                   # This is a new event
+                   EventCount_Merged = EventCount_Merged + 1
+                   EventTime_Merged = [EventTime_Merged; EventTime_Fragment[EventFragmentIdx]]
+                   EventLocation_Merged = [EventLocation_Merged ; EventLocation_Fragment[EventFragmentIdx, :]']
+                   EventNumberMerged_forFragment[EventFragmentIdx] = EventCount_Merged
+                   Terminate = 1 
+              end
+         end
+    end
+
+
+    # EventTime_Merged = EventTime_Merged[2:end]
+    # EventLocation_Merged = EventLocation_Merged[2:end,:]
+
+
+    println("new event count = ", EventCount_Merged)
+
+    EventMoment_Bulk = zeros(EventCount_Merged)
+
+    for EventFragmentIdx=1:EventCount_Fragment
+         MergedIdxofThisFragment = EventNumberMerged_forFragment[EventFragmentIdx]
+         EventMoment_Bulk[MergedIdxofThisFragment] = EventMoment_Bulk[MergedIdxofThisFragment] + EventMoment_Fragment[EventFragmentIdx]
+    end
+    EventMomentMagnitude = (log10.(EventMoment_Bulk) .- 9.05) ./ 1.5
+
+    return EventTime_Merged, EventMomentMagnitude,  EventLocation_Merged
+end

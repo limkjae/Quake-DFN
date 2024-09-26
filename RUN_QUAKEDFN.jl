@@ -7,7 +7,6 @@ using JLD2
 using LinearAlgebra
 using Printf
 using SpecialFunctions
-using HMatrices
 using StaticArrays
 pygui(true)
 
@@ -31,21 +30,14 @@ RecordStep = 10 # Simulation sampling rate
 ########################## Time Stepping Setup ################################
 TimeStepOnlyBasedOnUnstablePatch = 1 # if 1, time step is calculated only based on the unstable patch
 TimeStepPreset = 3 # 1: conservative --> 4: optimistic
+RuptureTimeStepMultiple = 3
+VerticalLengthScaleforM = 0 # if 0, Mass is automatically determined based on the fault length (radiation damping dominated). If not, M = VerticalLengthScaleforM * density / 2
 
 # Manually adjust time step below. No change when 0.0
 TimeSteppingAdj =   
         [0.0  0.0  0.0  0.0;   # Time step size
          0.0  0.0  0.0  0.0]   # Velocity
 
-
-############################### H-Matrix ? #####################################
-###############!!!!!! The H-Matrix is still under development !!!!!!############
-HMatrixCompress = 0 # 1 for using HMatrix. No HMatrix compression if not 1
-HMatrix_eta = 1.0
-HMatrix_atol_Shear = 1e-10 # if smaller, better accuracy but slower Calculation (become unstable if too low)
-HMatrix_atol_Normal = 1e-10 # if smaller, better accuracy but slower Calculation (become unstable if too low)
-# The stiffness matrices will be compressed to HMatrix if HMatrixCompress=1. 
-# We recommend to use only if the element size is larger than 5000  
 
 
 ############################# Plots before run? ################################
@@ -56,7 +48,7 @@ GeometryPlot = 0 # 1 will plot a-b
 
 
 function RunRSFDFN3D(TotalStep, RecordStep, 
-    LoadingInputFileName, SaveResultFileName)
+    LoadingInputFileName, SaveResultFileName, RuptureTimeStepMultiple)
 
 
     ############################### Load Input Files ###############################
@@ -85,11 +77,12 @@ function RunRSFDFN3D(TotalStep, RecordStep,
     FaultLengthDip_Bulk= load(LoadingInputFileName, "FaultLengthDip_Bulk")
     FaultCount= load(LoadingInputFileName, "FaultCount")
     LoadingFaultCount= load(LoadingInputFileName, "LoadingFaultCount")
-    FaultMass= load(LoadingInputFileName, "FaultMass")
     MinimumNormalStress = load(LoadingInputFileName, "MinimumNormalStress")
+    NormalStiffnessZero = load(LoadingInputFileName, "NormalStiffnessZero")
     ########^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^########
     ################################################################################
 
+    # NormalStiffnessZero = 1
 
     if GeometryPlot==1
         PlotRotation=[45,-45]
@@ -110,13 +103,18 @@ function RunRSFDFN3D(TotalStep, RecordStep,
 
 
     ######+++++++++++++++++++++++++ Adjust Parameters ++++++++++++++++++++++++######
-    FaultMass .= 1e6 
+    if VerticalLengthScaleforM == 0
+        VertScale = minimum([minimum(FaultLengthStrike), minimum(FaultLengthDip)])
+    else 
+        VertScale = VerticalLengthScaleforM
+    end    
+    FaultMass = ones(FaultCount) .* VertScale * RockDensity / 2
     Alpha_Evo = 0.0
 
     LoadingFaultCount, FaultMass, Fault_a, Fault_b, Fault_Dc, Fault_Theta_i, Fault_V_i, 
-    Fault_Friction_i, Fault_NormalStress, Fault_V_Const, StiffnessMatrixShear, StiffnessMatrixNormal, FaultCenter, FaultIndex_Adjusted, MinimumNormalStress = 
+    Fault_Friction_i, Fault_NormalStress, Fault_V_Const,  FaultCenter, FaultIndex_Adjusted, MinimumNormalStress = 
         ParameterAdj(LoadingFaultCount, FaultMass, Fault_a, Fault_b, Fault_Dc, Fault_Theta_i, Fault_V_i, 
-        Fault_Friction_i, Fault_NormalStress, Fault_V_Const, StiffnessMatrixShear, StiffnessMatrixNormal, 
+        Fault_Friction_i, Fault_NormalStress, Fault_V_Const, 
         FaultStrikeAngle, FaultDipAngle, FaultCenter, Fault_BulkIndex, FaultLLRR, MinimumNormalStress)
     
     # if AdjustStiffnessPlot == 1 # 1 will plot dt vs maxV
@@ -140,31 +138,30 @@ function RunRSFDFN3D(TotalStep, RecordStep,
     for i=1:FaultCount
         Period[i]=sqrt(FaultMass[i]/abs(StiffnessMatrixShear[i,i]))
     end
-    RecTimeStep=minimum(Period)/10
+    RecTimeStep=minimum(Period)/10 
     println("Recommended TimeStep: ",RecTimeStep)
+    RuptureDt = RecTimeStep* RuptureTimeStepMultiple
 
     if TimeStepPreset ==1
         global TimeStepping =
-        [1e4 1e1 RecTimeStep RecTimeStep;
+        [1e4 1e1 RuptureDt RuptureDt;
         1e-7 1e-5  1e-3 1e-2]
 
     elseif TimeStepPreset ==2
-
         global TimeStepping =
-        [1e5 1e1 RecTimeStep*2 RecTimeStep;
-        1e-7 1e-5  1e-3 1e-2]
+        [1e5 1e1 RuptureDt RuptureDt;
+        1e-8 1e-5  1e-3 1e-2]
                 
     elseif TimeStepPreset ==3
-
         global TimeStepping =
-        [1e6 RecTimeStep*1000 RecTimeStep*2 RecTimeStep;
+        [1e6 RecTimeStep*1000 RuptureDt RuptureDt;
         1e-9 1e-5  1e-3 1e-2]
 
     elseif TimeStepPreset ==4
-
         global TimeStepping =
-        [1e6 RecTimeStep*1000 RecTimeStep*5 RecTimeStep*3;
+        [1e7 RecTimeStep*1000 RuptureDt RuptureDt;
         1e-9 1e-5  1e-3 1e-2]
+
     end
 
     for i=1:length(TimeStepping[:,1])
@@ -198,13 +195,13 @@ function RunRSFDFN3D(TotalStep, RecordStep,
     
 
     ######+++++++++++++++++++++++++         Run       ++++++++++++++++++++++++######
-    main(StiffnessMatrixShear, StiffnessMatrixNormal, 
+    main(StiffnessMatrixShear, StiffnessMatrixNormal, NormalStiffnessZero,
     ShearModulus, FaultCount, LoadingFaultCount, FaultMass,
     Fault_a, Fault_b, Fault_Dc, Fault_Theta_i, Fault_V_i, Fault_Friction_i,
     Fault_NormalStress, Fault_V_Const,
     TotalStep, RecordStep, SwitchV, TimeStepping, SaveResultFileName,RockDensity,
     FaultCenter,FaultLengthStrike, FaultLengthDip, FaultStrikeAngle, FaultDipAngle, FaultLLRR, SaveStep,
-    HMatrixCompress, HMatrix_atol_Shear, HMatrix_atol_Normal, HMatrix_eta, TimeStepOnlyBasedOnUnstablePatch, MinimumNormalStress, Alpha_Evo)  
+    TimeStepOnlyBasedOnUnstablePatch, MinimumNormalStress, Alpha_Evo)  
 
 
     ########^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^########
@@ -214,7 +211,7 @@ end
 
 
 RunRSFDFN3D(TotalStep, RecordStep, 
-    LoadingInputFileName, SaveResultFileName)
+    LoadingInputFileName, SaveResultFileName, RuptureTimeStepMultiple)
 
 
 

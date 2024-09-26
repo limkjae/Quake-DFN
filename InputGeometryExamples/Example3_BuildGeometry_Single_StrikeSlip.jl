@@ -5,7 +5,7 @@ using PyPlot
 using PyCall
 pygui(true)
 
-
+ 
 function BuildBulk()
 
     OutputFileName="Input_BulkFaultGeometry.txt"

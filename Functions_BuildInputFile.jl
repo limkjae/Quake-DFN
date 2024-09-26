@@ -56,14 +56,14 @@ function FaultPlot_3D(FaultCenter,FaultLengthStrike, FaultLengthDip, FaultStrike
         p3=RotMatStrike*RotMatDip*[-FaultLengthStrike[FaultIdx]/2;+FaultLengthDip[FaultIdx]/2;0]+ [FaultCenter[FaultIdx,1]; FaultCenter[FaultIdx,2]; -FaultCenter[FaultIdx,3]];
         p4=RotMatStrike*RotMatDip*[FaultLengthStrike[FaultIdx]/2;+FaultLengthDip[FaultIdx]/2;0]+ [FaultCenter[FaultIdx,1]; FaultCenter[FaultIdx,2]; -FaultCenter[FaultIdx,3]];
         
-        fig = figure(1)
+        fig = figure(3)
         #ion() # ioff() for turn off drawnow
         art3d = PyObject(PyPlot.art3D)
 
         verts2 = ([tuple(p1...); tuple(p2...); tuple(p3...); tuple(p4...)],)
 
         p3c = PyObject(art3d.Poly3DCollection(verts2, linewidths=1, alpha=0.5))
-        ax = gca(projection="3d")
+        ax = subplot(projection="3d")
         pycall(ax.add_collection3d, PyAny, p3c)
         xlim(xmin,xmax )
         ylim(ymin,ymax )
@@ -99,7 +99,7 @@ function BulkToSegment(Input_Bulk)
     end
     FaultSegmentCount=FaultSegmentCount[2:end,:]
     TotalSegmentCount=sum(Int64,FaultSegmentCount[:,1].*FaultSegmentCount[:,2])
-    println("TotalSegment Count is ", TotalSegmentCount)
+    println("Total element count is ", TotalSegmentCount)
     
     Input_Segment=zeros(TotalSegmentCount,19)
 
@@ -330,7 +330,7 @@ end
 ####### Build Stiffness Matrix  Stirke Slip Vector By Part  #######
 ###################################################################
 
-function StiffnessMatrix_ByParts_Calculation_Shear(Input_SegmentSource, Input_SegmentReceiver, ShearModulus, PoissonRatio,
+function StiffnessMatrix_ByParts_Calculation_StrikeSlip(Input_SegmentSource, Input_SegmentReceiver, ShearModulus, PoissonRatio,
     CurrentPart, TotalParts)
     FaultCountSource=size(Input_SegmentSource,1)
     FaultCenterSource=Input_SegmentSource[:,1:3]
@@ -349,15 +349,13 @@ function StiffnessMatrix_ByParts_Calculation_Shear(Input_SegmentSource, Input_Se
     FaultLLRRReceiver=Input_SegmentReceiver[:,8]
     # println(FaultCountSource, "  ", FaultCountReceiver)
 
-
     StiffnessMatrixShear = zeros(FaultCountReceiver,FaultCountSource)
     StiffnessMatrixNormal = zeros(FaultCountReceiver,FaultCountSource)
+    # println(CurrentPart,"/",TotalParts)
     
-    print("\033c")
-
         for SourceIndex=1:FaultCountSource;
+            
             println(SourceIndex,"  ",CurrentPart,"/",TotalParts)
-                
 
             ####################################
             ##### get source geometry and slip
@@ -389,7 +387,6 @@ function StiffnessMatrix_ByParts_Calculation_Shear(Input_SegmentSource, Input_Se
             LameFirstParam=2*ShearModulus*PoissonRatio/(1-2*PoissonRatio);
             ALPHA=(LameFirstParam+ShearModulus)/(LameFirstParam+2*ShearModulus);
             
-
             #######################################################################
             ##### Calculate Receiver Point Relative to the Source and Source frame
             
@@ -447,8 +444,9 @@ function StiffnessMatrix_ByParts_Calculation_Shear(Input_SegmentSource, Input_Se
 
                 # println(SourceDipAngle,"  ",Z,"  ",DEPTH, " ", StressZZ_SourceFrame, "  ",Stress_Receiver[3,3])
             end
-        end                  
-
+        
+        end
+        print("\033c")                  
 
     return StiffnessMatrixShear, StiffnessMatrixNormal 
 end
@@ -458,7 +456,7 @@ end
 ####### Build Stiffness Matrix  Stirke Slip Vector By Part  #######
 ###################################################################
 
-function StiffnessMatrix_ByParts_Calculation_Normal(Input_SegmentSource, Input_SegmentReceiver, ShearModulus, PoissonRatio,
+function StiffnessMatrix_ByParts_Calculation_NormalReverse(Input_SegmentSource, Input_SegmentReceiver, ShearModulus, PoissonRatio,
     CurrentPart, TotalParts)
     FaultCountSource=size(Input_SegmentSource,1)
     FaultCenterSource=Input_SegmentSource[:,1:3]
@@ -481,8 +479,6 @@ function StiffnessMatrix_ByParts_Calculation_Normal(Input_SegmentSource, Input_S
     StiffnessMatrixShear = zeros(FaultCountReceiver,FaultCountSource)
     StiffnessMatrixNormal = zeros(FaultCountReceiver,FaultCountSource)
     
-    print("\033c")
-
     for SourceIndex=1:FaultCountSource;
         println(SourceIndex,"  ",CurrentPart,"/",TotalParts)
             
@@ -588,8 +584,8 @@ function StiffnessMatrix_ByParts_Calculation_Normal(Input_SegmentSource, Input_S
 
             # println(SourceDipAngle,"  ",Z,"  ",DEPTH, " ", StressZZ_SourceFrame, "  ",Stress_Receiver[3,3])
         end
-    end                  
-
+    end             
+    # print("\033c")
 
 return StiffnessMatrixShear, StiffnessMatrixNormal 
 end
@@ -705,7 +701,7 @@ end
 
 
 
-function SaveResults(ReducedStiffnessMatrixShear, ReducedStiffnessMatrixNormal, ReducedInput_Segment,
+function SaveResults(StiffnessMatrixShearOriginal, StiffnessMatrixNormalOriginal, ReducedInput_Segment, NormalStiffnessZero, 
     OutputFileName, ShearModulus, PoissonRatio, RockDensity, Switch_StrikeSlip_or_ReverseNormal, MinimumNS);
 
 
@@ -731,7 +727,7 @@ function SaveResults(ReducedStiffnessMatrixShear, ReducedStiffnessMatrixNormal, 
     FaultCount=size(ReducedInput_Segment,1)
     LoadingFaultCount=length(Fault_V_Const[Fault_V_Const.>0])
     FaultMass=RockDensity*(FaultLengthStrike_Bulk+FaultLengthDip_Bulk)/2/(1-PoissonRatio)/pi/pi;
-    
+    figure(3)
     clf()
     FaultPlot_3D(ReducedInput_Segment[:,1:3],ReducedInput_Segment[:,4], ReducedInput_Segment[:,5], 
         ReducedInput_Segment[:,6], ReducedInput_Segment[:,7], ReducedInput_Segment[:,8])
@@ -739,21 +735,22 @@ function SaveResults(ReducedStiffnessMatrixShear, ReducedStiffnessMatrixNormal, 
         xlabel("x")
         ylabel("y")
 
-    figure(1).canvas.draw()
+    figure(3).canvas.draw()
 
     
     ############################### Save Input File ################################
     ######++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++######
 
     save(OutputFileName, 
-    "StiffnessMatrixShear", ReducedStiffnessMatrixShear, "StiffnessMatrixNormal", ReducedStiffnessMatrixNormal, "FaultCenter", FaultCenter,
+    "StiffnessMatrixShear", StiffnessMatrixShearOriginal, "StiffnessMatrixNormal", StiffnessMatrixNormalOriginal, "FaultCenter", FaultCenter,
     "ShearModulus", ShearModulus, "RockDensity", RockDensity, "PoissonRatio", PoissonRatio,
     "FaultLengthStrike", FaultLengthStrike, "FaultLengthDip", FaultLengthDip, "FaultStrikeAngle", FaultStrikeAngle, 
     "FaultDipAngle", FaultDipAngle, "FaultLLRR", FaultLLRR, "Fault_a", Fault_a, "Fault_b", Fault_b, "Fault_Dc", Fault_Dc, 
     "Fault_Theta_i", Fault_Theta_i, "Fault_V_i", Fault_V_i, "Fault_Friction_i", Fault_Friction_i, "Fault_NormalStress", Fault_NormalStress, 
     "Fault_V_Const", Fault_V_Const, "Fault_BulkIndex", Fault_BulkIndex, "FaultLengthStrike_Bulk", FaultLengthStrike_Bulk, 
     "FaultLengthDip_Bulk", FaultLengthDip_Bulk, "FaultCount", FaultCount, "LoadingFaultCount", LoadingFaultCount, "FaultMass", FaultMass,
-    "Switch_StrikeSlip_or_ReverseNormal", Switch_StrikeSlip_or_ReverseNormal, "MinimumNormalStress", MinimumNS)
+    "Switch_StrikeSlip_or_ReverseNormal", Switch_StrikeSlip_or_ReverseNormal, "MinimumNormalStress", MinimumNS,
+    "NormalStiffnessZero", NormalStiffnessZero)
     println("Saved File Name: ",OutputFileName)
 
 
@@ -771,7 +768,10 @@ function SaveResults(ReducedStiffnessMatrixShear, ReducedStiffnessMatrixNormal, 
 
 end    
 
-function BuildMatrixByPartsShear(FaultCount, ElementPartRoughCount, Input_Segment,  ShearModulus, PoissonRatio)
+
+
+
+function BuildMatrixByPartsStrikeSlip(FaultCount, ElementPartRoughCount, Input_Segment,  ShearModulus, PoissonRatio)
 
     DivisionCount = round(Int,FaultCount / ElementPartRoughCount)
     if DivisionCount == 0; DivisionCount =1; end
@@ -792,7 +792,7 @@ function BuildMatrixByPartsShear(FaultCount, ElementPartRoughCount, Input_Segmen
             if j == DivisionCount; Fin_R = FaultCount; end
     
             StiffnessMatrixShearOriginal[Init_R:Fin_R,Init_S:Fin_S], StiffnessMatrixNormalOriginal[Init_R:Fin_R,Init_S:Fin_S] = 
-            StiffnessMatrix_ByParts_Calculation_Shear(Input_Segment[Init_S:Fin_S,:], Input_Segment[Init_R:Fin_R,:], ShearModulus, PoissonRatio,
+            StiffnessMatrix_ByParts_Calculation_StrikeSlip(Input_Segment[Init_S:Fin_S,:], Input_Segment[Init_R:Fin_R,:], ShearModulus, PoissonRatio,
                                                 CurrentPart, TotalParts)
         end
     end
@@ -801,7 +801,7 @@ function BuildMatrixByPartsShear(FaultCount, ElementPartRoughCount, Input_Segmen
 end
 
 
-function BuildMatrixByPartsNormal(FaultCount, ElementPartRoughCount, Input_Segment,  ShearModulus, PoissonRatio)
+function BuildMatrixByPartsNormalReverse(FaultCount, ElementPartRoughCount, Input_Segment,  ShearModulus, PoissonRatio)
 
     DivisionCount = round(Int,FaultCount / ElementPartRoughCount)
     if DivisionCount == 0; DivisionCount =1; end
@@ -822,7 +822,7 @@ function BuildMatrixByPartsNormal(FaultCount, ElementPartRoughCount, Input_Segme
             if j == DivisionCount; Fin_R = FaultCount; end
     
             StiffnessMatrixShearOriginal[Init_R:Fin_R,Init_S:Fin_S], StiffnessMatrixNormalOriginal[Init_R:Fin_R,Init_S:Fin_S] = 
-            StiffnessMatrix_ByParts_Calculation_Normal(Input_Segment[Init_S:Fin_S,:], Input_Segment[Init_R:Fin_R,:], ShearModulus, PoissonRatio,
+            StiffnessMatrix_ByParts_Calculation_NormalReverse(Input_Segment[Init_S:Fin_S,:], Input_Segment[Init_R:Fin_R,:], ShearModulus, PoissonRatio,
                                                 CurrentPart, TotalParts)
         end
     end
