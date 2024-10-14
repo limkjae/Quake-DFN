@@ -27,8 +27,8 @@ LoadingInputFileName="Input_Discretized.jld2"
 ThreadCount = 8 # if zero, it uses current thread count opened in REPL
 
 ########################## Simulation Time Set ################################
-TotalStep = 10000 # Total simulation step
-SaveStep = 5000 # Automatically saved every this step
+TotalStep = 1000 # Total simulation step
+SaveStep = 1000 # Automatically saved every this step
 RecordStep = 10 # Simulation sampling rate !! should be a factor of SaveStep !!
 
 
@@ -55,7 +55,12 @@ GeometryPlot = 0 # 1 will plot a-b
 function RunRSFDFN3D(TotalStep, RecordStep, RuptureTimeStepMultiple,
     LoadingInputFileName, SaveResultFileName)
 
-
+    
+    if ThreadCount > Threads.nthreads()
+        println("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
+        println("Theread Count is larger than Threads used in Julia")
+        println("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
+    end
     ################################################################################
     ############################### Load Input Files ###############################
 
