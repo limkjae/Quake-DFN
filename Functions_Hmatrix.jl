@@ -579,7 +579,6 @@ end
 
 
 
-
 function HmatSolver_Pararllel(NetDisp, Stiffness_H, ElementRange_SR, 
     Par_ElementDivision, ThreadCount, Elastic_Load_EachThread)
             
@@ -595,4 +594,182 @@ function HmatSolver_Pararllel(NetDisp, Stiffness_H, ElementRange_SR,
         Elastic_Load_DispP = sum(Elastic_Load_EachThread, dims=2)
 
     return Elastic_Load_DispP
+end
+
+function SolveAx_b_Jacobi(LoadingStiffnessH, K_Self, InitialShearStress, ElementRange_SR, FaultCount, 
+                            Par_ElementDivision, ThreadCount, Epsilon_MaxDiffRatio)
+    ########### Find Initial Displacement by Gauss Seidel ############
+    println("Iteratively Calculating Initial Displacement")
+    DispI_k = ones(FaultCount)
+    MaxDiff = 1
+    iteration=0
+    println("Jabobi")
+    while MaxDiff > Epsilon_MaxDiffRatio
+    iteration = iteration+1
+    if iteration % 20 ==0
+    println("Iteration until 1 > ",MaxDiff / Epsilon_MaxDiffRatio)
+    end
+    
+    EFTerm = HmatSolver_Pararllel(DispI_k, LoadingStiffnessH, ElementRange_SR, Par_ElementDivision, ThreadCount, zeros(FaultCount, ThreadCount))
+
+    DispI_kp1 = (EFTerm + InitialShearStress) ./ K_Self
+    MaxDiff = maximum(abs.((DispI_k - DispI_kp1)))
+    DispI_k=copy(DispI_kp1)
+    end
+    return DispI_k
+end
+
+
+
+function SolveAx_b_GaussSeidel(LoadingStiffnessH, K_Self, InitialShearStress, ElementRange_SR, 
+    FaultCount, Par_ElementDivision_Shear, ThreadCount, DispCritEps, Ranks_Shear, w_factor)
+
+
+    BlockCount = length(Ranks_Shear)
+    UpperBlockCount = 0
+    LowerBlockCount = 0
+    FullBlockCount = 0
+    Stiffness_L = Any[]
+    Stiffness_U =Any[]
+    ElementRange_L = zeros(Int,1,4)
+    ElementRange_U = zeros(Int,1,4)
+    Rank_L = zeros(Int,1)
+    Rank_U = zeros(Int,1)
+
+    BlockSolution = Any[]
+
+    for BlockIndex = 1:BlockCount
+        BlockElementCount = ElementRange_SR[BlockIndex,4] -ElementRange_SR[BlockIndex,3] +1
+        if ElementRange_SR[BlockIndex,1] == ElementRange_SR[BlockIndex,3] && ElementRange_SR[BlockIndex,2] == ElementRange_SR[BlockIndex,4]
+
+            UpperBlockCount += 1
+            UpperMatrix = copy(LoadingStiffnessH[BlockIndex])
+            FaultLenth = length(UpperMatrix[:,1])
+            for i=1:FaultLenth; for j=1:FaultLenth; if i >= j; UpperMatrix[i,j] = 0; end; end; end
+            push!(Stiffness_U,UpperMatrix)
+            Rank_U = [Rank_U;0]
+            ElementRange_U = [ElementRange_U; ElementRange_SR[BlockIndex,:]']
+
+            LowerBlockCount += 1
+            LowerMatrix = copy(LoadingStiffnessH[BlockIndex])
+            FaultLenth = length(LowerMatrix[:,1])
+            for i=1:FaultLenth; for j=1:FaultLenth; if i <= j; LowerMatrix[i,j] = 0; end; end; end
+            push!(Stiffness_L,LowerMatrix)
+            Rank_L = [Rank_L;-1]
+            ElementRange_L = [ElementRange_L; ElementRange_SR[BlockIndex,:]']
+            push!(BlockSolution,0)
+        elseif ElementRange_SR[BlockIndex,1] > ElementRange_SR[BlockIndex,3]
+            UpperBlockCount += 1
+            push!(Stiffness_U,LoadingStiffnessH[BlockIndex])
+            ElementRange_U = [ElementRange_U; ElementRange_SR[BlockIndex,:]']
+            Rank_U = [Rank_U;Ranks_Shear[BlockIndex]]
+        else
+            LowerBlockCount += 1
+            push!(Stiffness_L,LoadingStiffnessH[BlockIndex])
+            
+            ElementRange_L = [ElementRange_L; ElementRange_SR[BlockIndex,:]']
+            Rank_L = [Rank_L;Ranks_Shear[BlockIndex]]
+            
+            if Ranks_Shear[BlockIndex] == 0
+                push!(BlockSolution,0)
+            else
+                push!(BlockSolution,zeros(BlockElementCount))    
+            end
+        end
+    end
+
+    ElementRange_U = ElementRange_U[2:end,:]
+    ElementRange_L = ElementRange_L[2:end,:]
+    Rank_L = Rank_L[2:end,:]
+    Rank_U = Rank_U[2:end,:]
+
+    BlockCount_L = length(ElementRange_L[:,1])
+    BlockCount_U = length(ElementRange_U[:,1])
+        
+    # Lower triangular fault Block-Element relationship
+    BlocksHaveFault_NonDiagonal = Any[]
+    BlocksHaveFault_Diagonal = Any[]
+    for FaultIndex = 1:FaultCount
+        BlockHaveThisFault_Diagonal = [0]
+        BlockHaveThisFault_NonDiagonal = [0]
+        for Blockidx = 1:BlockCount_L
+            if ElementRange_L[Blockidx,3] <= FaultIndex && FaultIndex <= ElementRange_L[Blockidx,4] 
+                if ElementRange_L[Blockidx,1] == ElementRange_L[Blockidx,3] 
+                    BlockHaveThisFault_Diagonal = [BlockHaveThisFault_Diagonal; Blockidx]            
+                else
+                    BlockHaveThisFault_NonDiagonal= [BlockHaveThisFault_NonDiagonal; Blockidx]     
+                end
+            end
+        end
+        BlockHaveThisFault_Diagonal = BlockHaveThisFault_Diagonal[2:end]
+        BlockHaveThisFault_NonDiagonal = BlockHaveThisFault_NonDiagonal[2:end]
+        push!(BlocksHaveFault_Diagonal,BlockHaveThisFault_Diagonal)
+        push!(BlocksHaveFault_NonDiagonal,BlockHaveThisFault_NonDiagonal)
+    end
+
+
+
+    # calculate Gause-Seidel
+
+    println("Gauss-Seidel")
+    Disp_Current = zeros(FaultCount)
+    Disp_Prev = zeros(FaultCount)
+    MaxDiff = 1
+    iteration = 0
+    # Par_ElementDivision_U = [0, 2, 5, 40,50,BlockCount_U]
+    @time while MaxDiff > DispCritEps
+        MaxDiffOld = MaxDiff
+        iteration +=1
+        if iteration % 20 ==0
+        println("Iteration until 1 > ",MaxDiff / DispCritEps)
+        end
+        
+        Disp_PrevStep = copy(Disp_Current)
+        Disp_Prev = copy(Disp_Current)
+        Disp_Current = zeros(FaultCount)
+
+        Stress_Prev = zeros(FaultCount)
+        # Stress_Prev = HmatSolver_Pararllel(Disp_Prev, Stiffness_U, ElementRange_U, Par_ElementDivision_U, ThreadCount, zeros(FaultCount, ThreadCount))
+        for Blockidx = 1:BlockCount_U
+            
+            Stress_Prev[ElementRange_U[Blockidx,3]:ElementRange_U[Blockidx,4]] +=
+                Stiffness_U[Blockidx] * Disp_Prev[ElementRange_U[Blockidx,1]:ElementRange_U[Blockidx,2]]    
+    
+        end
+
+            
+        Disp_Current = zeros(FaultCount)
+        Disp_Current[1] = (InitialShearStress[1]  +Stress_Prev[1])./ K_Self[1]
+        Calculated = zeros(Int,BlockCount_L)
+        for FaultIndex = 2:FaultCount
+            Stress_Current = 0.0
+            for Blockidx in BlocksHaveFault_Diagonal[FaultIndex] # Diagonal Block update
+                EleNumInThis = FaultIndex - ElementRange_L[Blockidx,3] + 1 
+                Stress_Current += Stiffness_L[Blockidx][EleNumInThis,:]' * Disp_Current[ElementRange_L[Blockidx,1]: ElementRange_L[Blockidx,2]]
+                Calculated[Blockidx] = 1
+            end    
+
+            for Blockidx in BlocksHaveFault_NonDiagonal[FaultIndex] # Non-diagonal Block update
+                EleNumInThis = FaultIndex - ElementRange_L[Blockidx,3] + 1 
+                if Calculated[Blockidx] == 0 # calculate mat x vactor if not calculated yet
+                    BlockSolution[Blockidx] = Stiffness_L[Blockidx] * Disp_Current[ElementRange_L[Blockidx,1]:ElementRange_L[Blockidx,2]]
+                    Calculated[Blockidx] = 1    
+                end
+                    Stress_Current += BlockSolution[Blockidx][EleNumInThis]
+            end 
+
+            StressGap = (InitialShearStress[FaultIndex] + Stress_Current + Stress_Prev[FaultIndex]) 
+            Disp_Current[FaultIndex] = (1 - w_factor) * Disp_Prev[FaultIndex] + w_factor * StressGap ./ K_Self[FaultIndex]
+            # Disp_Current[FaultIndex] = StressGap ./ K_Self[FaultIndex]
+            # Disp_Prev[FaultIndex] = 0.0
+        end
+            MaxDiff = maximum(abs.(Disp_PrevStep - Disp_Current) )
+            # if MaxDiffOld < MaxDiff
+            #     w_factor = 1.0
+            # end
+    end
+
+    println("Iteration GS: ",iteration)
+
+    return Disp_Current
 end

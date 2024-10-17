@@ -43,10 +43,14 @@ TimeSteppingAdj =
     [0.0  0.0  0.0  0.0;   # Time step size
      0.0  0.0  0.0  0.0]   # Velocity
 
-
+########################## Ax=b solver ############################
+JacobiOrGS = 2 # 1: Jacobi, 2: Gauss-Seidel (Ax=b solver that is required for initializing)
+# Jacobi is faster in general but Gauss-Seidel is stabler.
+w_factor = 1.5 # only used for Gauss-Seidel. should be 0 < w < 2. 
+# faster convergence when large but unstable.
 
 ############################# Plots before run? ################################
-DtPlot = 1 # 1 will plot dt vs maxV
+DtPlot = 0 # 1 will plot dt vs maxV
 GeometryPlot = 0 # 1 will plot a-b
 
 
@@ -69,7 +73,7 @@ function RunRSFDFN3D(TotalStep, RecordStep, RuptureTimeStepMultiple,
     FaultCenter= load(LoadingInputFileName, "FaultCenter")
     ShearModulus= load(LoadingInputFileName, "ShearModulus")
     RockDensity= load(LoadingInputFileName, "RockDensity")
-    PoissonRatio= load(LoadingInputFileName, "PoissonRatio")
+    PoissonRatio= load(LoadingInputFileName, "PoissonRatio") 
     FaultLengthStrike= load(LoadingInputFileName, "FaultLengthStrike")
     FaultLengthDip= load(LoadingInputFileName, "FaultLengthDip")
     FaultStrikeAngle= load(LoadingInputFileName, "FaultStrikeAngle")
@@ -234,7 +238,7 @@ function RunRSFDFN3D(TotalStep, RecordStep, RuptureTimeStepMultiple,
     TotalStep, RecordStep, SwitchV, TimeStepping, SaveResultFileName,RockDensity,
     FaultCenter,FaultLengthStrike, FaultLengthDip, FaultStrikeAngle, FaultDipAngle, FaultLLRR, SaveStep,
     TimeStepOnlyBasedOnUnstablePatch, MinimumNormalStress, Alpha_Evo,
-    Ranks_Shear, Ranks_Normal, ElementRange_SR, NormalStiffness_H, ShearStiffness_H, ThreadCount)  
+    Ranks_Shear, Ranks_Normal, ElementRange_SR, NormalStiffness_H, ShearStiffness_H, ThreadCount, JacobiOrGS, w_factor)    
 
     ################################ Run Simulation ###############################
     ###############################################################################

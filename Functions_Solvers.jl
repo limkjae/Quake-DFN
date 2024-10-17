@@ -449,7 +449,7 @@ function FunctionDTPlot(SwitchV, TimeStepping, RecTimeStep)
         testDT[i] = FunctionDtRef(V, TimeStepping, SlowOrFast)
 
     end
-    figure(2)
+    figure(1)
     plot(log10.(Vtest),log10.(testDT))
     plot([minimum(log10.(Vtest)), maximum(log10.(Vtest))], log10.([RecTimeStep,RecTimeStep]), "r:")
     scatter(log10.(TimeStepping[2,:]),log10.(TimeStepping[1,:]))
