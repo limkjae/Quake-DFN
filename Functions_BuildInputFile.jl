@@ -455,7 +455,7 @@ end
  
 
 ###################################################################
-####### Build Stiffness Matrix  Stirke Slip Vector By Part  #######
+###### Build Stiffness Matrix  Normal Reverse Vector By Part  #####
 ###################################################################
 
 function StiffnessMatrix_ByParts_Calculation_NormalReverse(Input_SegmentSource, Input_SegmentReceiver, ShearModulus, PoissonRatio,
