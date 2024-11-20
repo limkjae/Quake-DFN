@@ -5,7 +5,7 @@ function main_H(ShearModulus, FaultCount, LoadingFaultCount, Mass, NormalStiffne
     TotalStep, RecordStep, SwitchV, TimeStepping, SaveResultFileName,RockDensity,
     FaultCenter,FaultLengthStrike, FaultLengthDip, FaultStrikeAngle, FaultDipAngle, FaultLLRR, SaveStep,
     TimeStepOnlyBasedOnUnstablePatch, MinimumNormalStress, Alpha_Evo,
-    Ranks_Shear, Ranks_Normal, ElementRange_SR, NormalStiffness_H, ShearStiffness_H, ThreadCount)  
+    Ranks_Shear, Ranks_Normal, ElementRange_SR, NormalStiffness_H, ShearStiffness_H, ThreadCount, JacobiOrGS, w_factor)  
     
     ExternalStressExist=0;
 
@@ -13,7 +13,7 @@ function main_H(ShearModulus, FaultCount, LoadingFaultCount, Mass, NormalStiffne
     ################ Optimizing and Initializing Hmatrix ################
     if ThreadCount == 0
         ThreadCount = Threads.nthreads()
-    end
+    end 
     Epsilon_MaxDiffRatio = 1e-7
     MaxRatioAllowed = 1.5
     MaxIteration = 50
@@ -40,12 +40,23 @@ function main_H(ShearModulus, FaultCount, LoadingFaultCount, Mass, NormalStiffne
                 Par_ElementDivision_ShearNoLoading[end-i] = Par_ElementDivision_ShearNoLoading[end-i+1] 
             end
         end
-        Far_Load_Disp_Initial[1:end-LoadingFaultCount] = 
-                SolveAx_b(LoadingStiffnessH[2:end], K_Self[1:end-LoadingFaultCount], InitialShearStress[1:end-LoadingFaultCount],
-                         ElementRange_SR[2:end,:], FaultCount - LoadingFaultCount, Par_ElementDivision_ShearNoLoading, ThreadCount, Epsilon_MaxDiffRatio)
+        if JacobiOrGS ==1
+            Far_Load_Disp_Initial[1:end-LoadingFaultCount] = 
+                    SolveAx_b_Jacobi(LoadingStiffnessH[2:end], K_Self[1:end-LoadingFaultCount], InitialShearStress[1:end-LoadingFaultCount],
+                            ElementRange_SR[2:end,:], FaultCount - LoadingFaultCount, Par_ElementDivision_ShearNoLoading, ThreadCount, Epsilon_MaxDiffRatio)
+        else
+            Far_Load_Disp_Initial[1:end-LoadingFaultCount] = 
+                SolveAx_b_GaussSeidel(LoadingStiffnessH[2:end], K_Self[1:end-LoadingFaultCount], InitialShearStress[1:end-LoadingFaultCount],
+                    ElementRange_SR[2:end,:], FaultCount - LoadingFaultCount, Par_ElementDivision_ShearNoLoading, ThreadCount, Epsilon_MaxDiffRatio, Ranks_Shear[2:end], w_factor)
+        end
     else
-        Far_Load_Disp_Initial = SolveAx_b(LoadingStiffnessH, K_Self, InitialShearStress, ElementRange_SR, FaultCount, 
-        Par_ElementDivision_Shear, ThreadCount, Epsilon_MaxDiffRatio)
+        if JacobiOrGS ==1
+            Far_Load_Disp_Initial = SolveAx_b_Jacobi(LoadingStiffnessH, K_Self, InitialShearStress, ElementRange_SR, FaultCount, 
+                                    Par_ElementDivision_Shear, ThreadCount, Epsilon_MaxDiffRatio)
+        else
+            Far_Load_Disp_Initial = SolveAx_b_GaussSeidel(LoadingStiffnessH, K_Self, InitialShearStress, ElementRange_SR, FaultCount, 
+                                    Par_ElementDivision_Shear, ThreadCount, Epsilon_MaxDiffRatio, Ranks_Shear, w_factor)
+        end
     end
 
     # Far_Load_Disp_Initial=-(StiffnessMatrixShear\InitialShearStress); # initial load point
