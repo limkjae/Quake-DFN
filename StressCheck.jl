@@ -55,8 +55,8 @@ end
 
 
 
-# PlotInput = ShearStressChange; ColorMinMax=[-1e6,1e6]
-PlotInput = NormalStressChange;ColorMinMax=[-1e6,1e6]
+PlotInput = ShearStressChange; ColorMinMax=[-1e6,1e6]
+# PlotInput = NormalStressChange; ColorMinMax=[-1e6,1e6]
 
 PlotRotation = [35,-30]
 Transparent = 0 # 1 for transparent fault plot. 0 for no-transparency

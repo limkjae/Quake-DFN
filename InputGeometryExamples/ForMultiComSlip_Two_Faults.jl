@@ -11,7 +11,7 @@ function BuildBulk()
 
     OutputFileName="Input_BulkFaultGeometry.txt"
 
-    SwitchSSRN = 1
+    SwitchSSRN = 0
     ShearMod= 20e9
     PoissonRatio = 0.2
     R_Density=2400.0
@@ -136,7 +136,7 @@ function BuildBulk()
     open(OutputFileName, "w") do io
         write(io,"SwitchSS/RN\tShearMod\tPoissonRatio\tR_Density\tCrit_TooClose\tTooCloseNormal_Multiplier\tMinimum_NS\n")
         writedlm(io,[SwitchSSRN   ShearMod    PoissonRatio     R_Density  Crit_TooClose     TooCloseNormal_Multiplier MinNormalStress])
-        write(io, "Ctr_X\tCtr_Y\tCtr_Z\tSt_L\tDip_L\tStAng\tDipAng\tLR/RN\ta\tb\tDc\tTheta_i\tV_i\tFric_i\tSig0\tSigGrad\tV_Const\tMaxLeng\n")
+        write(io, "Ctr_X\tCtr_Y\tCtr_Z\tSt_L\tDip_L\tStAng\tDipAng\tRake\ta\tb\tDc\tTheta_i\tV_i\tFric_i\tSig0\tSigGrad\tV_Const\tMaxLeng\n")
         writedlm(io, InputFile)
     end;
 

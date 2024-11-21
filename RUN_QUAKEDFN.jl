@@ -22,7 +22,7 @@ LoadingInputFileName="Input_Discretized.jld2"
 
 
 ########################## Simulation Time Set ################################
-TotalStep = 5000 # Total simulation step
+TotalStep = 10000 # Total simulation step
 SaveStep = 5000 # Automatically saved every this step
 RecordStep = 10 # Simulation sampling rate
 
@@ -63,7 +63,7 @@ function RunRSFDFN3D(TotalStep, RecordStep,
     FaultLengthDip= load(LoadingInputFileName, "FaultLengthDip")
     FaultStrikeAngle= load(LoadingInputFileName, "FaultStrikeAngle")
     FaultDipAngle= load(LoadingInputFileName, "FaultDipAngle")
-    FaultLLRR= load(LoadingInputFileName, "FaultLLRR")
+    FaultRakeAngle= load(LoadingInputFileName, "FaultRakeAngle")
     Fault_a= load(LoadingInputFileName, "Fault_a")
     Fault_b= load(LoadingInputFileName, "Fault_b")
     Fault_Dc= load(LoadingInputFileName, "Fault_Dc")
