@@ -4,7 +4,7 @@ function main(StiffnessMatrixShear, StiffnessMatrixNormal, NormalStiffnessZero,
     a, b, Dc, ThetaI, Vini, FrictionI,
     InitialNormalStress, LoadingRate, 
     TotalStep, RecordStep, SwitchV, TimeStepping, SaveResultFileName,RockDensity,
-    FaultCenter,FaultLengthStrike, FaultLengthDip, FaultStrikeAngle, FaultDipAngle, FaultLLRR, SaveStep,
+    FaultCenter,FaultLengthStrike, FaultLengthDip, FaultStrikeAngle, FaultDipAngle, FaultRakeAngle, SaveStep,
     TimeStepOnlyBasedOnUnstablePatch, MinimumNormalStress, Alpha_Evo)
     
     ExternalStressExist=0;

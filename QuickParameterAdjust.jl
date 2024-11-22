@@ -2,7 +2,7 @@
 
 function ParameterAdj(LoadingFaultCount, FaultMass, Fault_a, Fault_b, Fault_Dc, 
     Fault_Theta_i, Fault_V_i, Fault_Friction_i, Fault_NormalStress, Fault_V_Const,
-     FaultStrikeAngle, FaultDipAngle, FaultCenter, Fault_BulkIndex, FaultLLRR, MinimumNormalStress)
+     FaultStrikeAngle, FaultDipAngle, FaultCenter, Fault_BulkIndex, FaultRakeAngle, MinimumNormalStress)
 
     FaultMass_Original = copy(FaultMass)
     Fault_a_Original = copy(Fault_a)
@@ -76,9 +76,9 @@ function ParameterAdj(LoadingFaultCount, FaultMass, Fault_a, Fault_b, Fault_Dc,
     # V0=1e-9;
 
     # Fault_Friction_i, Fault_NormalStress, Fault_V_i, Fault_Theta_i = 
-    #             StressDependentFrictionParameters(MaxStressOrientation, StressRatioMaxOverMin, MinFrictionAllowed,
+    #             StressDependentFrictionParametersStrikeSlip(MaxStressOrientation, StressRatioMaxOverMin, MinFrictionAllowed,
     #             StressGradAtMaxOrientation, SurfaceStressAtMaxOrientation,
-    #             FaultStrikeAngle, FaultDipAngle, Fault_V_i, Fault_Theta_i, Fault_Friction_i, FaultLLRR,
+    #             FaultStrikeAngle, FaultDipAngle, Fault_V_i, Fault_Theta_i, Fault_Friction_i, 
     #             Fault_a, Fault_b, Fault_Dc, Fault_NormalStress, Friction_0, FaultCenter)
 
     ##########^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^#############
@@ -88,11 +88,11 @@ function ParameterAdj(LoadingFaultCount, FaultMass, Fault_a, Fault_b, Fault_Dc,
 
     ######################################################################################################
     ######################################### Direct Adjust ##############################################
-    # for i in eachindex(Fault_Dc)
-    #     if Fault_BulkIndex[i]==1
-    #         Fault_a[i]=0.003
-    #     end
-    # end
+    for i in eachindex(Fault_Dc)
+        if Fault_BulkIndex[i]==1
+            Fault_V_i[i]=1e-12
+        end
+    end
     
     # for i=1:FaultCount
     #     if 500 > FaultCenter[i,3] || FaultCenter[i,3] > 2000
@@ -158,20 +158,15 @@ end
 
 
 
-function StressDependentFrictionParameters(MaxStressOrientation, StressRatioMaxOverMin, MinFrictionAllowed,
+function StressDependentFrictionParametersStrikeSlip(MaxStressOrientation, StressRatioMaxOverMin, MinFrictionAllowed,
     StressGradAtMaxOrientation, SurfaceStressAtMaxOrientation,
-    FaultStrikeAngle, FaultDipAngle, Fault_V_i, Fault_Theta_i, Fault_Friction_i, FaultLLRR,
+    FaultStrikeAngle, FaultDipAngle, Fault_V_i, Fault_Theta_i, Fault_Friction_i, 
     Fault_a, Fault_b, Fault_Dc, Fault_NormalStress, Friction_0, FaultCenter)
     V0 = 1e-9
     NormalStressParameter = (1+StressRatioMaxOverMin)/2 .+ (1-StressRatioMaxOverMin)/2 .* cosd.(2 .* (FaultStrikeAngle .- 90.0 .- MaxStressOrientation))
     ShearStressParameter = -(1-StressRatioMaxOverMin)/2 .* sind.(2 .* (FaultStrikeAngle .- 90.0 .- MaxStressOrientation))
     Fault_Friction_i .= abs.(ShearStressParameter ./ NormalStressParameter)
     
-    if FaultLLRR != sign.(ShearStressParameter)
-        println("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
-        println("!!! Warning: Stress Orientation inconsistant with Slip Direction !!! ")
-        println("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
-    end
         
     for i in eachindex(Fault_Friction_i)
         if Fault_Friction_i[i] < MinFrictionAllowed

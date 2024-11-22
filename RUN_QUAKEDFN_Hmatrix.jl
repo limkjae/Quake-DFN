@@ -27,7 +27,7 @@ LoadingInputFileName="Input_Discretized.jld2"
 ThreadCount = 8 # if zero, it uses current thread count opened in REPL
 
 ########################## Simulation Time Set ################################
-TotalStep = 1000 # Total simulation step
+TotalStep = 3000 # Total simulation step
 SaveStep = 1000 # Automatically saved every this step
 RecordStep = 10 # Simulation sampling rate !! should be a factor of SaveStep !!
 
@@ -78,7 +78,7 @@ function RunRSFDFN3D(TotalStep, RecordStep, RuptureTimeStepMultiple,
     FaultLengthDip= load(LoadingInputFileName, "FaultLengthDip")
     FaultStrikeAngle= load(LoadingInputFileName, "FaultStrikeAngle")
     FaultDipAngle= load(LoadingInputFileName, "FaultDipAngle")
-    FaultLLRR= load(LoadingInputFileName, "FaultLLRR")
+    FaultRakeAngle= load(LoadingInputFileName, "FaultRakeAngle")
     Fault_a= load(LoadingInputFileName, "Fault_a")
     Fault_b= load(LoadingInputFileName, "Fault_b")
     Fault_Dc= load(LoadingInputFileName, "Fault_Dc")
@@ -114,7 +114,7 @@ function RunRSFDFN3D(TotalStep, RecordStep, RuptureTimeStepMultiple,
         Edge = 1
         clf()
         MaxVaule, MinValue = FaultPlot_3D_Color_General(FaultCenter,FaultLengthStrike, FaultLengthDip,
-            FaultStrikeAngle, FaultDipAngle, FaultLLRR, PlotInput, 
+            FaultStrikeAngle, FaultDipAngle, FaultRakeAngle, PlotInput, 
             PlotRotation, MinMax_Axis, ColorMinMax, Transparent, Edge, LoadingFaultCount)
         figure(1).canvas.draw()
     end
@@ -147,7 +147,7 @@ function RunRSFDFN3D(TotalStep, RecordStep, RuptureTimeStepMultiple,
     Fault_Friction_i, Fault_NormalStress, Fault_V_Const, FaultCenter, FaultIndex_Adjusted, MinimumNormalStress = 
         ParameterAdj(LoadingFaultCount, FaultMass, Fault_a, Fault_b, Fault_Dc, Fault_Theta_i, Fault_V_i, 
         Fault_Friction_i, Fault_NormalStress, Fault_V_Const, 
-        FaultStrikeAngle, FaultDipAngle, FaultCenter, Fault_BulkIndex, FaultLLRR, MinimumNormalStress)
+        FaultStrikeAngle, FaultDipAngle, FaultCenter, Fault_BulkIndex, FaultRakeAngle, MinimumNormalStress)
 
     ############################### Adjust Parameters ##############################
     ################################################################################
@@ -220,7 +220,7 @@ function RunRSFDFN3D(TotalStep, RecordStep, RuptureTimeStepMultiple,
     # "StiffnessMatrixShear", StiffnessMatrixShear, "StiffnessMatrixNormal", StiffnessMatrixNormal, 
     "FaultCenter", FaultCenter, "ShearModulus", ShearModulus, "RockDensity", RockDensity, "PoissonRatio", PoissonRatio,
     "FaultLengthStrike", FaultLengthStrike, "FaultLengthDip", FaultLengthDip, "FaultStrikeAngle", FaultStrikeAngle, 
-    "FaultDipAngle", FaultDipAngle, "FaultLLRR", FaultLLRR, "Fault_a", Fault_a, "Fault_b", Fault_b, "Fault_Dc", Fault_Dc, 
+    "FaultDipAngle", FaultDipAngle, "FaultRakeAngle", FaultRakeAngle, "Fault_a", Fault_a, "Fault_b", Fault_b, "Fault_Dc", Fault_Dc, 
     "Fault_Theta_i", Fault_Theta_i, "Fault_V_i", Fault_V_i, "Fault_Friction_i", Fault_Friction_i, "Fault_NormalStress", Fault_NormalStress, 
     "Fault_V_Const", Fault_V_Const, "Fault_BulkIndex", Fault_BulkIndex, "FaultLengthStrike_Bulk", FaultLengthStrike_Bulk, 
     "FaultLengthDip_Bulk", FaultLengthDip_Bulk, "FaultCount", FaultCount, "LoadingFaultCount", LoadingFaultCount, "FaultMass", FaultMass, "MinimumNormalStress", MinimumNormalStress,
@@ -236,7 +236,7 @@ function RunRSFDFN3D(TotalStep, RecordStep, RuptureTimeStepMultiple,
     Fault_a, Fault_b, Fault_Dc, Fault_Theta_i, Fault_V_i, Fault_Friction_i,
     Fault_NormalStress, Fault_V_Const,
     TotalStep, RecordStep, SwitchV, TimeStepping, SaveResultFileName,RockDensity,
-    FaultCenter,FaultLengthStrike, FaultLengthDip, FaultStrikeAngle, FaultDipAngle, FaultLLRR, SaveStep,
+    FaultCenter,FaultLengthStrike, FaultLengthDip, FaultStrikeAngle, FaultDipAngle, FaultRakeAngle, SaveStep,
     TimeStepOnlyBasedOnUnstablePatch, MinimumNormalStress, Alpha_Evo,
     Ranks_Shear, Ranks_Normal, ElementRange_SR, NormalStiffness_H, ShearStiffness_H, ThreadCount, JacobiOrGS, w_factor)    
 

@@ -106,7 +106,7 @@ function CalculateNSChange(t,FaultCenter, FaultDipAngle, FaultStrikeAngle, Fault
     RotationMat_FromFault_All=RotationMat_FromFault_Dip*RotationMat_FromFault_Strike;
     
     Stress_Fault=RotationMat_FromFault_All * sigEff_all * RotationMat_FromFault_All'    
-    FaultLLRR
+
 
     D_Stress_Normal = - Stress_Fault[3,3] # tension is positive (negative to make it compression)
     D_Stress_Shear =  cosd(FaultRakeAngle) * Stress_Fault[1,3] + sind(FaultRakeAngle) * Stress_Fault[2,3] 

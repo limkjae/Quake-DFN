@@ -3,7 +3,7 @@ function main_H(ShearModulus, FaultCount, LoadingFaultCount, Mass, NormalStiffne
     a, b, Dc, ThetaI, Vini, FrictionI,
     InitialNormalStress, LoadingRate, 
     TotalStep, RecordStep, SwitchV, TimeStepping, SaveResultFileName,RockDensity,
-    FaultCenter,FaultLengthStrike, FaultLengthDip, FaultStrikeAngle, FaultDipAngle, FaultLLRR, SaveStep,
+    FaultCenter,FaultLengthStrike, FaultLengthDip, FaultStrikeAngle, FaultDipAngle, FaultRakeAngle, SaveStep,
     TimeStepOnlyBasedOnUnstablePatch, MinimumNormalStress, Alpha_Evo,
     Ranks_Shear, Ranks_Normal, ElementRange_SR, NormalStiffness_H, ShearStiffness_H, ThreadCount, JacobiOrGS, w_factor)  
     

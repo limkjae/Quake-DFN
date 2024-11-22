@@ -22,8 +22,8 @@ LoadingInputFileName="Input_Discretized.jld2"
 
 
 ########################## Simulation Time Set ################################
-TotalStep = 10000 # Total simulation step
-SaveStep = 5000 # Automatically saved every this step
+TotalStep = 3000 # Total simulation step
+SaveStep = 1000 # Automatically saved every this step
 RecordStep = 10 # Simulation sampling rate
 
 
@@ -93,7 +93,7 @@ function RunRSFDFN3D(TotalStep, RecordStep,
         Edge = 1
         clf()
         MaxVaule, MinValue = FaultPlot_3D_Color_General(FaultCenter,FaultLengthStrike, FaultLengthDip,
-            FaultStrikeAngle, FaultDipAngle, FaultLLRR, PlotInput, 
+            FaultStrikeAngle, FaultDipAngle, FaultRakeAngle, PlotInput, 
             PlotRotation, MinMax_Axis, ColorMinMax, Transparent, Edge, LoadingFaultCount)
         figure(1).canvas.draw()
     end
@@ -115,7 +115,7 @@ function RunRSFDFN3D(TotalStep, RecordStep,
     Fault_Friction_i, Fault_NormalStress, Fault_V_Const,  FaultCenter, FaultIndex_Adjusted, MinimumNormalStress = 
         ParameterAdj(LoadingFaultCount, FaultMass, Fault_a, Fault_b, Fault_Dc, Fault_Theta_i, Fault_V_i, 
         Fault_Friction_i, Fault_NormalStress, Fault_V_Const, 
-        FaultStrikeAngle, FaultDipAngle, FaultCenter, Fault_BulkIndex, FaultLLRR, MinimumNormalStress)
+        FaultStrikeAngle, FaultDipAngle, FaultCenter, Fault_BulkIndex, FaultRakeAngle, MinimumNormalStress)
     
     # if AdjustStiffnessPlot == 1 # 1 will plot dt vs maxV
     #     PlotRotation=[45,-45]
@@ -188,7 +188,7 @@ function RunRSFDFN3D(TotalStep, RecordStep,
     # "StiffnessMatrixShear", StiffnessMatrixShear, "StiffnessMatrixNormal", StiffnessMatrixNormal, 
     "FaultCenter", FaultCenter, "ShearModulus", ShearModulus, "RockDensity", RockDensity, "PoissonRatio", PoissonRatio,
     "FaultLengthStrike", FaultLengthStrike, "FaultLengthDip", FaultLengthDip, "FaultStrikeAngle", FaultStrikeAngle, 
-    "FaultDipAngle", FaultDipAngle, "FaultLLRR", FaultLLRR, "Fault_a", Fault_a, "Fault_b", Fault_b, "Fault_Dc", Fault_Dc, 
+    "FaultDipAngle", FaultDipAngle, "FaultRakeAngle", FaultRakeAngle, "Fault_a", Fault_a, "Fault_b", Fault_b, "Fault_Dc", Fault_Dc, 
     "Fault_Theta_i", Fault_Theta_i, "Fault_V_i", Fault_V_i, "Fault_Friction_i", Fault_Friction_i, "Fault_NormalStress", Fault_NormalStress, 
     "Fault_V_Const", Fault_V_Const, "Fault_BulkIndex", Fault_BulkIndex, "FaultLengthStrike_Bulk", FaultLengthStrike_Bulk, 
     "FaultLengthDip_Bulk", FaultLengthDip_Bulk, "FaultCount", FaultCount, "LoadingFaultCount", LoadingFaultCount, "FaultMass", FaultMass, "MinimumNormalStress", MinimumNormalStress)
@@ -200,7 +200,7 @@ function RunRSFDFN3D(TotalStep, RecordStep,
     Fault_a, Fault_b, Fault_Dc, Fault_Theta_i, Fault_V_i, Fault_Friction_i,
     Fault_NormalStress, Fault_V_Const,
     TotalStep, RecordStep, SwitchV, TimeStepping, SaveResultFileName,RockDensity,
-    FaultCenter,FaultLengthStrike, FaultLengthDip, FaultStrikeAngle, FaultDipAngle, FaultLLRR, SaveStep,
+    FaultCenter,FaultLengthStrike, FaultLengthDip, FaultStrikeAngle, FaultDipAngle, FaultRakeAngle, SaveStep,
     TimeStepOnlyBasedOnUnstablePatch, MinimumNormalStress, Alpha_Evo)  
 
 

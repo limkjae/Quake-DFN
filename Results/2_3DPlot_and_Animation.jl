@@ -19,9 +19,8 @@ ResultV[ResultV.<=0] .= 1e-100
 ############################### Figure Configuration ##################################
 
 # figure(10); clf(); PyPlot.plot(log10.(ResultV[:,1:30:end])); xlabel("Record Step")
-PlotStep = 135
-
-PlotRotation = [35,-30]
+PlotStep = 200
+PlotRotation = [30,-180]
 Transparent = 0 # 1 for transparent fault plot. 0 for no-transparency
 Edge = 0 # 0 for no element boudary. 1 for plotting element boundary
 MinMax_Axis = 0 # 0 for automatically selected axis minimim and maximum 
@@ -59,7 +58,7 @@ FaultLengthStrike= load(FileNameInput, "FaultLengthStrike")
 FaultLengthDip= load(FileNameInput, "FaultLengthDip")
 FaultStrikeAngle= load(FileNameInput, "FaultStrikeAngle")
 FaultDipAngle= load(FileNameInput, "FaultDipAngle")
-FaultLLRR= load(FileNameInput, "FaultLLRR")
+FaultRakeAngle= load(FileNameInput, "FaultRakeAngle")
 LoadingFaultCount= load(FileNameInput, "LoadingFaultCount")
 Fault_a= load(FileNameInput, "Fault_a")
 Fault_b= load(FileNameInput, "Fault_b")
@@ -78,7 +77,7 @@ end
 figure(1)
 clf()
 MaxVaule, MinValue = FaultPlot_3D_Color_General(FaultCenter,FaultLengthStrike, FaultLengthDip,
-    FaultStrikeAngle, FaultDipAngle, FaultLLRR, PlotInput, 
+    FaultStrikeAngle, FaultDipAngle, FaultRakeAngle, PlotInput, 
     PlotRotation, MinMax_Axis, ColorMinMax, Transparent, Edge, LoadingFaultCount)
 
     ax = subplot(projection="3d")

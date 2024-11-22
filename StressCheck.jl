@@ -30,7 +30,7 @@ FaultLengthStrike= load(LoadingInputFileName, "FaultLengthStrike")
 FaultLengthDip= load(LoadingInputFileName, "FaultLengthDip")
 FaultStrikeAngle= load(LoadingInputFileName, "FaultStrikeAngle")
 FaultDipAngle= load(LoadingInputFileName, "FaultDipAngle")
-FaultLLRR= load(LoadingInputFileName, "FaultLLRR")
+FaultRakeAngle= load(LoadingInputFileName, "FaultRakeAngle")
 
 
 Fault_BulkIndex = Int.(load(LoadingInputFileName, "Fault_BulkIndex"))
@@ -55,8 +55,8 @@ end
 
 
 
-PlotInput = ShearStressChange; ColorMinMax=[-1e6,1e6]
-# PlotInput = NormalStressChange; ColorMinMax=[-1e6,1e6]
+# PlotInput = ShearStressChange; ColorMinMax=0 #[-1e6,1e6]
+PlotInput = NormalStressChange; ColorMinMax=[-1e6,1e6]
 
 PlotRotation = [35,-30]
 Transparent = 0 # 1 for transparent fault plot. 0 for no-transparency
@@ -72,7 +72,7 @@ LoadingFaultCount = 0
 figure(1)
 clf()
 MaxVaule, MinValue = FaultPlot_3D_Color_General(FaultCenter,FaultLengthStrike, FaultLengthDip,
-    FaultStrikeAngle, FaultDipAngle, FaultLLRR, PlotInput, 
+    FaultStrikeAngle, FaultDipAngle, FaultRakeAngle, PlotInput, 
     PlotRotation, MinMax_Axis, ColorMinMax, Transparent, Edge, LoadingFaultCount)
 
     ax = subplot(projection="3d")
