@@ -20,8 +20,8 @@ ResultV[ResultV.<=0] .= 1e-100
 
 # figure(10); clf(); PyPlot.plot(log10.(ResultV[:,1:30:end])); xlabel("Record Step")
 PlotStep = 200
-PlotRotation = [30,-180]
-Transparent = 0 # 1 for transparent fault plot. 0 for no-transparency
+PlotRotation = [18,-140]
+Transparent = 1 # 1 for transparent fault plot. 0 for no-transparency
 Edge = 0 # 0 for no element boudary. 1 for plotting element boundary
 MinMax_Axis = 0 # 0 for automatically selected axis minimim and maximum 
 # MinMax_Axis=[-2000 2000; -2000 2000; -4000 0]

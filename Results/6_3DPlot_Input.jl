@@ -18,7 +18,7 @@ FaultLengthStrike= load(FileNameInput, "FaultLengthStrike")
 FaultLengthDip= load(FileNameInput, "FaultLengthDip")
 FaultStrikeAngle= load(FileNameInput, "FaultStrikeAngle")
 FaultDipAngle= load(FileNameInput, "FaultDipAngle")
-FaultLLRR= load(FileNameInput, "FaultLLRR")
+FaultRakeAngle= load(FileNameInput, "FaultRakeAngle")
 LoadingFaultCount= load(FileNameInput, "LoadingFaultCount")
 Fault_a= load(FileNameInput, "Fault_a")
 Fault_b= load(FileNameInput, "Fault_b")
@@ -56,7 +56,7 @@ end
 figure(1)
 clf()
 MaxVaule, MinValue = FaultPlot_3D_Color_General(FaultCenter,FaultLengthStrike, FaultLengthDip,
-    FaultStrikeAngle, FaultDipAngle, FaultLLRR, PlotInput, 
+    FaultStrikeAngle, FaultDipAngle, FaultRakeAngle, PlotInput, 
     PlotRotation, MinMax_Axis, ColorMinMax, Transparent, Edge, LoadingFaultCount)
 
 # figure(1)
