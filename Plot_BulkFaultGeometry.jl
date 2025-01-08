@@ -82,7 +82,7 @@ MaxVaule, MinValue = FaultPlot_3D_Color_General_hsv(Input_Bulk[:,1:3],
 plotforcbar=  scatter([1,1],[1,1],0.1, [MinValue,MaxVaule], cmap="hsv")
 cbar  = colorbar(plotforcbar, pad=0.15)
 cbar.set_ticks([0, 90, 180,270,360])
-cbar.set_ticklabels(["Left Latteral", "Reverse", "Right Lateral", "Normal", "Left Lateral"])
+cbar.set_ticklabels(["Left Lateral", "Reverse", "Right Lateral", "Normal", "Left Lateral"])
 figure(8).canvas.draw()
 
 

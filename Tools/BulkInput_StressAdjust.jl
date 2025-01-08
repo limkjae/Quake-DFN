@@ -11,14 +11,14 @@ InputBulkFileName="Input_BulkFaultGeometry.txt"
 
 
 # build Principal Stress. Compression Positive. Only Ratio Matters!
-PrincipalStressRatioX = 0.5
-PrincipalStressRatioY = 2.0
+PrincipalStressRatioX = 0.2
+PrincipalStressRatioY = 0.2
 PrincipalStressRatioZ = 1.0
-StressRotationStrike = 00 # degree
-StressRotationDip = 00 # degree
+StressRotationStrike = 0 # degree
+StressRotationDip = 45 # degree
 
 PlotPrincipalStress = 1 # 1:plot the principal stress (Aspect ratio: equal), 0: no
-PrinpalStressLength = 1000 # if plotted, maximum length is...
+PrinpalStressLength = 500 # if plotted, maximum length is...
 StressVectorLocation = [0,0,0]
 
 # MaxStressRatio = maximum([PrincipalStressRatioX , PrincipalStressRatioY, PrincipalStressRatioZ])
@@ -93,7 +93,7 @@ end
 open(InputBulkFileName, "w") do io
     write(io,"SwitchSS/RN\tShearMod\tPoissonRatio\tR_Density\tCrit_TooClose\tTooCloseNormal_Multiplier\tMinimum_NS\n")
     writedlm(io,[0.0   Input_Bulk[2,2]     Input_Bulk[2,3]      Input_Bulk[2,4]   Input_Bulk[2,5]      Input_Bulk[2,6]  Input_Bulk[2,7] ])
-    write(io, "Ctr_X\tCtr_Y\tCtr_Z\tSt_L\tDip_L\tStAng\tDipAng\tLR\ta\tb\tDc\tTheta_i\tV_i\tFric_i\tSig0\tSigGrad\tV_Const\tMaxLeng\n")
+    write(io, "Ctr_X\tCtr_Y\tCtr_Z\tSt_L\tDip_L\tStAng\tDipAng\tRakeAngle\ta\tb\tDc\tTheta_i\tV_i\tFric_i\tSig0\tSigGrad\tV_Const\tMaxLeng\n")
     writedlm(io, Input_BulktoAdjust)
 end
 
@@ -105,6 +105,9 @@ include("../Plot_BulkFaultGeometry.jl")
 
 
 if PlotPrincipalStress ==1
+
+    Linewidth = 3
+    Arrow_length_ratio = 0.2
 
     UnlotatedVectorX =[PrincipalStressRatioX, 0.0, 0.0]
     UnlotatedVectorY =[0.0, PrincipalStressRatioY, 0.0]
@@ -125,29 +128,30 @@ if PlotPrincipalStress ==1
     RotatedStessY = RotationMat_Strike * RotationMat_Dip  * UnlotatedVectorY * PrinpalStressLength
     RotatedStessZ = RotationMat_Strike * RotationMat_Dip  * UnlotatedVectorZ * PrinpalStressLength
 
+
     ax.quiver(StressVectorLocation[1] + RotatedStessX[1], StressVectorLocation[2] + RotatedStessX[2], StressVectorLocation[3]+ RotatedStessX[3], 
     -RotatedStessX[1] , -RotatedStessX[2] , -RotatedStessX[3] ,
-    color="k",arrow_length_ratio=0.1)
+    color="k",arrow_length_ratio=Arrow_length_ratio, linewidth =Linewidth)
 
     ax.quiver(StressVectorLocation[1] + RotatedStessY[1], StressVectorLocation[2] + RotatedStessY[2], StressVectorLocation[3]+ RotatedStessY[3], 
     -RotatedStessY[1] , -RotatedStessY[2] , -RotatedStessY[3] ,
-    color="k",arrow_length_ratio=0.1)
+    color="k",arrow_length_ratio=Arrow_length_ratio, linewidth =Linewidth)
 
     ax.quiver(StressVectorLocation[1] + RotatedStessZ[1], StressVectorLocation[2] + RotatedStessZ[2], StressVectorLocation[3]+ RotatedStessZ[3], 
     -RotatedStessZ[1] , -RotatedStessZ[2] , -RotatedStessZ[3] ,
-    color="k",arrow_length_ratio=0.1)
+    color="k",arrow_length_ratio=Arrow_length_ratio, linewidth =Linewidth)
 
     ax.quiver(StressVectorLocation[1] - RotatedStessX[1], StressVectorLocation[2] - RotatedStessX[2], StressVectorLocation[3] - RotatedStessX[3], 
     RotatedStessX[1] , RotatedStessX[2] , RotatedStessX[3] ,
-    color="k",arrow_length_ratio=0.1)
+    color="k",arrow_length_ratio=Arrow_length_ratio, linewidth =Linewidth)
 
     ax.quiver(StressVectorLocation[1] - RotatedStessY[1], StressVectorLocation[2] - RotatedStessY[2], StressVectorLocation[3] - RotatedStessY[3], 
     RotatedStessY[1] , RotatedStessY[2] , RotatedStessY[3] ,
-    color="k",arrow_length_ratio=0.1)
+    color="k",arrow_length_ratio=Arrow_length_ratio, linewidth =Linewidth)
 
     ax.quiver(StressVectorLocation[1] - RotatedStessZ[1], StressVectorLocation[2] - RotatedStessZ[2], StressVectorLocation[3] - RotatedStessZ[3], 
     RotatedStessZ[1] , RotatedStessZ[2] , RotatedStessZ[3] ,
-    color="k",arrow_length_ratio=0.1)
+    color="k",arrow_length_ratio=Arrow_length_ratio, linewidth =Linewidth)
 
     ax.set_aspect("equal")
 end
