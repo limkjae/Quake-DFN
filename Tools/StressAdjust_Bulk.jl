@@ -13,17 +13,21 @@ InputBulkFileName="Input_BulkFaultGeometry.txt"
 
 function ChangeBulk()
 
-    ###### build Principal Stress. Compression Positive. Only Ratio Matters!
-    PrincipalStressRatioX = 0.3
+    ######################################## Inputs ########################################
+
+    ###### build Principal Stress. Compression Positive. Only Ratio Matters! 
+    PrincipalStressRatioX = 0.5
     PrincipalStressRatioY = 1.0
     PrincipalStressRatioZ = 0.5
-    StressRotationStrike = -10 # degree
-    StressRotationDip = 5 # degree
+    StressRotationStrike = -50 # degree
+    StressRotationDip = 0 # degree
+    LoadingFaultAdjust = 1 # if 0, Loading fault sense of slip will not be changed
+    LoadingFaultInvert = 1 # if 1, loading fault sense of slip become inverted
 
-    ##############  FigureConfiguration  ##############
-
+    #####  FigureConfiguration  
     PlotPrincipalStress = 1 # 1:plot the principal stress (Aspect ratio: equal), 0: no
     PlotTractionVector = 0 # 1: plot traction, normal, shear vector, 0: no
+    PlotLoadingFault = 1 # 1: plot loading fault, normal, shear vector, 0: no
 
     PlotRotation=[30,-50]
     Transparent = 1 # 1 for transparent fault plot
@@ -32,22 +36,53 @@ function ChangeBulk()
 
     StressVectorLocation = 0 # Autometically Adjusted when 0 
     PrinpalStressLength = 0 # Autometically Adjusted when 0 
-    ###################################################
+    ########################################################################################
 
 
     Input_Bulk=readdlm(InputBulkFileName)
+    Switch_StrikeSlip_or_ReverseNormal = Input_Bulk[2,1] 
     Input_BulktoAdjust=Input_Bulk[4:end,:]
-    Input_BulktoAdjust = Input_BulktoAdjust[sortperm(Input_BulktoAdjust[:, 16], rev=true), :] # move the loading faults to the end
     BulkFaultCount = length(Input_BulktoAdjust[:,1])
-
+    # Adjust LRRN to rake angle
+    if Switch_StrikeSlip_or_ReverseNormal == 1
+        for BulkIndex = 1: BulkFaultCount
+            if Input_BulktoAdjust[BulkIndex,8] == -1.0
+                Input_BulktoAdjust[BulkIndex,8] = 0.0
+            else        
+                Input_BulktoAdjust[BulkIndex,8] = 180.0
+            end    
+        end
+    elseif Switch_StrikeSlip_or_ReverseNormal ==2
+        for BulkIndex = 1: BulkFaultCount
+            if Input_BulktoAdjust[BulkIndex,7] < 90.0
+                if Input_BulktoAdjust[BulkIndex,8] == -1.0
+                    Input_BulktoAdjust[BulkIndex,8] = 90.0
+                else        
+                    Input_BulktoAdjust[BulkIndex,8] = 270.0
+                end    
+            else 
+                if Input_BulktoAdjust[BulkIndex,8] == -1.0
+                    Input_BulktoAdjust[BulkIndex,8] = 270.0
+                else        
+                    Input_BulktoAdjust[BulkIndex,8] = 90.0
+                end    
+            end
+        end
+    end
+        
+    Input_BulktoAdjust = Input_BulktoAdjust[sortperm(Input_BulktoAdjust[:, 17], rev=false), :] # move the loading faults to the end
+    if PlotLoadingFault == 0 
+        LoadingFaultCountPlot = sum(x->x>0, Input_BulktoAdjust[:,17]) 
+    else 
+        LoadingFaultCountPlot = 0
+    end
 
     if StressVectorLocation == 0
-        StressVectorLocation = [mean(Input_BulktoAdjust[:,1]), mean(Input_BulktoAdjust[:,2]), 100]
+        StressVectorLocation = [mean(Input_BulktoAdjust[1:end - LoadingFaultCountPlot,1]), mean(Input_BulktoAdjust[1:end - LoadingFaultCountPlot,2]), 100]
     end 
     if PrinpalStressLength == 0
-        PrinpalStressLength = maximum([maximum(Input_BulktoAdjust[:,1]) - minimum(Input_BulktoAdjust[:,1]), 
-                                      maximum(Input_BulktoAdjust[:,2]) - minimum(Input_BulktoAdjust[:,2])])/5
-
+        PrinpalStressLength = maximum([maximum(Input_BulktoAdjust[1:end-LoadingFaultCountPlot,1]) - minimum(Input_BulktoAdjust[1:end-LoadingFaultCountPlot,1]), 
+                                      maximum(Input_BulktoAdjust[1:end-LoadingFaultCountPlot,2]) - minimum(Input_BulktoAdjust[1:end-LoadingFaultCountPlot,2])])/5
     end
     #################### Calculate Stress for XYZ Frame #####################
     # Stres Negative for Compression
@@ -93,15 +128,22 @@ function ChangeBulk()
         StressOnFault = RotationMat_FromFault_All * StressRatioXYZ * RotationMat_FromFault_All'    
         # RakeAngle[BulkIndex] = rad2deg(atan(StressOnFault[2,3] / StressOnFault[1,3]))
         Rake = rad2deg(atan(StressOnFault[2,3] / StressOnFault[1,3]))
+        
+        
         Friction = sqrt(StressOnFault[2,3]^2 + StressOnFault[1,3]^2) / abs(StressOnFault[3,3])
+        if Input_BulktoAdjust[BulkIndex,17] > 0 && LoadingFaultInvert == 1
+            Rake = Rake + 180
+        end
+        if Input_BulktoAdjust[BulkIndex,17] > 0 && LoadingFaultAdjust == 0
+            println("donotherin")
+        else
+            if StressOnFault[1,3] < 0;  Rake = Rake + 180;  end
+            if Rake > 360; Rake = Rake - 360; end
+            if Rake < 0; Rake = Rake + 360; end
+            Input_BulktoAdjust[BulkIndex, 8] =  Rake
+            Input_BulktoAdjust[BulkIndex, 14] =  Friction
+        end
         println(Rake, "   ", Friction)
-        # println(StressOnFault)
-        if StressOnFault[1,3] < 0;  Rake = Rake + 180;  end
-        if Rake > 360; Rake = Rake - 360; end
-        if Rake < 0; Rake = Rake + 360; end
-        Input_BulktoAdjust[BulkIndex, 8] =  Rake
-        Input_BulktoAdjust[BulkIndex, 14] =  Friction
-
     end
 
         ############################## Save File #############################
@@ -116,9 +158,10 @@ function ChangeBulk()
 
     figure(1)
     clf()
-    PlotInput = Input_BulktoAdjust[:,14]; ColorMinMax = 0
-    MaxVaule, MinValue = FaultPlot_3D_Color_General(Input_BulktoAdjust[:,1:3],
-        Input_BulktoAdjust[:,4], Input_BulktoAdjust[:,5], Input_BulktoAdjust[:,6], Input_BulktoAdjust[:,7], Input_BulktoAdjust[:,8], PlotInput, 
+    PlotInput = Input_BulktoAdjust[1:end-LoadingFaultCountPlot,14]; ColorMinMax = 0
+    MaxVaule, MinValue = FaultPlot_3D_Color_General(Input_BulktoAdjust[1:end-LoadingFaultCountPlot,1:3],
+        Input_BulktoAdjust[1:end-LoadingFaultCountPlot,4], Input_BulktoAdjust[1:end-LoadingFaultCountPlot,5], Input_BulktoAdjust[1:end-LoadingFaultCountPlot,6], 
+        Input_BulktoAdjust[1:end-LoadingFaultCountPlot,7], Input_BulktoAdjust[1:end-LoadingFaultCountPlot,8], PlotInput, 
         PlotRotation, MinMax_Axis, ColorMinMax, Transparent, Edge, 0)
         ax = subplot(projection="3d")
         xlabel("x")
@@ -127,7 +170,7 @@ function ChangeBulk()
         cbar  = colorbar(plotforcbar, pad=0.15)
         figure(1).canvas.draw()
 
-    ax = PlotBulk_SenseOfSlip(0.0, Input_BulktoAdjust, PlotRotation, Transparent, Edge, MinMax_Axis)
+    ax = PlotBulk_SenseOfSlip(0.0, Input_BulktoAdjust[1:end-LoadingFaultCountPlot,:], PlotRotation, Transparent, Edge, MinMax_Axis)
  
 
     if PlotPrincipalStress ==1

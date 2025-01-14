@@ -126,7 +126,7 @@ function BuildInputFromBulkGeometry_H()
         end
         
 
-        # Adjust if positive depth exists
+        # Warning if positive depth exists
         for i in eachindex(Input_Bulk[:,1])
             if Input_Bulk[i,3]<Input_Bulk[i,5]/2*sind(Input_Bulk[i,7])
                 println("Caution! Fault ",i," may have negative depth")

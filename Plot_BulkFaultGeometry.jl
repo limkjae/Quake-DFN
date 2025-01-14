@@ -14,7 +14,7 @@ function PlotBulk()
     Input_Bulk=readdlm(InputBulkFileName)
     RakeLRRN = Int(Input_Bulk[2,1])
     Input_Bulk=Input_Bulk[4:end,:]
-    Input_Bulk = Input_Bulk[sortperm(Input_Bulk[:, 16], rev=true), :] # move the loading faults to the end
+    Input_Bulk = Input_Bulk[sortperm(Input_Bulk[:, 17], rev=false), :] # move the loading faults to the end
 
     #######################################################################################
     ####################################  Input  ##########################################
@@ -28,7 +28,7 @@ function PlotBulk()
     Transparent = 1 # 1 for transparent fault plot
     Edge = 1 # 0 for no element boudary 
     MinMax_Axis=0
-    LoadingFaultPlot = 0 # 1 to plot constant velocity faults. 
+    LoadingFaultPlot = 1 # 1 to plot constant velocity faults. 
     #######################################################################################
 
     if LoadingFaultPlot == 0
