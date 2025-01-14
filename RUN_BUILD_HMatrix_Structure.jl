@@ -118,7 +118,7 @@ function BuildHMatStructure()
     Input_Segment = BulkToSegment(Input_Bulk);
     FaultCount=   size(Input_Segment,1)
     Input_Segment = [Input_Segment ones(FaultCount) zeros(FaultCount)]
-    Input_Segment = Input_Segment[sortperm(Input_Segment[:, 16]), :] # move the loading faults to the end
+    Input_Segment = Input_Segment[sortperm(Input_Segment[:, 16]), :] # move the loading faults to the top
     
 
 

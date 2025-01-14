@@ -600,3 +600,113 @@ function SurfaceDeformaion_StrikeSlip(FaultCountSource, FaultCenterSource, Fault
     return DisplacementX,  DisplacementY, DisplacementZ
 end
  
+
+
+function PlotBulk_SenseOfSlip(RakeLRRN, Input_Bulk, PlotRotation, Transparent, Edge, MinMax_Axis)
+
+    ################# Adjust to Rake Angle if defined by Sense of Slip #################
+
+    Faultcount = length(Input_Bulk[:,1])
+    RakeAngle = Input_Bulk[:,8]
+    DipAngle =  Input_Bulk[:,7]
+    # adjust sense of slip to rake angle
+    if RakeLRRN ==1
+        for BulkIndex = 1: Faultcount
+            if RakeAngle[BulkIndex] == -1.0
+                RakeAngle[BulkIndex] = 0.0
+            else        
+                RakeAngle[BulkIndex] = 180.0
+            end    
+        end
+    elseif RakeLRRN ==2
+        for BulkIndex = 1: Faultcount
+            if DipAngle[BulkIndex] < 90.0
+                if RakeAngle[BulkIndex] == -1.0
+                    RakeAngle[BulkIndex] = 90.0
+                else        
+                    RakeAngle[BulkIndex] = 270.0
+                end    
+            else 
+                if RakeAngle[BulkIndex] == -1.0
+                    RakeAngle[BulkIndex] = 270.0
+                else        
+                    RakeAngle[BulkIndex] = 90.0
+                end    
+            end
+        end
+    end
+
+    RakeAngle_NRAdjusted = copy(RakeAngle)
+    for BulkIndex = 1: Faultcount
+        if DipAngle[BulkIndex] > 90.0
+            RakeAngle_NRAdjusted[BulkIndex] = 360 - RakeAngle_NRAdjusted[BulkIndex]
+
+        end
+    end
+    PlotInput=RakeAngle_NRAdjusted; ColorMinMax=[0, 360]
+
+        
+
+    ################# Draw Fault Surface #################
+
+    figure(8)
+    clf()
+    MaxVaule, MinValue = FaultPlot_3D_Color_General_hsv(Input_Bulk[:,1:3],
+        Input_Bulk[:,4], Input_Bulk[:,5], Input_Bulk[:,6], Input_Bulk[:,7], Input_Bulk[:,8], PlotInput, 
+        PlotRotation, MinMax_Axis, ColorMinMax, Transparent, Edge, 0)
+        ax = subplot(projection="3d")
+        xlabel("x")
+        ylabel("y")
+    plotforcbar=  scatter([1,1],[1,1],0.1, [MinValue,MaxVaule], cmap="hsv")
+    cbar  = colorbar(plotforcbar, pad=0.15)
+    cbar.set_ticks([0, 90, 180,270,360])
+    cbar.set_ticklabels(["Left Lateral", "Reverse", "Right Lateral", "Normal", "Left Lateral"])
+    figure(8).canvas.draw()
+
+    ################# Draw Sense of Slip ################
+
+
+    LineLength = vec(minimum([Input_Bulk[:,4] Input_Bulk[:,5]], dims=2)./2)
+
+    UnrotatedSlipUnitVec = [cosd.(RakeAngle) sind.(RakeAngle) zeros(Faultcount)]
+    UnrotatedGapVector = [0 0 1]
+    RotatedSlipUnitVec = UnrotatedSlipUnitVec .* 0.0 
+    VecStart = UnrotatedSlipUnitVec .* 0.0 
+    VecEnd = UnrotatedSlipUnitVec .* 0.0 
+    FaultCenter =  Input_Bulk[:,1:3]
+    FaultCenter[:,3] = -FaultCenter[:,3]
+    for BulkIndex = 1: Faultcount
+
+    RotationMat_Strike=
+    [cosd(Input_Bulk[BulkIndex,6]) -sind(Input_Bulk[BulkIndex,6])  0
+    sind(Input_Bulk[BulkIndex,6]) cosd(Input_Bulk[BulkIndex,6]) 0
+    0  0  1];
+
+    RotationMat_Dip=
+    [1 0 0
+    0 cosd(Input_Bulk[BulkIndex,7]) -sind(Input_Bulk[BulkIndex,7])
+    0 sind(Input_Bulk[BulkIndex,7]) cosd(Input_Bulk[BulkIndex,7])]
+
+    RotatedSlipUnitVec[BulkIndex,:] = RotationMat_Strike * RotationMat_Dip  * UnrotatedSlipUnitVec[BulkIndex,:]
+    RotatedGap = RotationMat_Strike * RotationMat_Dip  * UnrotatedGapVector' .* 50
+
+    VecStart[BulkIndex,:] = -RotatedSlipUnitVec[BulkIndex,:] /2 * LineLength[BulkIndex] .+ FaultCenter[BulkIndex,1:3] + RotatedGap
+    VecEnd[BulkIndex,:] = RotatedSlipUnitVec[BulkIndex,:]/2* LineLength[BulkIndex] .+ FaultCenter[BulkIndex,1:3] - + RotatedGap
+    end
+
+
+
+    for i =1:Faultcount 
+        ax.quiver(VecStart[i,1], VecStart[i,2], VecStart[i,3], 
+            RotatedSlipUnitVec[i,1] * LineLength[i], RotatedSlipUnitVec[i,2] * LineLength[i], RotatedSlipUnitVec[i,3] * LineLength[i],
+            color="k",arrow_length_ratio=0.2)
+        ax.quiver(VecEnd[i,1], VecEnd[i,2], VecEnd[i,3], 
+            -RotatedSlipUnitVec[i,1] * LineLength[i], -RotatedSlipUnitVec[i,2] * LineLength[i], -RotatedSlipUnitVec[i,3] * LineLength[i],
+            color="k",arrow_length_ratio=0.2)
+
+    end
+
+
+
+    return ax
+end
