@@ -88,11 +88,11 @@ function ParameterAdj(LoadingFaultCount, FaultMass, Fault_a, Fault_b, Fault_Dc,
 
     ######################################################################################################
     ######################################### Direct Adjust ##############################################
-    for i in eachindex(Fault_Dc)
-        if Fault_BulkIndex[i]==1
-            Fault_V_i[i]=1e-12
-        end
-    end
+    # for i in eachindex(Fault_Dc)
+    #     if Fault_BulkIndex[i]==1
+    #         Fault_V_i[i]=1e-12
+    #     end
+    # end
     
     # for i=1:FaultCount
     #     if 500 > FaultCenter[i,3] || FaultCenter[i,3] > 2000
