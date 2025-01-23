@@ -27,8 +27,8 @@ LoadingInputFileName="Input_Discretized.jld2"
 ThreadCount = 8 # if zero, it uses current thread count opened in REPL
 
 ########################## Simulation Time Set ################################
-TotalStep = 3000 # Total simulation step
-SaveStep = 1000 # Automatically saved every this step
+TotalStep = 2000 # Total simulation step
+SaveStep = 2000 # Automatically saved every this step
 RecordStep = 10 # Simulation sampling rate !! should be a factor of SaveStep !!
 
 
@@ -138,9 +138,9 @@ function RunRSFDFN3D(TotalStep, RecordStep, RuptureTimeStepMultiple,
     # FaultMass .= 1e6  
 
 
-    #####----------- Alpha in Evolution Law ----------#####
+    #####----------- Evolution Law and Alpha ----------#####
     Alpha_Evo = 0.0
-
+    EvolutionDR = 1
     
     #######---------- Logical quick adjust ----------#######
     LoadingFaultCount, FaultMass, Fault_a, Fault_b, Fault_Dc, Fault_Theta_i, Fault_V_i, 
@@ -238,7 +238,7 @@ function RunRSFDFN3D(TotalStep, RecordStep, RuptureTimeStepMultiple,
     TotalStep, RecordStep, SwitchV, TimeStepping, SaveResultFileName,RockDensity,
     FaultCenter,FaultLengthStrike, FaultLengthDip, FaultStrikeAngle, FaultDipAngle, FaultRakeAngle, SaveStep,
     TimeStepOnlyBasedOnUnstablePatch, MinimumNormalStress, Alpha_Evo,
-    Ranks_Shear, Ranks_Normal, ElementRange_SR, NormalStiffness_H, ShearStiffness_H, ThreadCount, JacobiOrGS, w_factor)    
+    Ranks_Shear, Ranks_Normal, ElementRange_SR, NormalStiffness_H, ShearStiffness_H, ThreadCount, JacobiOrGS, w_factor, EvolutionDR)    
 
     ################################ Run Simulation ###############################
     ###############################################################################

@@ -1,9 +1,6 @@
 
-
-
 ################################################################################
 ###### This file generate Hmatrix Structure File from Bulk Fault Geometry ######
-###### H-matrix approximation should  be 
 
 using DelimitedFiles
 using Base

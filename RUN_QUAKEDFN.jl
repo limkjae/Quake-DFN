@@ -22,8 +22,8 @@ LoadingInputFileName="Input_Discretized.jld2"
 
 
 ########################## Simulation Time Set ################################
-TotalStep = 3000 # Total simulation step
-SaveStep = 1000 # Automatically saved every this step
+TotalStep = 2000 # Total simulation step
+SaveStep = 2000 # Automatically saved every this step
 RecordStep = 10 # Simulation sampling rate
 
 
@@ -98,6 +98,12 @@ function RunRSFDFN3D(TotalStep, RecordStep,
         figure(1).canvas.draw()
     end
     
+    ############# Evolution and Alpha Value ################
+    Alpha_Evo = 0.0
+    EvolutionDR = 1
+    ########################################################
+
+
     ################################ Run Simulation ################################
     ######++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++######
 
@@ -109,7 +115,7 @@ function RunRSFDFN3D(TotalStep, RecordStep,
         VertScale = VerticalLengthScaleforM
     end    
     FaultMass = ones(FaultCount) .* VertScale * RockDensity / 2
-    Alpha_Evo = 0.0
+
 
     LoadingFaultCount, FaultMass, Fault_a, Fault_b, Fault_Dc, Fault_Theta_i, Fault_V_i, 
     Fault_Friction_i, Fault_NormalStress, Fault_V_Const,  FaultCenter, FaultIndex_Adjusted, MinimumNormalStress = 
@@ -117,20 +123,6 @@ function RunRSFDFN3D(TotalStep, RecordStep,
         Fault_Friction_i, Fault_NormalStress, Fault_V_Const, 
         FaultStrikeAngle, FaultDipAngle, FaultCenter, Fault_BulkIndex, FaultRakeAngle, MinimumNormalStress)
     
-    # if AdjustStiffnessPlot == 1 # 1 will plot dt vs maxV
-    #     PlotRotation=[45,-45]
-    #     Transparent=0
-    #     MinMax_Axis=[-3000 3000; -3000 3000; -4000 0]
-    #     ColorMinMax=0
-    #     PlotInput=Fault_a - Fault_b    
-    #     clf()
-        
-    #     MaxVaule, MinValue = FaultPlot_3D_Color_SelectedElements(FaultCenter,FaultLengthStrike, FaultLengthDip,
-    #     FaultStrikeAngle, FaultDipAngle, FaultLLRR, PlotInput, 
-    #     PlotRotation, MinMax_Axis, ColorMinMax, Transparent, FaultIndex_Adjusted)
-    #     figure(1).canvas.draw()
-    # end
-
 
 
     ######+++++++++++++++++++++++++   Time Step Set   ++++++++++++++++++++++++######
@@ -201,7 +193,7 @@ function RunRSFDFN3D(TotalStep, RecordStep,
     Fault_NormalStress, Fault_V_Const,
     TotalStep, RecordStep, SwitchV, TimeStepping, SaveResultFileName,RockDensity,
     FaultCenter,FaultLengthStrike, FaultLengthDip, FaultStrikeAngle, FaultDipAngle, FaultRakeAngle, SaveStep,
-    TimeStepOnlyBasedOnUnstablePatch, MinimumNormalStress, Alpha_Evo)  
+    TimeStepOnlyBasedOnUnstablePatch, MinimumNormalStress, Alpha_Evo, EvolutionDR)  
 
 
     ########^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^########
@@ -213,19 +205,3 @@ end
 RunRSFDFN3D(TotalStep, RecordStep, 
     LoadingInputFileName, SaveResultFileName, RuptureTimeStepMultiple)
 
-
-
-
-
-
-
-    
-# ResultTime=load("Results/Result.jld","History_Time")
-# ResultDisp=load("Results/Result.jld","History_Disp")
-# ResultV=load("Results/Result.jld","History_V")
-
-# figure(3)
-# clf()
-# PyPlot.plot(ResultTime[1:end-1], log10.(ResultV[1:end-1,:]), linewidth=1)
-# figure(4)
-# PyPlot.plot( log10.(ResultV[1:end-1,:]), linewidth=1)

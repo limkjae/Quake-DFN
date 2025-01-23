@@ -5,7 +5,7 @@ function main_H(ShearModulus, FaultCount, LoadingFaultCount, Mass, NormalStiffne
     TotalStep, RecordStep, SwitchV, TimeStepping, SaveResultFileName,RockDensity,
     FaultCenter,FaultLengthStrike, FaultLengthDip, FaultStrikeAngle, FaultDipAngle, FaultRakeAngle, SaveStep,
     TimeStepOnlyBasedOnUnstablePatch, MinimumNormalStress, Alpha_Evo,
-    Ranks_Shear, Ranks_Normal, ElementRange_SR, NormalStiffness_H, ShearStiffness_H, ThreadCount, JacobiOrGS, w_factor)  
+    Ranks_Shear, Ranks_Normal, ElementRange_SR, NormalStiffness_H, ShearStiffness_H, ThreadCount, JacobiOrGS, w_factor, EvolutionDR)  
     
     ExternalStressExist=0;
 
@@ -279,7 +279,7 @@ function main_H(ShearModulus, FaultCount, LoadingFaultCount, Mass, NormalStiffne
                 Mass,ShearModulus, 
                 EffNormalStress_i,Total_Loading_Disp, SolverSwitch,
                 V,Friction,Disp,Theta,EffNormalStress,Dt_All,Instability,
-                LoadingRate, LoadingFaultCount, FaultCount, RockDensity, D_EffStress_Shear, SwitchV, Alpha_Evo, EffNormalStress_Old)
+                LoadingRate, LoadingFaultCount, FaultCount, RockDensity, D_EffStress_Shear, SwitchV, Alpha_Evo, EffNormalStress_Old, EvolutionDR)
 
                 ############ End of One Step Solver ############
                 # println(findall(x->x==0, FLAG_GoodToGo))
