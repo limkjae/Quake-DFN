@@ -16,9 +16,9 @@ function ChangeBulk()
     ######################################## Inputs ########################################
 
     ###### build Principal Stress. Compression Positive. Only Ratio Matters! 
-    PrincipalStressRatioX = 0.5
-    PrincipalStressRatioY = 1.0
-    PrincipalStressRatioZ = 0.5
+    PrincipalStressRatioX = 0.3
+    PrincipalStressRatioY = 0.4
+    PrincipalStressRatioZ = 1.0
     StressRotationStrike = 30 # degree
     StressRotationDip = 0 # degree
     LoadingFaultAdjust = 0 # if 0, Loading fault sense of slip will not be changed
@@ -143,18 +143,29 @@ function ChangeBulk()
             Input_BulktoAdjust[BulkIndex, 8] =  Rake
             Input_BulktoAdjust[BulkIndex, 14] =  Friction
         end
-        println(Rake, "   ", Friction)
+        # println(Rake, "   ", Friction)
     end
 
+    SurvivedFaults = 0
+    Input_BulktoAdjustFiltered = zeros(1,18) 
+    for i=1:BulkFaultCount
+        SurvivedFaults =+ 1
+        if isnan(Input_BulktoAdjust[i,8])
+            println("Slip sence of Bulk Element ",i, " cannot be defined with the given stress field. The element will be removed")
+            println("This problem can be alleviated by adding anisotropy or small angles to the stress field applied")
+        else
+            Input_BulktoAdjustFiltered = [Input_BulktoAdjustFiltered; Input_BulktoAdjust[i,:]']
+        end
+    end
+    Input_BulktoAdjustFiltered = Input_BulktoAdjustFiltered[2:end,:]
         ############################## Save File #############################
 
     open(InputBulkFileName, "w") do io
         write(io,"SwitchSS/RN\tShearMod\tPoissonRatio\tR_Density\tCrit_TooClose\tTooCloseNormal_Multiplier\tMinimum_NS\n")
         writedlm(io,[0.0   Input_Bulk[2,2]     Input_Bulk[2,3]      Input_Bulk[2,4]   Input_Bulk[2,5]      Input_Bulk[2,6]  Input_Bulk[2,7] ])
         write(io, "Ctr_X\tCtr_Y\tCtr_Z\tSt_L\tDip_L\tStAng\tDipAng\tRakeAngle\ta\tb\tDc\tTheta_i\tV_i\tFric_i\tSig0\tSigGrad\tV_Const\tMaxLeng\n")
-        writedlm(io, Input_BulktoAdjust)
+        writedlm(io, Input_BulktoAdjustFiltered)
     end
-
 
     figure(1)
     clf()
@@ -263,7 +274,6 @@ function ChangeBulk()
 
         end
     end
-
 
 
 end
