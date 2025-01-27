@@ -19,15 +19,15 @@ function ChangeBulk()
     PrincipalStressRatioX = 0.5
     PrincipalStressRatioY = 1.0
     PrincipalStressRatioZ = 0.5
-    StressRotationStrike = -50 # degree
+    StressRotationStrike = 30 # degree
     StressRotationDip = 0 # degree
-    LoadingFaultAdjust = 1 # if 0, Loading fault sense of slip will not be changed
+    LoadingFaultAdjust = 0 # if 0, Loading fault sense of slip will not be changed
     LoadingFaultInvert = 1 # if 1, loading fault sense of slip become inverted
 
     #####  FigureConfiguration  
     PlotPrincipalStress = 1 # 1:plot the principal stress (Aspect ratio: equal), 0: no
     PlotTractionVector = 0 # 1: plot traction, normal, shear vector, 0: no
-    PlotLoadingFault = 1 # 1: plot loading fault, normal, shear vector, 0: no
+    PlotLoadingFault = 0 # 1: plot loading fault, normal, shear vector, 0: no
 
     PlotRotation=[30,-50]
     Transparent = 1 # 1 for transparent fault plot
@@ -135,7 +135,7 @@ function ChangeBulk()
             Rake = Rake + 180
         end
         if Input_BulktoAdjust[BulkIndex,17] > 0 && LoadingFaultAdjust == 0
-            println("donotherin")
+            # println("donotherin")
         else
             if StressOnFault[1,3] < 0;  Rake = Rake + 180;  end
             if Rake > 360; Rake = Rake - 360; end
