@@ -46,7 +46,7 @@ TimeSteppingAdj =
 ########################## Ax=b solver ############################
 JacobiOrGS = 2 # 1: Jacobi, 2: Gauss-Seidel (Ax=b solver that is required for initializing)
 # Jacobi is faster in general but Gauss-Seidel is stabler.
-w_factor = 1.5 # only used for Gauss-Seidel. should be 0 < w < 2. 
+w_factor = 1.0 # only used for Gauss-Seidel. should be 0 < w < 2. 
 # faster convergence when large but unstable.
 
 ############################# Plots before run? ################################
@@ -138,9 +138,10 @@ function RunRSFDFN3D(TotalStep, RecordStep, RuptureTimeStepMultiple,
     # FaultMass .= 1e6  
 
 
-    #####----------- Evolution Law and Alpha ----------#####
+    ############# Evolution and Alpha Value ################
     Alpha_Evo = 0.0
     EvolutionDR = 1
+    ########################################################
     
     #######---------- Logical quick adjust ----------#######
     LoadingFaultCount, FaultMass, Fault_a, Fault_b, Fault_Dc, Fault_Theta_i, Fault_V_i, 

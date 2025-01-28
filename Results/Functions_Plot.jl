@@ -208,6 +208,107 @@ function FaultPlot_3D_Color_General_hsv(FaultCenter,FaultLengthStrike, FaultLeng
 end
 
 
+
+
+
+function FaultPlot_3D_Color_AdjustedElements(FaultCenter,FaultLengthStrike, FaultLengthDip, FaultStrikeAngle,
+    FaultDipAngle, FaultLLRR, InputProperty, PlotRotation, MinMax_Axis, ColorMinMax,
+    Transparent, Edge, LoadingFaultCount)
+
+    cm = get_cmap(:jet)    
+    buffer=300
+    xmin=minimum(FaultCenter[1:end-LoadingFaultCount,1])-buffer
+    xmax=maximum(FaultCenter[1:end-LoadingFaultCount,1])+buffer
+    ymin=minimum(FaultCenter[1:end-LoadingFaultCount,2])-buffer
+    ymax=maximum(FaultCenter[1:end-LoadingFaultCount,2])+buffer
+    zmax=0
+    zmin=-maximum(FaultCenter[1:end-LoadingFaultCount,3])-buffer
+
+    xCenter=(xmin+xmax)/2
+    yCenter=(ymin+ymax)/2
+    zCenter=(zmin+zmax)/2
+    
+    maxlength=maximum([xmax-xmin,ymax-ymin, -zmin+zmax])
+
+    if MinMax_Axis == 0
+        xmin=xCenter-maxlength/2
+        xmax=xCenter+maxlength/2
+        ymin=yCenter-maxlength/2
+        ymax=yCenter+maxlength/2
+        zmin=zCenter-maxlength/2
+
+    else
+        xmin=MinMax_Axis[1,1]
+        xmax=MinMax_Axis[1,2]
+        ymin=MinMax_Axis[2,1]
+        ymax=MinMax_Axis[2,2]
+        zmin=MinMax_Axis[3,1]
+        zmax=MinMax_Axis[3,2]
+    end
+
+        MaxValue = 2
+        MinValue = 0
+
+    for FaultIdx = 1: length(FaultLengthStrike)  - LoadingFaultCount
+
+        RotMatStrike=[cosd(FaultStrikeAngle[FaultIdx]) -sind(FaultStrikeAngle[FaultIdx]) 0
+            sind(FaultStrikeAngle[FaultIdx]) cosd(FaultStrikeAngle[FaultIdx]) 0
+            0  0 1]
+        RotMatDip=[1 0  0
+        0 cosd(FaultDipAngle[FaultIdx]) -sind(FaultDipAngle[FaultIdx])
+        0 sind(FaultDipAngle[FaultIdx]) cosd(FaultDipAngle[FaultIdx])]
+                
+        p1=RotMatStrike*RotMatDip*[FaultLengthStrike[FaultIdx]/2;-FaultLengthDip[FaultIdx]/2;0] + [FaultCenter[FaultIdx,1]; FaultCenter[FaultIdx,2]; -FaultCenter[FaultIdx,3]];
+        p2=RotMatStrike*RotMatDip*[-FaultLengthStrike[FaultIdx]/2;-FaultLengthDip[FaultIdx]/2;0] + [FaultCenter[FaultIdx,1]; FaultCenter[FaultIdx,2]; -FaultCenter[FaultIdx,3]];
+        p3=RotMatStrike*RotMatDip*[-FaultLengthStrike[FaultIdx]/2;+FaultLengthDip[FaultIdx]/2;0]+ [FaultCenter[FaultIdx,1]; FaultCenter[FaultIdx,2]; -FaultCenter[FaultIdx,3]];
+        p4=RotMatStrike*RotMatDip*[FaultLengthStrike[FaultIdx]/2;+FaultLengthDip[FaultIdx]/2;0]+ [FaultCenter[FaultIdx,1]; FaultCenter[FaultIdx,2]; -FaultCenter[FaultIdx,3]];
+        
+        fig = figure(1)
+        PlotValue=(InputProperty[FaultIdx]-MinValue)/(MaxValue-MinValue)
+        art3d = PyObject(PyPlot.art3D)
+
+        verts2 = ([tuple(p1...); tuple(p2...); tuple(p3...); tuple(p4...)],)
+        p3c = PyObject(art3d.Poly3DCollection(verts2, linewidths=1))
+
+        ax = subplot(projection="3d")
+        pycall(ax.add_collection3d, PyAny, p3c)
+        xlim(xmin,xmax )
+        ylim(ymin,ymax )
+        zlim(zmin,zmax )
+
+        if InputProperty[FaultIdx] == 1
+            face_color = [cm(PlotValue)[1], cm(PlotValue)[2],cm(PlotValue)[3],0.0]#PlotValue]#ReMidVel[PlotStep,FaultIdx]]
+            edge_color = [0.5, 0.5, 0.5, 1.0]#ReMidVel[PlotStep,FaultIdx]]
+        else 
+            face_color = [cm(PlotValue)[1], cm(PlotValue)[2],cm(PlotValue)[3],0.8]#PlotValue]#ReMidVel[PlotStep,FaultIdx]]
+            edge_color = [0.5, 0.5, 0.5, 1.0]#ReMidVel[PlotStep,FaultIdx]]
+
+        end
+
+        # # if Transparent == 0
+        # #     face_color = [cm(PlotValue)[1], cm(PlotValue)[2],cm(PlotValue)[3],1]#PlotValue]#ReMidVel[PlotStep,FaultIdx]]
+        # #     edge_color = [0.5, 0.5, 0.5, 1.0]#ReMidVel[PlotStep,FaultIdx]]
+        # # else 
+        # #     face_color = [cm(PlotValue)[1], cm(PlotValue)[2],cm(PlotValue)[3],0.3]#PlotValue]#ReMidVel[PlotStep,FaultIdx]]
+        # #     edge_color = [0.5, 0.5, 0.5, 1.0]#ReMidVel[PlotStep,FaultIdx]]
+
+        # # end
+        # if Edge == 0
+        # edge_color = [0 0 0 0]
+        # end
+        
+        pycall(p3c.set_facecolor, PyAny, face_color)
+        pycall(p3c.set_edgecolor, PyAny, edge_color)
+        ax.view_init(PlotRotation[1],PlotRotation[2])
+
+    end
+    return MaxValue, MinValue
+end
+
+
+
+
+
 function FaultPlot_3D_Color_SelectedElements(FaultCenter,FaultLengthStrike, FaultLengthDip, FaultStrikeAngle,
     FaultDipAngle, FaultLLRR, InputProperty, PlotRotation, MinMax_Axis, ColorMinMax, Transparent, SelectedElements)
 
@@ -286,7 +387,7 @@ function FaultPlot_3D_Color_SelectedElements(FaultCenter,FaultLengthStrike, Faul
         p3c = PyObject(art3d.Poly3DCollection(verts2, linewidths=1))
         # ReMidVel[PlotStep,FaultIdx]/MaxVel))
 
-        ax = gca(projection="3d")
+        ax = subplot(projection="3d")
         pycall(ax.add_collection3d, PyAny, p3c)
         xlim(xmin,xmax )
         ylim(ymin,ymax )
