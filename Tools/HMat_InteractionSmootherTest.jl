@@ -23,7 +23,7 @@ LoadingInputFileName="Input_Discretized.jld2"
 
 function ReduceInteractionforHmat()
     SaveIT = 1
-    PlotIt = 1
+    PlotIt = 0
 
     StrongInteractionCriteriaMultiple = 0.5
 
@@ -62,15 +62,17 @@ function ReduceInteractionforHmat()
                 for ReceiverAt = ElementRange_SR[Block,3]:ElementRange_SR[Block,4]
                     ReceiverInThisBlock = ReceiverInThisBlock + 1
                     if abs(K_Self[ReceiverAt]) * StrongInteractionCriteriaMultiple < abs( LoadingStiffnessH[Block][ReceiverInThisBlock,SourceInThisBlock]) 
-                    # println(SourceInThisBlock,"  ", ReceiverInThisBlock,"  ", K_Self[ReceiverAt], "  ", LoadingStiffnessH[Block][ReceiverInThisBlock,SourceInThisBlock])
+                    
+                        # println(SourceInThisBlock,"  ", ReceiverInThisBlock,"  ", K_Self[ReceiverAt], "  ", LoadingStiffnessH[Block][ReceiverInThisBlock,SourceInThisBlock])
+                    
                     ShearStiffness_H[Block][ReceiverInThisBlock,SourceInThisBlock] = 
                                 sign(LoadingStiffnessH[Block][ReceiverInThisBlock,SourceInThisBlock]) * abs(K_Self[ReceiverAt]) * StrongInteractionCriteriaMultiple
+                    RedutionRatio = sign(LoadingStiffnessH[Block][ReceiverInThisBlock,SourceInThisBlock]) * abs(K_Self[ReceiverAt]) * StrongInteractionCriteriaMultiple / LoadingStiffnessH[Block][ReceiverInThisBlock,SourceInThisBlock]
+                    # println(RedutionRatio)                    
+                    NormalStiffness_H[Block][ReceiverInThisBlock,SourceInThisBlock] = NormalStiffness_H[Block][ReceiverInThisBlock,SourceInThisBlock] * RedutionRatio
                     StrongInteractionPair = [StrongInteractionPair;  [SourceAt ReceiverAt]]
                     end
 
-                    # if 
-                    # if LoadingStiffnessH[]
-                
                 end
             end
         end
@@ -85,6 +87,9 @@ function ReduceInteractionforHmat()
 
         Base.delete!(file, "ShearStiffness_H") 
         write(file, "ShearStiffness_H", ShearStiffness_H) 
+        Base.delete!(file, "NormalStiffness_H") 
+        write(file, "NormalStiffness_H", NormalStiffness_H) 
+
         if length(StrongInteractionPair[:,1]) > 0
             println("ShearStiffness_H Adjusted")
         end

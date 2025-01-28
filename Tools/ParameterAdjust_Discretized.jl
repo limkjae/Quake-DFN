@@ -17,10 +17,10 @@ pygui(true)
 LoadingInputFileName="Input_Discretized.jld2" 
 
 FaultCenter= load(LoadingInputFileName, "FaultCenter")
-FaultMass= load(LoadingInputFileName, "FaultMass")
+# FaultMass= load(LoadingInputFileName, "FaultMass")
 FaultStrikeAngle= load(LoadingInputFileName, "FaultStrikeAngle")
 FaultDipAngle= load(LoadingInputFileName, "FaultDipAngle")
-FaultLLRR= load(LoadingInputFileName, "FaultLLRR")
+FaultLLRR= load(LoadingInputFileName, "FaultRakeAngle")
 Fault_a= load(LoadingInputFileName, "Fault_a")
 Fault_b= load(LoadingInputFileName, "Fault_b")
 Fault_Dc= load(LoadingInputFileName, "Fault_Dc")
@@ -35,11 +35,11 @@ MinimumNormalStress = load(LoadingInputFileName, "MinimumNormalStress")
 
 
 
-function ParameterAdj_permanent(LoadingFaultCount, FaultMass, Fault_a, Fault_b, Fault_Dc, 
+function ParameterAdj_permanent(LoadingFaultCount, Fault_a, Fault_b, Fault_Dc, 
     Fault_Theta_i, Fault_V_i, Fault_Friction_i, Fault_NormalStress, Fault_V_Const,
      FaultStrikeAngle, FaultDipAngle, FaultCenter, Fault_BulkIndex, FaultLLRR, MinimumNormalStress)
 
-    FaultMass_Original = copy(FaultMass)
+    
     Fault_a_Original = copy(Fault_a)
     Fault_b_Original = copy(Fault_b)
     Fault_Dc_Original = copy(Fault_Dc)
@@ -65,6 +65,29 @@ function ParameterAdj_permanent(LoadingFaultCount, FaultMass, Fault_a, Fault_b, 
 
     ##########^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^#############
     ######################################################################################################
+
+
+    #####################################################################################################
+    #########################  Calculation of initial velocit from defined Mu zero ######################
+    
+    # Fault_Theta_i .= 1e8
+    # Fault_V_i .= 0.0
+    # V0=1e-9
+    # Friction_0 = ones(FaultCount) * 0.59
+    
+    # if iszero(Fault_V_i)
+    #     Fault_V_i = V0 .* exp.( (Fault_Friction_i .- Friction_0 .- Fault_b .* log.(Fault_Theta_i .* V0./Fault_Dc)) ./ Fault_a)
+    #     println("maximum Initial Velocity is ", maximum(Fault_V_i))
+    # end    
+    
+    # if iszero(Fault_Theta_i)
+    #     Fault_Theta_i = Fault_Dc ./ V0 .* exp.( (Fault_Friction_i .- Friction_0 .- Fault_a .* log.(Fault_V_i ./ V0)) ./ Fault_b)
+    # end
+
+
+    #########^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^#############
+    #####################################################################################################
+    
 
 
     #####################################################################################################
@@ -124,11 +147,11 @@ function ParameterAdj_permanent(LoadingFaultCount, FaultMass, Fault_a, Fault_b, 
 
     file = jldopen(LoadingInputFileName, "a+")
 
-    if FaultMass_Original != FaultMass
-        Base.delete!(file, "FaultMass") 
-        write(file, "FaultMass", FaultMass) 
-        println("- Fault Mass Adjusted")
-    end
+    # if FaultMass_Original != FaultMass
+    #     Base.delete!(file, "FaultMass") 
+    #     write(file, "FaultMass", FaultMass) 
+    #     println("- Fault Mass Adjusted")
+    # end
     
     if Fault_a_Original != Fault_a
         Base.delete!(file, "Fault_a") 
@@ -184,7 +207,7 @@ function ParameterAdj_permanent(LoadingFaultCount, FaultMass, Fault_a, Fault_b, 
 
     close(file)
 
-    return LoadingFaultCount, FaultMass, Fault_a, Fault_b, Fault_Dc, Fault_Theta_i, Fault_V_i, 
+    return LoadingFaultCount, Fault_a, Fault_b, Fault_Dc, Fault_Theta_i, Fault_V_i, 
     Fault_Friction_i, Fault_NormalStress, Fault_V_Const, FaultCenter, FaultIndex_Adjusted, MinimumNormalStress
 
 
@@ -228,6 +251,6 @@ end
 
 
 
-ParameterAdj_permanent(LoadingFaultCount, FaultMass, Fault_a, Fault_b, Fault_Dc, 
+ParameterAdj_permanent(LoadingFaultCount, Fault_a, Fault_b, Fault_Dc, 
     Fault_Theta_i, Fault_V_i, Fault_Friction_i, Fault_NormalStress, Fault_V_Const,
      FaultStrikeAngle, FaultDipAngle, FaultCenter, Fault_BulkIndex, FaultLLRR, MinimumNormalStress);
