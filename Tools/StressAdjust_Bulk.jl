@@ -17,12 +17,21 @@ function ChangeBulk()
 
     ###### build Principal Stress. Compression Positive. Only Ratio Matters! 
     PrincipalStressRatioX = 0.3
-    PrincipalStressRatioY = 0.4
-    PrincipalStressRatioZ = 1.0
-    StressRotationStrike = 30 # degree
+    PrincipalStressRatioY = 1.0
+    PrincipalStressRatioZ = 0.5
+    StressRotationStrike = -10 # degree
     StressRotationDip = 0 # degree
+
+    MaximumTargetVelocity = 1e-10 # if this has value, the maximum velocity is set to this value. And Mu0 will be adjusted accordingly.
+    MinFrictionAllowed = 0.05
+
+    FaultSegmentLength = 1000 # if 0, segment length will be unchanged
+    
+
     LoadingFaultAdjust = 0 # if 0, Loading fault sense of slip will not be changed
     LoadingFaultInvert = 1 # if 1, loading fault sense of slip become inverted
+
+
 
     #####  FigureConfiguration  
     PlotPrincipalStress = 1 # 1:plot the principal stress (Aspect ratio: equal), 0: no
@@ -36,6 +45,7 @@ function ChangeBulk()
 
     StressVectorLocation = 0 # Autometically Adjusted when 0 
     PrinpalStressLength = 0 # Autometically Adjusted when 0 
+
     ########################################################################################
 
 
@@ -131,6 +141,9 @@ function ChangeBulk()
         
         
         Friction = sqrt(StressOnFault[2,3]^2 + StressOnFault[1,3]^2) / abs(StressOnFault[3,3])
+        if Friction < MinFrictionAllowed
+            Friction = MinFrictionAllowed
+        end
         if Input_BulktoAdjust[BulkIndex,17] > 0 && LoadingFaultInvert == 1
             Rake = Rake + 180
         end
@@ -146,6 +159,24 @@ function ChangeBulk()
         # println(Rake, "   ", Friction)
     end
 
+    
+    if MaximumTargetVelocity > 0 
+        MaxFric, MaxF_idx = findmax(Input_BulktoAdjust[:,14])
+        V0 = 1e-9
+        Fault_a = Input_BulktoAdjust[:,9]
+        Fault_b = Input_BulktoAdjust[:,10]
+        Fault_Dc = Input_BulktoAdjust[:,11]
+        Fault_Theta_i = Input_BulktoAdjust[:,12]
+        Mu0 = MaxFric - Fault_a[MaxF_idx] * log(MaximumTargetVelocity/V0) - Fault_b[MaxF_idx] * log(Fault_Theta_i[MaxF_idx]*V0 / Fault_Dc[MaxF_idx])
+        Friction_0 = ones(length(Input_BulktoAdjust[:,9])) * Mu0
+        Input_BulktoAdjust[:,13]  = V0 .* exp.( (Input_BulktoAdjust[:, 14] .- Friction_0 .- Fault_b .* log.(Fault_Theta_i .* V0./Fault_Dc)) ./ Fault_a)
+        println("Velocity Adjusted. Mu_0 = ", Mu0, ". Maximum Velocity is ", maximum(Input_BulktoAdjust[:,13] ))
+    end
+
+    if FaultSegmentLength > 0
+        Input_BulktoAdjust[:,18]  .= FaultSegmentLength
+
+    end
     SurvivedFaults = 0
     Input_BulktoAdjustFiltered = zeros(1,18) 
     for i=1:BulkFaultCount

@@ -21,7 +21,8 @@ function PlotBulk()
     ##  1.Ctr_X     2.Ctr_Y 3.Ctr_Z 4.St_L	    5.Dip_L	    6.StAng	    7.DipAng	8.LR/RN
     ##  9.a         10.b	11.Dc	12.Theta_i	13. V_i     14. Friction_i 15.NormalStress at surface [Pa]  
     ##  16. NoarmalStress Gradient [Pa] 17. V_Const     18. Minimum Segment Length
-    PlotInput = Input_Bulk[:,14]; ColorMinMax=0    
+    PlotInput = Input_Bulk[:,13]; ColorMinMax=0    
+    # PlotInput = log10.(Input_Bulk[:,13]); ColorMinMax=[-30,0]    
 
     ############################### Figure Configuration ##################################
     PlotRotation=[30,-50]
