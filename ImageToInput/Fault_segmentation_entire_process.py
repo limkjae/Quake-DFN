@@ -33,7 +33,7 @@ def background_remover():
     # Read the image
     image = cv2.imread('ImageToInput/FaultImage.jpg')
     if image is None:
-        print("Error: Could not read the image 'CollateralPaper_sidefault_drawing.jpg'.")
+        print("Error: Could not read the image 'FaultImage.jpg'.")
         exit()
 
     # Convert to HSV color space
