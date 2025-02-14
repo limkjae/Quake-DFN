@@ -15,8 +15,8 @@ Make sure you have the following packages installed:
 """
 
 import cv2 
-import numpy as np
 import math
+import numpy as np
 from skimage.morphology import skeletonize 
 from skimage.util import invert
 import sknw
@@ -25,14 +25,13 @@ from scipy.ndimage import convolve
 from scipy.sparse import csr_matrix
 from scipy.sparse.csgraph import dijkstra
 
-
 def background_remover():
     """
     Reads 'CollateralPaper_sidefault_drawing.jpg', removes the background by keeping only
     black and green parts, and saves the result as 'CollateralPaper_sidefault_drawing_no_background.jpg'.
     """
     # Read the image
-    image = cv2.imread('CollateralPaper_sidefault_drawing.jpg')
+    image = cv2.imread('ImageToInput/FaultImage.jpg')
     if image is None:
         print("Error: Could not read the image 'CollateralPaper_sidefault_drawing.jpg'.")
         exit()
@@ -58,7 +57,7 @@ def background_remover():
     output[mask != 0] = image[mask != 0]
 
     # Save the image without background
-    cv2.imwrite('CollateralPaper_sidefault_drawing_no_background.jpg', output)
+    cv2.imwrite('ImageToInput/CollateralPaper_sidefault_drawing_no_background.jpg', output)
     print("Background removal DONE")
 
 
@@ -70,7 +69,7 @@ def fault_segmentation():
     and a text file with the endpoints.
     """
     # Read the image with no background
-    image = cv2.imread('CollateralPaper_sidefault_drawing_no_background.jpg')
+    image = cv2.imread('ImageToInput/CollateralPaper_sidefault_drawing_no_background.jpg')
     if image is None:
         print("Error: Could not read 'CollateralPaper_sidefault_drawing_no_background.jpg'.")
         exit()
@@ -206,7 +205,7 @@ def fault_segmentation():
     # Save the endpoints of each segment into a text file.
     # The coordinates are transformed to a coordinate system where the origin is at the bottom left,
     # and scaled by the previously computed scale factor.
-    with open('CollateralPaper_sidefault_segmented_endpoints.txt', 'w') as f:
+    with open('ImageToInput/CollateralPaper_sidefault_segmented_endpoints.txt', 'w') as f:
         for seg in line_segments:
             p1, p2 = seg
             y1_img, x1_img = p1
@@ -233,7 +232,7 @@ def fault_segmentation():
         cv2.circle(image, (int(x2), int(y2)), radius=2, color=(255, 0, 0), thickness=-1)
 
     # Save the segmented image with marked endpoints
-    cv2.imwrite('CollateralPaper_sidefault_segmented.png', image)
+    cv2.imwrite('ImageToInput/CollateralPaper_sidefault_segmented.png', image)
     print("Fault segmentation DONE")
 
 
@@ -243,7 +242,7 @@ def line_segment_splitter():
     and writes the filtered endpoints back to the same file.
     """
     rows = []
-    with open('CollateralPaper_sidefault_segmented_endpoints.txt', 'r') as f:
+    with open('ImageToInput/CollateralPaper_sidefault_segmented_endpoints.txt', 'r') as f:
         for line in f:
             line = line.strip()
             if line == '':
@@ -273,7 +272,7 @@ def line_segment_splitter():
                 break
 
     # Write back only the unique rows
-    with open('CollateralPaper_sidefault_segmented_endpoints.txt', 'w') as f_new:
+    with open('ImageToInput/CollateralPaper_sidefault_segmented_endpoints.txt', 'w') as f_new:
         for idx, row in enumerate(rows):
             if idx not in rows_to_delete:
                 f_new.write(', '.join(map(str, row)) + '\n')

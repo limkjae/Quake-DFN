@@ -16,17 +16,16 @@ function ChangeBulk()
     ######################################## Inputs ########################################
 
     ###### build Principal Stress. Compression Positive. Only Ratio Matters! 
-    PrincipalStressRatioX = 0.3
+    PrincipalStressRatioX = 0.4
     PrincipalStressRatioY = 1.0
     PrincipalStressRatioZ = 0.5
-    StressRotationStrike = -10 # degree
-    StressRotationDip = 0 # degree
+    StressRotationStrike = 10 # degree
+    StressRotationDip = 45 # degree
 
     MaximumTargetVelocity = 1e-10 # if this has value, the maximum velocity is set to this value. And Mu0 will be adjusted accordingly.
     MinFrictionAllowed = 0.05
 
-    FaultSegmentLength = 1000 # if 0, segment length will be unchanged
-    
+    FaultSegmentLength = 1000 # if 0, segment length will be unchanged    
 
     LoadingFaultAdjust = 0 # if 0, Loading fault sense of slip will not be changed
     LoadingFaultInvert = 1 # if 1, loading fault sense of slip become inverted
@@ -48,6 +47,10 @@ function ChangeBulk()
 
     ########################################################################################
 
+    MaxStressRatio =  maximum([PrincipalStressRatioX,PrincipalStressRatioY, PrincipalStressRatioZ])
+    PrincipalStressRatioX = PrincipalStressRatioX / MaxStressRatio
+    PrincipalStressRatioY = PrincipalStressRatioY / MaxStressRatio
+    PrincipalStressRatioZ = PrincipalStressRatioZ / MaxStressRatio
 
     Input_Bulk=readdlm(InputBulkFileName)
     Switch_StrikeSlip_or_ReverseNormal = Input_Bulk[2,1] 
@@ -94,6 +97,7 @@ function ChangeBulk()
         PrinpalStressLength = maximum([maximum(Input_BulktoAdjust[1:end-LoadingFaultCountPlot,1]) - minimum(Input_BulktoAdjust[1:end-LoadingFaultCountPlot,1]), 
                                       maximum(Input_BulktoAdjust[1:end-LoadingFaultCountPlot,2]) - minimum(Input_BulktoAdjust[1:end-LoadingFaultCountPlot,2])])/5
     end
+
     #################### Calculate Stress for XYZ Frame #####################
     # Stres Negative for Compression
     PrincipalStressRatio = [-PrincipalStressRatioX 0 0 
@@ -120,6 +124,8 @@ function ChangeBulk()
 
     ############## Calcuate Stress and Frictions in Each Fault ###############
     RakeAngle = zeros(BulkFaultCount)
+    ShearFric =  zeros(BulkFaultCount)
+    NormalFric =  zeros(BulkFaultCount)
     for BulkIndex = 1:BulkFaultCount
 
         FaultStrikeAngle = Input_BulktoAdjust[BulkIndex, 6]
@@ -138,10 +144,12 @@ function ChangeBulk()
         StressOnFault = RotationMat_FromFault_All * StressRatioXYZ * RotationMat_FromFault_All'    
         # RakeAngle[BulkIndex] = rad2deg(atan(StressOnFault[2,3] / StressOnFault[1,3]))
         Rake = rad2deg(atan(StressOnFault[2,3] / StressOnFault[1,3]))
-        
-        
+        ShearFric[BulkIndex] = sqrt(StressOnFault[2,3]^2 + StressOnFault[1,3]^2) 
+        NormalFric[BulkIndex] = abs(StressOnFault[3,3])
         Friction = sqrt(StressOnFault[2,3]^2 + StressOnFault[1,3]^2) / abs(StressOnFault[3,3])
+
         if Friction < MinFrictionAllowed
+            ShearFric[BulkIndex] = ShearFric[BulkIndex]  * MinFrictionAllowed / Friction
             Friction = MinFrictionAllowed
         end
         if Input_BulktoAdjust[BulkIndex,17] > 0 && LoadingFaultInvert == 1
@@ -214,6 +222,15 @@ function ChangeBulk()
 
     ax = PlotBulk_SenseOfSlip(0.0, Input_BulktoAdjust[1:end-LoadingFaultCountPlot,:], PlotRotation, Transparent, Edge, MinMax_Axis)
  
+    figure(3)
+    plot([0,1.2], [0,1.2] * 1.0, color = [0.8, 0.8, 0.8])
+    plot([0,1.2], [0,1.2] * 0.8, color = [0.8, 0.8, 0.8])
+    plot([0,1.2], [0,1.2] * 0.6, color = [0.8, 0.8, 0.8])
+    plot([0,1.2], [0,1.2] * 0.4, color = [0.8, 0.8, 0.8])
+    plot([0,1.2], [0,1.2] * 0.2, color = [0.8, 0.8, 0.8])
+    scatter(NormalFric, ShearFric,  facecolors="none", edgecolor="k")
+    xlim([0,1.2])
+    ylim([0,1.2])
 
     if PlotPrincipalStress ==1
 

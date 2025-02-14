@@ -32,7 +32,7 @@ function calculation(i, j, k, L, line)
 end
 
 
-data = readdlm("CollateralPaper_sidefault_segmented_endpoints.txt", ',', Float64)
+data = readdlm("ImageToInput/CollateralPaper_sidefault_segmented_endpoints.txt", ',', Float64)
 
 
 output = [
@@ -47,7 +47,7 @@ for (index, row) in enumerate(eachrow(data))
 end
 
 
-open("Input_BulkFaultGeometry_XXXXX.txt", "w") do f
+open("Input_BulkFaultGeometry.txt", "w") do f
     for line in output
         println(f, line)
     end
