@@ -19,10 +19,12 @@ function ChangeBulk()
     PrincipalStressRatioX = 0.4
     PrincipalStressRatioY = 1.0
     PrincipalStressRatioZ = 0.5
-    StressRotationStrike = 10 # degree
-    StressRotationDip = 45 # degree
+    StressRotationStrike = -10 # degree
+    StressRotationDip = 0 # degree
 
     MaximumTargetVelocity = 1e-10 # if this has value, the maximum velocity is set to this value. And Mu0 will be adjusted accordingly.
+    V_p = 1e-5 # When target velocity is set this will be used for peak friction plot
+    V_r = 1e-2 # When target velocity is set this will be used for residual friction plot
     MinFrictionAllowed = 0.05
 
     FaultSegmentLength = 1000 # if 0, segment length will be unchanged    
@@ -48,6 +50,8 @@ function ChangeBulk()
     ########################################################################################
 
     MaxStressRatio =  maximum([PrincipalStressRatioX,PrincipalStressRatioY, PrincipalStressRatioZ])
+    StressRotationStrike = StressRotationStrike + 0.001
+    StressRotationDip = StressRotationDip + 0.001
     PrincipalStressRatioX = PrincipalStressRatioX / MaxStressRatio
     PrincipalStressRatioY = PrincipalStressRatioY / MaxStressRatio
     PrincipalStressRatioZ = PrincipalStressRatioZ / MaxStressRatio
@@ -167,7 +171,8 @@ function ChangeBulk()
         # println(Rake, "   ", Friction)
     end
 
-    
+    PeakFriction = 0.0
+    ResidualFriction = 0.0
     if MaximumTargetVelocity > 0 
         MaxFric, MaxF_idx = findmax(Input_BulktoAdjust[:,14])
         V0 = 1e-9
@@ -179,6 +184,8 @@ function ChangeBulk()
         Friction_0 = ones(length(Input_BulktoAdjust[:,9])) * Mu0
         Input_BulktoAdjust[:,13]  = V0 .* exp.( (Input_BulktoAdjust[:, 14] .- Friction_0 .- Fault_b .* log.(Fault_Theta_i .* V0./Fault_Dc)) ./ Fault_a)
         println("Velocity Adjusted. Mu_0 = ", Mu0, ". Maximum Velocity is ", maximum(Input_BulktoAdjust[:,13] ))
+        PeakFriction = Mu0 + Fault_a[MaxF_idx] * log(V_p / 1e-9 ) + Fault_b[MaxF_idx] *log(1e-9 * Fault_Theta_i[MaxF_idx] ./ Fault_Dc[MaxF_idx])
+        ResidualFriction = Mu0 + (Fault_a[MaxF_idx] - Fault_b[MaxF_idx]) * log.(V_r / 1e-9 )
     end
 
     if FaultSegmentLength > 0
@@ -228,6 +235,8 @@ function ChangeBulk()
     plot([0,1.2], [0,1.2] * 0.6, color = [0.8, 0.8, 0.8])
     plot([0,1.2], [0,1.2] * 0.4, color = [0.8, 0.8, 0.8])
     plot([0,1.2], [0,1.2] * 0.2, color = [0.8, 0.8, 0.8])
+    plot([0,1.2], [0,1.2] * PeakFriction, color = "r")
+    plot([0,1.2], [0,1.2] * ResidualFriction, color = "b")
     scatter(NormalFric, ShearFric,  facecolors="none", edgecolor="k")
     xlim([0,1.2])
     ylim([0,1.2])
