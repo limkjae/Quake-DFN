@@ -19,7 +19,7 @@ function ChangeBulk()
     PrincipalStressRatioX = 0.4
     PrincipalStressRatioY = 1.0
     PrincipalStressRatioZ = 0.5
-    StressRotationStrike = -10 # degree
+    StressRotationStrike = -0 # degree
     StressRotationDip = 0 # degree
 
     MaximumTargetVelocity = 1e-10 # if this has value, the maximum velocity is set to this value. And Mu0 will be adjusted accordingly.
@@ -29,9 +29,12 @@ function ChangeBulk()
 
     FaultSegmentLength = 1000 # if 0, segment length will be unchanged    
 
+    Fault_a_Rev = 0.0 # if not zero, RSF "a" value will be revised to this
+    Fault_b_Rev = 0.0 # if not zero, RSF "b" value will be revised to this
+    Fault_Dc_Rev = 0.0 # if not zero, RSF "Dc" value will be revised to this
+
     LoadingFaultAdjust = 0 # if 0, Loading fault sense of slip will not be changed
     LoadingFaultInvert = 1 # if 1, loading fault sense of slip become inverted
-
 
 
     #####  FigureConfiguration  
@@ -171,12 +174,17 @@ function ChangeBulk()
         # println(Rake, "   ", Friction)
     end
 
+    if Fault_a_Rev != 0.0; Input_BulktoAdjust[:,9] .= Fault_a_Rev; end
+    if Fault_b_Rev != 0.0; Input_BulktoAdjust[:,10] .= Fault_b_Rev; end
+    if Fault_Dc_Rev != 0.0; Input_BulktoAdjust[:,11] .= Fault_Dc_Rev; end
+
     PeakFriction = 0.0
     ResidualFriction = 0.0
     if MaximumTargetVelocity > 0 
         MaxFric, MaxF_idx = findmax(Input_BulktoAdjust[:,14])
         V0 = 1e-9
-        Fault_a = Input_BulktoAdjust[:,9]
+        
+        Fault_a = Input_BulktoAdjust[:,9] 
         Fault_b = Input_BulktoAdjust[:,10]
         Fault_Dc = Input_BulktoAdjust[:,11]
         Fault_Theta_i = Input_BulktoAdjust[:,12]
@@ -230,6 +238,7 @@ function ChangeBulk()
     ax = PlotBulk_SenseOfSlip(0.0, Input_BulktoAdjust[1:end-LoadingFaultCountPlot,:], PlotRotation, Transparent, Edge, MinMax_Axis)
  
     figure(3)
+    clf()
     plot([0,1.2], [0,1.2] * 1.0, color = [0.8, 0.8, 0.8])
     plot([0,1.2], [0,1.2] * 0.8, color = [0.8, 0.8, 0.8])
     plot([0,1.2], [0,1.2] * 0.6, color = [0.8, 0.8, 0.8])

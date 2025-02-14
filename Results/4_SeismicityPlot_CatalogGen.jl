@@ -35,14 +35,17 @@ EventTime_Merged, EventMomentMagnitude,  EventLocation_Merged =
 ######################## Plots ##########################
 
 figure(1)
+clf()
 scatter(EventTime_Merged/60/60/24, EventMomentMagnitude,s= 6 .^ (EventMomentMagnitude .+ MarkerSizeAdjustment), facecolors="none", edgecolor="b")
 ylim([2,8])
 
 
 figure(2)
+clf()
 scatter3D(EventLocation_Merged[:,1], EventLocation_Merged[:,2],-EventLocation_Merged[:,3],s= 6 .^ (EventMomentMagnitude .+ MarkerSizeAdjustment), facecolors="none", edgecolor="b")
 
 figure(3)
+clf()
 scatter(EventLocation_Merged[:,1], EventLocation_Merged[:,2],s= 6 .^ (EventMomentMagnitude .+ MarkerSizeAdjustment), facecolors="none", edgecolor="b")
 
 
