@@ -43,6 +43,9 @@ TimeSteppingAdj =
     [0.0  0.0  0.0  0.0;   # Time step size
      0.0  0.0  0.0  0.0]   # Velocity
 
+########## Strong Interaction Supression for Numerical Stability ##############
+StrongInteractionCriteriaMultiple = 0.5 # only applied when larger than 0.
+
 ########################## Ax=b solver ############################
 JacobiOrGS = 2 # 1: Jacobi, 2: Gauss-Seidel (Ax=b solver that is required for initializing)
 # Jacobi is faster in general but Gauss-Seidel is stabler.
@@ -55,7 +58,6 @@ GeometryPlot = 0 # 1 will plot a-b
 
 
 
-
 function RunRSFDFN3D(TotalStep, RecordStep, RuptureTimeStepMultiple,
     LoadingInputFileName, SaveResultFileName)
 
@@ -65,6 +67,15 @@ function RunRSFDFN3D(TotalStep, RecordStep, RuptureTimeStepMultiple,
         println("Theread Count is larger than Threads used in Julia")
         println("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
     end
+
+
+    if Threads.nthreads() == 1
+        println("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
+        println("          Only 1 thread is being used             ")
+        println("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
+    end
+
+
     ################################################################################
     ############################### Load Input Files ###############################
 
@@ -99,8 +110,13 @@ function RunRSFDFN3D(TotalStep, RecordStep, RuptureTimeStepMultiple,
     ShearStiffness_H = load(LoadingInputFileName, "ShearStiffness_H")
     NormalStiffness_H = load(LoadingInputFileName, "NormalStiffness_H")
     NormalStiffnessZero = load(LoadingInputFileName, "NormalStiffnessZero")
+    Admissible = load(LoadingInputFileName,"Admissible")
     ################################################################################
     
+    if StrongInteractionCriteriaMultiple > 0
+        ShearStiffness_H, NormalStiffness_H = ReduceTooStrongInteraction_Hmat(StrongInteractionCriteriaMultiple, Admissible,
+        FaultCount, ElementRange_SR, ShearStiffness_H, NormalStiffness_H)
+    end
     # NormalStiffnessZero = 1
 
     ################################################################################

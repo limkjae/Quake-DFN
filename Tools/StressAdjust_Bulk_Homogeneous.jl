@@ -16,22 +16,22 @@ function ChangeBulk()
     ######################################## Inputs ########################################
 
     ###### build Principal Stress. Compression Positive. Only Ratio Matters! 
-    PrincipalStressRatioX = 0.4
+    PrincipalStressRatioX = 0.3
     PrincipalStressRatioY = 1.0
     PrincipalStressRatioZ = 0.5
-    StressRotationStrike = -0 # degree
+    StressRotationStrike = 20 # degree
     StressRotationDip = 0 # degree
 
-    MaximumTargetVelocity = 1e-10 # if this has value, the maximum velocity is set to this value. And Mu0 will be adjusted accordingly.
+    MaximumTargetVelocity = 1e-11 # if this has value, the maximum velocity is set to this value. And Mu0 will be adjusted accordingly.
     V_p = 1e-5 # When target velocity is set this will be used for peak friction plot
     V_r = 1e-2 # When target velocity is set this will be used for residual friction plot
     MinFrictionAllowed = 0.05
 
     FaultSegmentLength = 1000 # if 0, segment length will be unchanged    
 
-    Fault_a_Rev = 0.0 # if not zero, RSF "a" value will be revised to this
+    Fault_a_Rev = 0.002 # if not zero, RSF "a" value will be revised to this
     Fault_b_Rev = 0.0 # if not zero, RSF "b" value will be revised to this
-    Fault_Dc_Rev = 0.0 # if not zero, RSF "Dc" value will be revised to this
+    Fault_Dc_Rev = 0.00001 # if not zero, RSF "Dc" value will be revised to this
 
     LoadingFaultAdjust = 0 # if 0, Loading fault sense of slip will not be changed
     LoadingFaultInvert = 1 # if 1, loading fault sense of slip become inverted
@@ -217,7 +217,7 @@ function ChangeBulk()
     open(InputBulkFileName, "w") do io
         write(io,"SwitchSS/RN\tShearMod\tPoissonRatio\tR_Density\tCrit_TooClose\tTooCloseNormal_Multiplier\tMinimum_NS\n")
         writedlm(io,[0.0   Input_Bulk[2,2]     Input_Bulk[2,3]      Input_Bulk[2,4]   Input_Bulk[2,5]      Input_Bulk[2,6]  Input_Bulk[2,7] ])
-        write(io, "Ctr_X\tCtr_Y\tCtr_Z\tSt_L\tDip_L\tStAng\tDipAng\tRakeAngle\ta\tb\tDc\tTheta_i\tV_i\tFric_i\tSig0\tSigGrad\tV_Const\tMaxLeng\n")
+        write(io, "Ctr_X\tCtr_Y\tCtr_Z\tSt_L\tDip_L\tStAng\tDipAng\tRake\ta\tb\tDc\tTheta_i\tV_i\tFric_i\tSig0\tSigGrad\tV_Const\tMaxLeng\n")
         writedlm(io, Input_BulktoAdjustFiltered)
     end
 

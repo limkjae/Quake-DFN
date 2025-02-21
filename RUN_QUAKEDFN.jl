@@ -38,7 +38,8 @@ TimeSteppingAdj =
         [0.0  0.0  0.0  0.0;   # Time step size
          0.0  0.0  0.0  0.0]   # Velocity
 
-
+########## Strong Interaction Supression for Numerical Stability ##############
+StrongInteractionCriteriaMultiple = 0.5 # only applied when larger than 0.
 
 ############################# Plots before run? ################################
 DtPlot = 0 # 1 will plot dt vs maxV
@@ -82,7 +83,13 @@ function RunRSFDFN3D(TotalStep, RecordStep,
     ########^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^########
     ################################################################################
 
-    # NormalStiffnessZero = 1
+
+    if StrongInteractionCriteriaMultiple > 0    
+        StiffnessMatrixShear, StiffnessMatrixNormal = 
+            ReduceTooStrongInteraction(StrongInteractionCriteriaMultiple, FaultCount, StiffnessMatrixShear, StiffnessMatrixNormal)
+    end
+
+
 
     if GeometryPlot==1
         PlotRotation=[45,-45]

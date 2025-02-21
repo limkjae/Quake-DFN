@@ -15,12 +15,12 @@ function EvolutionLaw(ThetaOld, Dt, V, Dc, Alpha_Evo, EffNormalStress, EffNormal
 end
 
 
-function EvolutionLaw_Slow(ThetaOld, Dt, V, Dc, Alpha_Evo, EffNormalStress, EffNormalStress_Old, b)
-    # Theta = (ThetaOld+Dt)/(1 + Dt * V/Dc + Alpha_Evo * Dt * (EffNormalStress - EffNormalStress_Old) / Dt / b / EffNormalStress)
+# function EvolutionLaw_Slow(ThetaOld, Dt, V, Dc, Alpha_Evo, EffNormalStress, EffNormalStress_Old, b)
+#     # Theta = (ThetaOld+Dt)/(1 + Dt * V/Dc + Alpha_Evo * Dt * (EffNormalStress - EffNormalStress_Old) / Dt / b / EffNormalStress)
     
-        Theta = ThetaOld-V*ThetaOld/Dc*log(V*ThetaOld/Dc)*Dt; #Ruina Law
-    return Theta                
-end
+#         Theta = ThetaOld-V*ThetaOld/Dc*log(V*ThetaOld/Dc)*Dt; #Ruina Law
+#     return Theta                
+# end
 
 
 function Solver_HighV_D(FaultIdx, ConvergenceCrit,DispOld,FrictionOld,ThetaOld,VOld,
@@ -134,12 +134,7 @@ while maxDiff>ConvergenceCrit_Iter
         end
 
     else 
-        Disp=DispOld+(VOld+V)/2*Dt; # Update disp
-        #         Theta=ThetaOld-V*ThetaOld/Dc*log(V*ThetaOld/Dc)*Dt; %Ruina Law
-        #         Theta=ThetaOld+(1-V*ThetaOld/Dc)*Dt; %Dieterich Law
-        # Theta=(ThetaOld-Dc/V)*exp(-V/Dc*Dt)+Dc/V; #Dieterich Law Semi analytic
-
-        # Theta=ThetaOld-V*ThetaOld/Dc*log(V*ThetaOld/Dc)*Dt  #Ruina Law
+        Disp=DispOld+(VOld+V)/2*Dt; # Update 
         Theta = EvolutionLaw(ThetaOld, Dt, V, Dc, Alpha_Evo, EffNormalStress, EffNormalStress_Old, b, 1, EvolutionDR)
         # Const_T = V/Dc + Alpha_Evo * (EffNormalStress - EffNormalStress_Old) / Dt / b / EffNormalStress
         # Theta=(ThetaOld - 1/Const_T)*exp(-V/Dc*Dt) + 1/Const_T; #Dieterich Law Semi analytic with Alpha
@@ -210,10 +205,6 @@ function Solver_LowV_D(FaultIdx, ConvergenceCrit,DispOld,FrictionOld,ThetaOld,VO
         DV=VTest/1e10;
 
         Accel=(V-VOld)/Dt;
-        #         Theta=ThetaOld-V*ThetaOld/Dc*log(V*ThetaOld/Dc)*Dt; %Ruina Law
-        # Theta=ThetaOld+(1-V*ThetaOld/Dc)*Dt; #Dieterich Law
-        # Theta=(ThetaOld+Dt)/(1+V*Dt/Dc); #Dieterich Law
-        # Theta = (ThetaOld+Dt)/(1 + Dt * V/Dc + Alpha_Evo * Dt * (EffNormalStress - EffNormalStress_Old) / Dt / b / EffNormalStress); #Dieterich Law with Alpha
         Theta = EvolutionLaw(ThetaOld, Dt, V, Dc, Alpha_Evo, EffNormalStress, EffNormalStress_Old, b, 0, EvolutionDR)
 
         if Theta < 0        
@@ -242,10 +233,6 @@ function Solver_LowV_D(FaultIdx, ConvergenceCrit,DispOld,FrictionOld,ThetaOld,VO
         VTest2 = copy(V)
 
         Accel=(V-VOld)/Dt;
-        #         Theta=ThetaOld-V*ThetaOld/Dc*log(V*ThetaOld/Dc)*Dt; %Ruina Law
-        # Theta=ThetaOld+(1-V*ThetaOld/Dc)*Dt; #Dieterich Law
-        # Theta=(ThetaOld+Dt)/(1+V*Dt/Dc); #Dieterich Law
-        # Theta = (ThetaOld+Dt)/(1 + Dt * V/Dc + Alpha_Evo * Dt * (EffNormalStress - EffNormalStress_Old) / Dt / b / EffNormalStress); #Dieterich Law with Alpha
         Theta = EvolutionLaw(ThetaOld, Dt, V, Dc, Alpha_Evo, EffNormalStress, EffNormalStress_Old, b, 0, EvolutionDR)
         if Theta < 0            
             if Dt < SwitchV; InstabilityThistime=3; V=copy(VOld); Theta=copy(ThetaOld); Friction=copy(FrictionOld); Disp=copy(DispOld);  FLAG_GoodToGo=0; # println("Switch 3 ", FaultIdx, " V ", V, " VOld ",VOld, " Dt ", Dt)
@@ -278,10 +265,6 @@ function Solver_LowV_D(FaultIdx, ConvergenceCrit,DispOld,FrictionOld,ThetaOld,VO
 
 
         Disp=DispOld+(VOld+V)/2*Dt; # Update disp
-        #         Theta=ThetaOld-V*ThetaOld/Dc*log(V*ThetaOld/Dc)*Dt; #Ruina Law
-        # Theta=ThetaOld+(1-V*ThetaOld/Dc)*Dt; #Dieterich Law
-        # Theta=(ThetaOld+Dt)/(1+V*Dt/Dc); #Dieterich Law
-        # Theta = (ThetaOld+Dt)/(1 + Dt * V/Dc + Alpha_Evo * Dt * (EffNormalStress - EffNormalStress_Old) / Dt / b / EffNormalStress); #Dieterich Law with Alpha
         Theta = EvolutionLaw(ThetaOld, Dt, V, Dc, Alpha_Evo, EffNormalStress, EffNormalStress_Old, b, 0, EvolutionDR)
         if Theta < 0            
             if Dt < SwitchV; InstabilityThistime=3; V=copy(VOld); Theta=copy(ThetaOld); Friction=copy(FrictionOld); Disp=copy(DispOld);  FLAG_GoodToGo=0; # println("Switch 5 ", FaultIdx, " V ", V, " VOld ",VOld, " Dt ", Dt)
@@ -554,4 +537,71 @@ function InterpolateFromStressChange(Time, FaultCount,
 
 
     return D_EffStress_Normal, D_EffStress_Shear, D_EffStress_Pressure
+end
+
+
+
+
+
+function ReduceTooStrongInteraction_Hmat(StrongInteractionCriteriaMultiple, Admissible,
+    FaultCount, ElementRange_SR, ShearStiffness_H, NormalStiffness_H)
+
+    LoadingStiffnessH, K_Self= StiffnessTransitionToLoading(ShearStiffness_H, ElementRange_SR, FaultCount)
+    StrongInteractionPair = zeros(Int,1,2)
+
+    BlockCount = length(Admissible)
+    for Block = 1:BlockCount
+        if Admissible[Block] == 0
+            SourceInThisBlock = 0
+            for SourceAt = ElementRange_SR[Block,1]:ElementRange_SR[Block,2]
+                SourceInThisBlock = SourceInThisBlock+1                
+                ReceiverInThisBlock = 0
+                for ReceiverAt = ElementRange_SR[Block,3]:ElementRange_SR[Block,4]
+                    ReceiverInThisBlock = ReceiverInThisBlock + 1
+                    if abs(K_Self[ReceiverAt]) * StrongInteractionCriteriaMultiple < abs( LoadingStiffnessH[Block][ReceiverInThisBlock,SourceInThisBlock]) 
+                        RedutionRatio = abs(K_Self[ReceiverAt]) * StrongInteractionCriteriaMultiple / abs(LoadingStiffnessH[Block][ReceiverInThisBlock,SourceInThisBlock])
+                        ShearStiffness_H[Block][ReceiverInThisBlock,SourceInThisBlock] = ShearStiffness_H[Block][ReceiverInThisBlock,SourceInThisBlock]  * RedutionRatio
+                                    # sign(LoadingStiffnessH[Block][ReceiverInThisBlock,SourceInThisBlock]) * abs(K_Self[ReceiverAt]) * StrongInteractionCriteriaMultiple
+                        
+                        NormalStiffness_H[Block][ReceiverInThisBlock,SourceInThisBlock] = NormalStiffness_H[Block][ReceiverInThisBlock,SourceInThisBlock] * RedutionRatio
+                        StrongInteractionPair = [StrongInteractionPair;  [SourceAt ReceiverAt]]
+                    end
+
+                end
+            end
+        end
+    end
+    StrongInteractionPair = StrongInteractionPair[2:end,:]
+
+    println(length(StrongInteractionPair[:,1]), "/", FaultCount^2," interaction is smoothened")
+
+    return ShearStiffness_H, NormalStiffness_H
+end
+
+
+
+
+
+
+function ReduceTooStrongInteraction(StrongInteractionCriteriaMultiple, FaultCount, StiffnessMatrixShear, StiffnessMatrixNormal)
+
+
+    StrongInteractionPair = zeros(Int,1,2)
+    for SourceAt = 1:FaultCount
+        for ReceiverAt = 1:FaultCount
+            if SourceAt != ReceiverAt
+                if abs(StiffnessMatrixShear[ReceiverAt, ReceiverAt]) * StrongInteractionCriteriaMultiple < abs( StiffnessMatrixShear[ReceiverAt, SourceAt]) 
+                    RedutionRatio = abs(StiffnessMatrixShear[ReceiverAt, ReceiverAt]) * StrongInteractionCriteriaMultiple /  abs( StiffnessMatrixShear[ReceiverAt, SourceAt]) 
+                    StiffnessMatrixShear[ReceiverAt, SourceAt]  = StiffnessMatrixShear[ReceiverAt, SourceAt] * RedutionRatio
+                    StiffnessMatrixNormal[ReceiverAt, SourceAt]  = StiffnessMatrixNormal[ReceiverAt, SourceAt] * RedutionRatio
+                    StrongInteractionPair = [StrongInteractionPair;  [SourceAt ReceiverAt]]
+                end
+
+            end
+        end
+    end
+    StrongInteractionPair = StrongInteractionPair[2:end,:]
+    println(length(StrongInteractionPair[:,1]), "/", FaultCount^2," interaction is smoothened")
+
+    return StiffnessMatrixShear, StiffnessMatrixNormal
 end
