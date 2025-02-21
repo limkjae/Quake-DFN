@@ -22,11 +22,14 @@ function BuildBulk()
 
     NormalStressSurface=0 #10e6
 
-    Fault1StrikeAngle = 0.0
-    Fault2StrikeAngle = 90.0
-    Fault1DipAngle = 90.0
-    Fault2DipAngle = 90.0
-    MinFriction = 0.2
+    Fault1StrikeAngle = 30.0
+    Fault2StrikeAngle = 110.0
+    Fault1DipAngle = 70.0
+    Fault2DipAngle = 45.0
+    Fault1RakeAngle = 90.0
+    Fault2RakeAngle = 30.0
+
+    MinFriction = 0.1
     
     Faultcount=2
     MaxDiscritLength=200.0
@@ -39,7 +42,7 @@ function BuildBulk()
     ############################# Write Bulk Input #################################
     ######++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++######
     ## Bulk File Order 
-    ##  1.Ctr_X     2.Ctr_Y 3.Ctr_Z 4.St_L	    5.Dip_L	    6.StAng	    7.DipAng	8.LR/RN (-1: LL / +1 RL or -1:Reverse / +1 Normal)
+    ##  1.Ctr_X     2.Ctr_Y 3.Ctr_Z 4.St_L	    5.Dip_L	    6.StAng	    7.DipAng	8.Rake
     ##  9.a         10.b	11.Dc	12.Theta_i	13. V_i     14. Friction_i 15.NormalStress at surface [Pa]  
     ##  16. NoarmalStress Gradient [Pa] 17. V_Const     18. Minimum Segment Length
 
@@ -57,7 +60,7 @@ function BuildBulk()
     Fault[1,5]=Fault[1,3]*2;
     Fault[1,6]=Fault1StrikeAngle;
     Fault[1,7]=Fault1DipAngle;
-    Fault[1,8]=0.0;
+    Fault[1,8]=Fault1RakeAngle;
 
     ### Fault 2     
     Fault[2,1]=100.0
@@ -67,7 +70,7 @@ function BuildBulk()
     Fault[2,5]=Fault[2,3]*2;
     Fault[2,6]=Fault2StrikeAngle;
     Fault[2,7]=Fault2DipAngle;
-    Fault[2,8]=0.0;
+    Fault[2,8]=Fault2RakeAngle;
 
     # ### Fault 3     
     # Fault[3,1]=0.0
