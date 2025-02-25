@@ -7,6 +7,7 @@ using Statistics
 pygui(true)
 include("Functions_Plot.jl")
 
+
 ResultName="Result"
 FileName="Results/" * ResultName * ".jld2"
 FileNameInput="Results/" * ResultName * "_Input.jld2"
@@ -19,16 +20,16 @@ ResultV[ResultV.<=0] .= 1e-100
 ############################### Figure Configuration ##################################
 
 # figure(10); clf(); PyPlot.plot(log10.(ResultV[:,1:1:end])); xlabel("Record Step")
-PlotStep = 200
-PlotRotation = [23,-16]
-Transparent = 0 # 1 for transparent fault plot. 0 for no-transparency
+PlotStep = 100
+PlotRotation = [40,-120]
+Transparent = 1 # 1 for transparent fault plot. 0 for no-transparency
 Edge = 0 # 0 for no element boudary. 1 for plotting element boundary
 MinMax_Axis = 0 # 0 for automatically selected axis minimim and maximum 
 # MinMax_Axis=[-2000 2000; -2000 2000; -4000 0]
 LoadingFaultPlot = 0 # 1 to plot constant velocity faults. 
 
 ShowDay = 0 # If 1, day is shown in the location 
-DayLocation = [0,0,1000]
+DayLocation = [20000,25000,1000]
 # MaxVLog = log10(maximum(ResultV[:,:]))
 ################## What to Plot ? ###################
 PlotInput=log10.(ResultV[PlotStep,:]); ColorMinMax=[-12, 0] 
@@ -37,7 +38,7 @@ PlotInput=log10.(ResultV[PlotStep,:]); ColorMinMax=[-12, 0]
 # PlotInput=log10.(ResultPressure[PlotStep,:]); ColorMinMax=[3,6]
 # PlotInput= Result_NormalStress[PlotStep,:] -  Fault_NormalStress; ColorMinMax=[-1e6,1e6]
 # PlotInput=ResultDisp[PlotStep,:]; ColorMinMax=0 
-# PlotInput=ResultDisp[PlotStep,:]; ColorMinMax=[0,0.3] 
+
 #############---------------------------#############
 
 

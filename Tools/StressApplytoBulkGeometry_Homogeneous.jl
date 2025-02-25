@@ -18,20 +18,27 @@ function ChangeBulk()
     ###### build Principal Stress. Compression Positive. Only Ratio Matters! 
     PrincipalStressRatioX = 0.3
     PrincipalStressRatioY = 1.0
-    PrincipalStressRatioZ = 0.5
-    StressRotationStrike = 20 # degree
+    PrincipalStressRatioZ = 0.6
+    StressRotationStrike = -5 # degree
     StressRotationDip = 0 # degree
 
     MaximumTargetVelocity = 1e-11 # if this has value, the maximum velocity is set to this value. And Mu0 will be adjusted accordingly.
+    ConstantTheta = 1e10 # if not zero, initial theta will be revised to this uniformly
+    Fault_a_Rev = 0.0 # if not zero, RSF "a" value will be revised to this uniformly
+    Fault_b_Rev = 0.0 # if not zero, RSF "b" value will be revised to this uniformly
+    Fault_Dc_Rev = 0.0 # if not zero, RSF "Dc" value will be revised to this uniformly
+
     V_p = 1e-5 # When target velocity is set this will be used for peak friction plot
     V_r = 1e-2 # When target velocity is set this will be used for residual friction plot
     MinFrictionAllowed = 0.05
+    
+    MinimumNormalStressAllowed = 1e6
+    StressOnSurface_Sig1Orientation = 10e6 # pascal
+    StressGredient_Sig1Orientation = 0 # pascal/m
 
-    FaultSegmentLength = 1000 # if 0, segment length will be unchanged    
 
-    Fault_a_Rev = 0.002 # if not zero, RSF "a" value will be revised to this
-    Fault_b_Rev = 0.0 # if not zero, RSF "b" value will be revised to this
-    Fault_Dc_Rev = 0.00001 # if not zero, RSF "Dc" value will be revised to this
+    FaultSegmentLength = 0 # if 0, segment length will be unchanged    
+
 
     LoadingFaultAdjust = 0 # if 0, Loading fault sense of slip will not be changed
     LoadingFaultInvert = 1 # if 1, loading fault sense of slip become inverted
@@ -42,7 +49,7 @@ function ChangeBulk()
     PlotTractionVector = 0 # 1: plot traction, normal, shear vector, 0: no
     PlotLoadingFault = 0 # 1: plot loading fault, normal, shear vector, 0: no
 
-    PlotRotation=[30,-50]
+    PlotRotation=[56,-109]
     Transparent = 1 # 1 for transparent fault plot
     Edge = 1 # 0 for no element boudary 
     MinMax_Axis=0
@@ -58,7 +65,8 @@ function ChangeBulk()
     PrincipalStressRatioX = PrincipalStressRatioX / MaxStressRatio
     PrincipalStressRatioY = PrincipalStressRatioY / MaxStressRatio
     PrincipalStressRatioZ = PrincipalStressRatioZ / MaxStressRatio
-
+    Sig1 = maximum([PrincipalStressRatioX, PrincipalStressRatioY, PrincipalStressRatioZ])
+    Sig3 = minimum([PrincipalStressRatioX, PrincipalStressRatioY, PrincipalStressRatioZ])
     Input_Bulk=readdlm(InputBulkFileName)
     Switch_StrikeSlip_or_ReverseNormal = Input_Bulk[2,1] 
     Input_BulktoAdjust=Input_Bulk[4:end,:]
@@ -102,7 +110,7 @@ function ChangeBulk()
     end 
     if PrinpalStressLength == 0
         PrinpalStressLength = maximum([maximum(Input_BulktoAdjust[1:end-LoadingFaultCountPlot,1]) - minimum(Input_BulktoAdjust[1:end-LoadingFaultCountPlot,1]), 
-                                      maximum(Input_BulktoAdjust[1:end-LoadingFaultCountPlot,2]) - minimum(Input_BulktoAdjust[1:end-LoadingFaultCountPlot,2])])/5
+                                      maximum(Input_BulktoAdjust[1:end-LoadingFaultCountPlot,2]) - minimum(Input_BulktoAdjust[1:end-LoadingFaultCountPlot,2])])/2
     end
 
     #################### Calculate Stress for XYZ Frame #####################
@@ -133,6 +141,8 @@ function ChangeBulk()
     RakeAngle = zeros(BulkFaultCount)
     ShearFric =  zeros(BulkFaultCount)
     NormalFric =  zeros(BulkFaultCount)
+    NormStressSurface =  zeros(BulkFaultCount)
+    NormStressGradient =  zeros(BulkFaultCount)
     for BulkIndex = 1:BulkFaultCount
 
         FaultStrikeAngle = Input_BulktoAdjust[BulkIndex, 6]
@@ -153,9 +163,16 @@ function ChangeBulk()
         Rake = rad2deg(atan(StressOnFault[2,3] / StressOnFault[1,3]))
         ShearFric[BulkIndex] = sqrt(StressOnFault[2,3]^2 + StressOnFault[1,3]^2) 
         NormalFric[BulkIndex] = abs(StressOnFault[3,3])
+        
+        Input_BulktoAdjust[BulkIndex,15] = NormalFric[BulkIndex] .* StressOnSurface_Sig1Orientation
+        if Input_BulktoAdjust[BulkIndex,15] <  MinimumNormalStressAllowed
+            Input_BulktoAdjust[BulkIndex,15] = MinimumNormalStressAllowed
+        end
+        Input_BulktoAdjust[BulkIndex,16] = NormalFric[BulkIndex] .* StressGredient_Sig1Orientation 
         Friction = sqrt(StressOnFault[2,3]^2 + StressOnFault[1,3]^2) / abs(StressOnFault[3,3])
 
         if Friction < MinFrictionAllowed
+            println("Fault ", BulkIndex, " has very small friction. Adjusted to Minimum Allowed Friction")
             ShearFric[BulkIndex] = ShearFric[BulkIndex]  * MinFrictionAllowed / Friction
             Friction = MinFrictionAllowed
         end
@@ -177,6 +194,7 @@ function ChangeBulk()
     if Fault_a_Rev != 0.0; Input_BulktoAdjust[:,9] .= Fault_a_Rev; end
     if Fault_b_Rev != 0.0; Input_BulktoAdjust[:,10] .= Fault_b_Rev; end
     if Fault_Dc_Rev != 0.0; Input_BulktoAdjust[:,11] .= Fault_Dc_Rev; end
+    if ConstantTheta != 0.0; Input_BulktoAdjust[:,12] .= ConstantTheta; end
 
     PeakFriction = 0.0
     ResidualFriction = 0.0
@@ -216,7 +234,7 @@ function ChangeBulk()
 
     open(InputBulkFileName, "w") do io
         write(io,"SwitchSS/RN\tShearMod\tPoissonRatio\tR_Density\tCrit_TooClose\tTooCloseNormal_Multiplier\tMinimum_NS\n")
-        writedlm(io,[0.0   Input_Bulk[2,2]     Input_Bulk[2,3]      Input_Bulk[2,4]   Input_Bulk[2,5]      Input_Bulk[2,6]  Input_Bulk[2,7] ])
+        writedlm(io,[0.0   Input_Bulk[2,2]     Input_Bulk[2,3]      Input_Bulk[2,4]   Input_Bulk[2,5]      Input_Bulk[2,6]  MinimumNormalStressAllowed ])
         write(io, "Ctr_X\tCtr_Y\tCtr_Z\tSt_L\tDip_L\tStAng\tDipAng\tRake\ta\tb\tDc\tTheta_i\tV_i\tFric_i\tSig0\tSigGrad\tV_Const\tMaxLeng\n")
         writedlm(io, Input_BulktoAdjustFiltered)
     end
@@ -237,8 +255,14 @@ function ChangeBulk()
 
     ax = PlotBulk_SenseOfSlip(0.0, Input_BulktoAdjust[1:end-LoadingFaultCountPlot,:], PlotRotation, Transparent, Edge, MinMax_Axis)
  
+    MohrCircleCenter = Sig3 + (Sig1-Sig3)/2
+    MohrCircleAngles = collect(0:5:180)
+    MohrCircleX = MohrCircleCenter .+ cosd.(MohrCircleAngles) * (Sig1-Sig3)/2
+    MohrCircleY = sind.(MohrCircleAngles)* (Sig1-Sig3)/2
+
     figure(3)
     clf()
+    plot(MohrCircleX, MohrCircleY, color = [0.8, 0.8, 0.8])
     plot([0,1.2], [0,1.2] * 1.0, color = [0.8, 0.8, 0.8])
     plot([0,1.2], [0,1.2] * 0.8, color = [0.8, 0.8, 0.8])
     plot([0,1.2], [0,1.2] * 0.6, color = [0.8, 0.8, 0.8])

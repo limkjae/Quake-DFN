@@ -42,12 +42,12 @@ Switch_StrikeSlip_or_ReverseNormal = load(LoadingInputFileName, "Switch_StrikeSl
 ########^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^########
 ################################################################################
 
-
 TimeCount=150
 ExternalStress_TimeArray=zeros(TimeCount)
 for i=1:TimeCount
-ExternalStress_TimeArray[i]=0.001*1.2^i
+        ExternalStress_TimeArray[i]=0.001*1.2^i
 end
+
 
 function CalculateNSChange(t,FaultCenter, FaultDipAngle, FaultStrikeAngle, FaultRakeAngle, mu, nu, FlowRate, PressureOrigin, 
         Permeability, Viscosity, B, nu_u, rho_0)
@@ -115,6 +115,8 @@ function CalculateNSChange(t,FaultCenter, FaultDipAngle, FaultStrikeAngle, Fault
     return D_Stress_Normal, D_Stress_Shear, Pressure
 
 end
+
+
 
 TotalPlotFault=FaultCount
 TimeArrayCount=length(ExternalStress_TimeArray)

@@ -22,8 +22,8 @@ LoadingInputFileName="Input_Discretized.jld2"
 
 
 ########################## Simulation Time Set ################################
-TotalStep = 3000 # Total simulation step
-SaveStep = 3000 # Automatically saved every this step
+TotalStep = 5000 # Total simulation step
+SaveStep = 5000 # Automatically saved every this step
 RecordStep = 10 # Simulation sampling rate
 
 
@@ -39,7 +39,7 @@ TimeSteppingAdj =
          0.0  0.0  0.0  0.0]   # Velocity
 
 ########## Strong Interaction Supression for Numerical Stability ##############
-StrongInteractionCriteriaMultiple = 0.5 # only applied when larger than 0.
+StrongInteractionCriteriaMultiple = 0.5 # only applied when larger than 0. The higher, the more tolerance of strong interaction. 
 
 ############################# Plots before run? ################################
 DtPlot = 0 # 1 will plot dt vs maxV
@@ -86,7 +86,7 @@ function RunRSFDFN3D(TotalStep, RecordStep,
 
     if StrongInteractionCriteriaMultiple > 0    
         StiffnessMatrixShear, StiffnessMatrixNormal = 
-            ReduceTooStrongInteraction(StrongInteractionCriteriaMultiple, FaultCount, StiffnessMatrixShear, StiffnessMatrixNormal)
+            ReduceTooStrongInteraction(StrongInteractionCriteriaMultiple, FaultCount - LoadingFaultCount, StiffnessMatrixShear, StiffnessMatrixNormal)
     end
 
 

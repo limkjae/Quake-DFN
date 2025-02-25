@@ -16,6 +16,12 @@ function calculation(i, j, k, L, line)
         LR = -1
         Dip_L = 1000 * 7
     end
+    if StAng > 90
+        StAng = StAng - 180
+    end
+    if StAng < 0
+        StAng = StAng + 180
+    end
     St_L = 1000 * sqrt((i - k)^2 + (j - L)^2)
     DipAng = 90
     a = 0.002

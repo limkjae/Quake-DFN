@@ -31,6 +31,7 @@ function CheckStrongInteractionHmat(StrongInteractionCriteriaMultiple, PlotIt)
     FaultCount= load(LoadingInputFileName, "FaultCount")
     ElementRange_SR = load(LoadingInputFileName, "ElementRange_SR")
     ShearStiffness_H = load(LoadingInputFileName, "ShearStiffness_H")
+    LoadingFaultCount= load(LoadingInputFileName, "LoadingFaultCount")
 
     LoadingStiffnessH, K_Self= StiffnessTransitionToLoading(ShearStiffness_H, ElementRange_SR, FaultCount)
 
@@ -104,14 +105,16 @@ function CheckStrongInteraction(StrongInteractionCriteriaMultiple, PlotIt)
 
     StiffnessMatrixShear= load(LoadingInputFileName, "StiffnessMatrixShear")
     Faultcount = load(LoadingInputFileName, "FaultCount")
-
+    LoadingFaultCount= load(LoadingInputFileName, "LoadingFaultCount")
+    #  SourceAt = 1
+    #  ReceiverAt = 90
     StrongInteractionPair = zeros(Int,1,2)
     SourceInThisBlock = 0
-    for SourceAt = 1:Faultcount
+    for SourceAt = 1:Faultcount - LoadingFaultCount
         SourceInThisBlock = SourceInThisBlock+1
-        for ReceiverAt = 1:Faultcount
+        for ReceiverAt = 1:Faultcount - LoadingFaultCount
             if SourceAt != ReceiverAt
-                if abs(StiffnessMatrixShear[SourceAt, SourceAt]) * StrongInteractionCriteriaMultiple < abs( StiffnessMatrixShear[ReceiverAt, SourceAt]) 
+                if abs(StiffnessMatrixShear[ReceiverAt, ReceiverAt]) * StrongInteractionCriteriaMultiple < abs( StiffnessMatrixShear[ReceiverAt, SourceAt]) 
                     # println("Strong !!")
                     StrongInteractionPair = [StrongInteractionPair;  [SourceAt ReceiverAt]]
                 end
@@ -121,7 +124,7 @@ function CheckStrongInteraction(StrongInteractionCriteriaMultiple, PlotIt)
     end
     StrongInteractionPair = StrongInteractionPair[2:end,:]
     println("Regular Matrix checked")
-    println("Storng Interaction Pairs Number: ", length(StrongInteractionPair[:,1]))
+    println("Storng Interaction Pairs Count: ", length(StrongInteractionPair[:,1]))
 
     if PlotIt ==1
         println("Plotting Element Pair")
