@@ -10,7 +10,7 @@ pygui(true)
 
 
 FlowRate=100 # kg/s
-PressureOrigin=[-577.0, 0.0,-1000]; # Custom Faults
+PressureOrigin=[0.0, 0.0,-2000]; # Custom Faults
 Permeability = 1e-16;
 Viscosity = 0.4e-3;
 SkemptonCoeff=0.75;

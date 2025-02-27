@@ -21,15 +21,15 @@ ResultV[ResultV.<=0] .= 1e-100
 
 # figure(10); clf(); PyPlot.plot(log10.(ResultV[:,1:1:end])); xlabel("Record Step")
 PlotStep = 100
-PlotRotation = [40,-120]
-Transparent = 1 # 1 for transparent fault plot. 0 for no-transparency
+PlotRotation = [17,-26]
+Transparent = 0 # 1 for transparent fault plot. 0 for no-transparency
 Edge = 0 # 0 for no element boudary. 1 for plotting element boundary
 MinMax_Axis = 0 # 0 for automatically selected axis minimim and maximum 
 # MinMax_Axis=[-2000 2000; -2000 2000; -4000 0]
 LoadingFaultPlot = 0 # 1 to plot constant velocity faults. 
 
 ShowDay = 0 # If 1, day is shown in the location 
-DayLocation = [20000,25000,1000]
+DayLocation = [0,0,1000]
 # MaxVLog = log10(maximum(ResultV[:,:]))
 ################## What to Plot ? ###################
 PlotInput=log10.(ResultV[PlotStep,:]); ColorMinMax=[-12, 0] 
@@ -128,9 +128,9 @@ end
 
 
 
-# #Single element locator
+# # #Single element locator
 # # figure(1)
-# SelectedElements = [100]
+# SelectedElements = [1275,1277,1278,1274]
 # # clf()
 # MaxVaule, MinValue = FaultPlot_3D_Color_SelectedElements(FaultCenter,FaultLengthStrike, FaultLengthDip,
 #     FaultStrikeAngle, FaultDipAngle, FaultRakeAngle, PlotInput, 

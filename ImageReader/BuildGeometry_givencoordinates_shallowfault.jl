@@ -1,28 +1,10 @@
 using DelimitedFiles
 using LinearAlgebra
 
+data = readdlm("ImageReader/Faultimage_segmented_endpoints.txt", ',', Float64)
 
 function calculation(i, j, k, L, line)
-    Ctr_X = 1000 * (i + k) / 2
-    Ctr_Y = 1000 * (j + L) / 2
-    if line <= 900
-        Ctr_Z = 1000 * 5
-        StAng = 180 + atan((L - j) / (k - i)) * (180 / π)
-        LR = 1
-        Dip_L = 1000 * 10
-    else
-        Ctr_Z = 1000 * 3.5
-        StAng = atan((L - j) / (k - i)) * (180 / π)
-        LR = -1
-        Dip_L = 1000 * 7
-    end
-    if StAng > 90
-        StAng = StAng - 180
-    end
-    if StAng < 0
-        StAng = StAng + 180
-    end
-    St_L = 1000 * sqrt((i - k)^2 + (j - L)^2)
+    ##### Input parameters Homogeneous ######
     DipAng = 90
     a = 0.002
     b = 0.006
@@ -34,12 +16,26 @@ function calculation(i, j, k, L, line)
     SigGrad = 0
     V_Const = 0
     MaxLeng = 1000
+    #########################################
+
+    Ctr_X = (i + k) / 2 * 1000
+    Ctr_Y = (j + L) / 2 * 1000
+    St_L = sqrt((i - k)^2 + (j - L)^2) * 1000
+
+    if line <= 900
+        Ctr_Z = 5 * 1000
+        StAng = atan((L - j) / (k - i)) * (180 / π) + 180
+        LR = 1
+        Dip_L = 10 * 1000
+    else
+        Ctr_Z = 3.5 * 1000
+        StAng = atan((L - j) / (k - i)) * (180 / π)
+        LR = -1
+        Dip_L = 7 * 1000
+    end
+
     return Ctr_X, Ctr_Y, Ctr_Z, St_L, Dip_L, StAng, DipAng, LR, a, b, Dc, Theta_i, V_i, Fric_i, Sig0, SigGrad, V_Const, MaxLeng
 end
-
-
-data = readdlm("ImageToInput/CollateralPaper_sidefault_segmented_endpoints.txt", ',', Float64)
-
 
 output = [
     "SwitchSS/RN    ShearMod    PoissonRatio    R_Density   Crit_TooClose   TooCloseNormal_Multiplier   Minimum_NS",
@@ -47,11 +43,9 @@ output = [
     "Ctr_X  Ctr_Y   Ctr_Z   St_L    Dip_L   StAng   DipAng  LR  a   b   Dc  Theta_i     V_i     Fric_i  Sig0    SigGrad     V_Const     MaxLeng"
 ]
 
-
 for (index, row) in enumerate(eachrow(data))
     push!(output, join(calculation(row..., index), "\t"))
 end
-
 
 open("Input_BulkFaultGeometry.txt", "w") do f
     for line in output

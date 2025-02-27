@@ -1,23 +1,7 @@
-"""
-Combined Script: background removal, fault segmentation, and line segment splitting.
-Intermediate files are saved as in the original scripts:
-  - 'CollateralPaper_sidefault_drawing_no_background.jpg'
-  - 'CollateralPaper_sidefault_segmented.png'
-  - 'CollateralPaper_sidefault_segmented_endpoints.txt'
-  
-Make sure you have the following packages installed:
-  - opencv-python
-  - numpy
-  - scikit-image
-  - sknw
-  - networkx
-  - scipy
-"""
-
-import cv2 
-import math
+import cv2
 import numpy as np
-from skimage.morphology import skeletonize 
+import math
+from skimage.morphology import skeletonize
 from skimage.util import invert
 import sknw
 import networkx as nx
@@ -25,15 +9,47 @@ from scipy.ndimage import convolve
 from scipy.sparse import csr_matrix
 from scipy.sparse.csgraph import dijkstra
 
+
+"""
+Input file name should be [Faultimage.jpg]. 
+
+This script processes an input drawing of a fault line by performing the following steps:
+1. Background removal: Keeps only the black fault lines and green scale line parts of the image.
+2. Fault segmentation: Removes the green scale line, skeletonizes the remaining drawing,
+   computes its length using Dijkstra's algorithm, and segments it into individual lines.
+3. Line segment splitting: Filters out duplicate or very similar overlapping segments.
+
+The processed outputs include images with marked endpoints and a text file with the segment endpoints,
+with coordinates scaled to real-world units (kilometers).
+"""
+
+
+# Give the scale length (units correspond to its real-life length in kilometers)
+scale_length = 10.0
+
+# Define the min and max segment lengths in real-world units, then convert to pixels
+min_length_units = 2.0  # minimum segment length in units
+max_length_units = 5.0   # maximum segment length in units
+
+# Change this line to rename the file you want to analyze
+base_name = "ImageReader/Faultimage"
+
+# Write the real file names and paths
+drawing_file = f"{base_name}.jpg"
+no_background_file = f"{base_name}_drawing_no_background.jpg"
+segmented_endpoints_file = f"{base_name}_segmented_endpoints.txt"
+segmented_file = f"{base_name}_segmented.jpg"
+
+
 def background_remover():
     """
-    Reads 'CollateralPaper_sidefault_drawing.jpg', removes the background by keeping only
-    black and green parts, and saves the result as 'CollateralPaper_sidefault_drawing_no_background.jpg'.
+    Reads the drawing file, removes the background by keeping only black and green parts,
+    and saves the result as the no-background file.
     """
     # Read the image
-    image = cv2.imread('ImageToInput/FaultImage.jpg')
+    image = cv2.imread(drawing_file)
     if image is None:
-        print("Error: Could not read the image 'FaultImage.jpg'.")
+        print(f"Can't read the image '{drawing_file}'.")
         exit()
 
     # Convert to HSV color space
@@ -57,21 +73,20 @@ def background_remover():
     output[mask != 0] = image[mask != 0]
 
     # Save the image without background
-    cv2.imwrite('ImageToInput/CollateralPaper_sidefault_drawing_no_background.jpg', output)
-    print("Background removal DONE")
-
+    cv2.imwrite(no_background_file, output)
+    print("Background removal done")
 
 def fault_segmentation():
     """
-    Reads the no-background image, extracts the green fault line,
-    computes a skeleton and its length (to derive a scale factor),
-    segments the skeleton into edges, and saves both an image with blue nodes
+    Reads the no-background image, takes out the green fault line,
+    computes a skeleton and its length, then segments the skeleton 
+    into lines, and finally saves both an image with blue points
     and a text file with the endpoints.
     """
     # Read the image with no background
-    image = cv2.imread('ImageToInput/CollateralPaper_sidefault_drawing_no_background.jpg')
+    image = cv2.imread(no_background_file)
     if image is None:
-        print("Error: Could not read 'CollateralPaper_sidefault_drawing_no_background.jpg'.")
+        print(f"Can't read '{no_background_file}'.")
         exit()
     height, width = image.shape[:2]
 
@@ -100,14 +115,14 @@ def fault_segmentation():
     endpoints_green = find_endpoints(skeleton_green)
     coords = np.column_stack(np.where(endpoints_green))
     if coords.shape[0] != 2:
-        print("Warning: Found more than two endpoints for the green line.")
+        print("Found more than two endpoints for the green line.")
     # In OpenCV, color is in BGR. Blue is (255, 0, 0)
     for y, x in coords:
         cv2.circle(image, (x, y), radius=3, color=(255, 0, 0), thickness=-1)
 
     def compute_skeleton_length(skel):
         """
-        Computes the length of a skeleton (in pixels) using a Dijkstra shortest-path
+        Calculates the length of a skeleton (in pixels) using a Dijkstra shortest-path
         between its two endpoints.
         """
         coords = np.column_stack(np.where(skel))
@@ -134,7 +149,7 @@ def fault_segmentation():
         adjacency = csr_matrix((data, (row_ind, col_ind)), shape=(len(coords), len(coords)))
         endpoints_coords = np.column_stack(np.where(find_endpoints(skel)))
         if endpoints_coords.shape[0] != 2:
-            print("Warning: Skeleton does not have exactly two endpoints.")
+            print("Warning: Skeleton doesn't have exactly two endpoints.")
             return None
         start_idx = index_map[endpoints_coords[0, 0], endpoints_coords[0, 1]]
         end_idx = index_map[endpoints_coords[1, 0], endpoints_coords[1, 1]]
@@ -143,15 +158,18 @@ def fault_segmentation():
         length = dist_matrix[end_idx]
         return length
 
-    # Compute the length of the green line and the scale factor (10.0 units correspond to its length)
+    # Compute the length of the green line and the scale factor (units correspond to its real-life length in kilometers)
     length_in_pixels = compute_skeleton_length(skeleton_green)
     if length_in_pixels is None:
-        print("Could not compute the length of the green line.")
+        print("Can't compute the length of the green line.")
         exit()
-    scale_factor = 10.0 / length_in_pixels
+    scale_factor = scale_length / length_in_pixels
 
     # Remove the green parts (fault line) from the image by setting those pixels to white
     image[mask_green_bool] = [255, 255, 255]
+
+    for y, x in coords:
+        cv2.circle(image, (x, y), radius=4, color=(255, 255, 255), thickness=-1)
 
     # Prepare a binary image for skeletonization of the remaining (fault) drawing
     gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
@@ -162,9 +180,6 @@ def fault_segmentation():
     # Build a graph from the skeleton using sknw
     graph = sknw.build_sknw(skeleton.astype(np.uint8))
 
-    # Define the min and max segment lengths in real-world units, then convert to pixels
-    min_length_units = 1.5  # minimum segment length in units
-    max_length_units = 13   # maximum segment length in units
     min_length_pixels = min_length_units / scale_factor
     max_length_pixels = max_length_units / scale_factor
 
@@ -204,14 +219,14 @@ def fault_segmentation():
 
     # Save the endpoints of each segment into a text file.
     # The coordinates are transformed to a coordinate system where the origin is at the bottom left,
-    # and scaled by the previously computed scale factor.
-    with open('ImageToInput/CollateralPaper_sidefault_segmented_endpoints.txt', 'w') as f:
+    # and scaled by the previously found scale factor.
+    with open(segmented_endpoints_file, 'w') as f:
         for seg in line_segments:
             p1, p2 = seg
             y1_img, x1_img = p1
             y2_img, x2_img = p2
 
-            # Convert to a standard coordinate system (origin at bottom left)
+            # Convert to a standard coordinate system (with the origin at bottom left)
             y1_std = height - y1_img
             y2_std = height - y2_img
 
@@ -232,22 +247,21 @@ def fault_segmentation():
         cv2.circle(image, (int(x2), int(y2)), radius=2, color=(255, 0, 0), thickness=-1)
 
     # Save the segmented image with marked endpoints
-    cv2.imwrite('ImageToInput/CollateralPaper_sidefault_segmented.png', image)
-    print("Fault segmentation DONE")
-
+    cv2.imwrite(segmented_file, image)
+    print("Fault segmentation done")
 
 def line_segment_splitter():
     """
-    Reads the endpoints file, removes segments that are very close to each other,
+    Reads the endpoints file, removes segments that are too close to each other,
     and writes the filtered endpoints back to the same file.
     """
     rows = []
-    with open('ImageToInput/CollateralPaper_sidefault_segmented_endpoints.txt', 'r') as f:
+    with open(segmented_endpoints_file, 'r') as f:
         for line in f:
             line = line.strip()
             if line == '':
                 continue
-            # Split by comma and convert the strings to floats.
+            # Split by comma and convert the strings to floats
             a_str, b_str, c_str, d_str = line.split(',')
             a = float(a_str)
             b = float(b_str)
@@ -255,7 +269,7 @@ def line_segment_splitter():
             d = float(d_str)
             rows.append((a, b, c, d))
 
-    # Identify rows that are very similar (i.e. duplicate segments) and mark them for deletion.
+    # Identify rows that are very similar (like duplicate segments) and delete them
     rows_to_delete = set()
     for i in range(len(rows)):
         if i in rows_to_delete:
@@ -267,18 +281,17 @@ def line_segment_splitter():
             a_j, b_j, c_j, d_j = rows[j]
             dist1 = math.hypot(a_i - a_j, b_i - b_j)
             dist2 = math.hypot(c_i - c_j, d_i - d_j)
-            if dist1 < 0.01 and dist2 < 0.0:
+            if dist1 < 0.01 and dist2 < 0.01:
                 rows_to_delete.add(i)
                 break
 
     # Write back only the unique rows
-    with open('ImageToInput/CollateralPaper_sidefault_segmented_endpoints.txt', 'w') as f_new:
+    with open(segmented_endpoints_file, 'w') as f_new:
         for idx, row in enumerate(rows):
             if idx not in rows_to_delete:
                 f_new.write(', '.join(map(str, row)) + '\n')
 
-    print("Line segment splitting DONE")
-
+    print("Line segment splitting done")
 
 if __name__ == "__main__":
     print("Background removal")
@@ -290,4 +303,4 @@ if __name__ == "__main__":
     print("Line segment split")
     line_segment_splitter()
 
-    print("All steps DONE")
+    print("All steps done")
