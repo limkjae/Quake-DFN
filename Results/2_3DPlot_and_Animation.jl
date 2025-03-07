@@ -7,6 +7,7 @@ using Statistics
 pygui(true)
 include("Functions_Plot.jl")
 
+
 ResultName="Result"
 FileName="Results/" * ResultName * ".jld2"
 FileNameInput="Results/" * ResultName * "_Input.jld2"
@@ -18,10 +19,9 @@ ResultV[ResultV.<=0] .= 1e-100
 #######################################################################################
 ############################### Figure Configuration ##################################
 
-# figure(10); clf(); PyPlot.plot(log10.(ResultV[:,1:30:end])); xlabel("Record Step")
-PlotStep = 700
-
-PlotRotation = [35,-30]
+# figure(10); clf(); PyPlot.plot(log10.(ResultV[:,1:1:end])); xlabel("Record Step")
+PlotStep = 100
+PlotRotation = [17,-26]
 Transparent = 0 # 1 for transparent fault plot. 0 for no-transparency
 Edge = 0 # 0 for no element boudary. 1 for plotting element boundary
 MinMax_Axis = 0 # 0 for automatically selected axis minimim and maximum 
@@ -30,14 +30,15 @@ LoadingFaultPlot = 0 # 1 to plot constant velocity faults.
 
 ShowDay = 0 # If 1, day is shown in the location 
 DayLocation = [0,0,1000]
-
-
+# MaxVLog = log10(maximum(ResultV[:,:]))
 ################## What to Plot ? ###################
-PlotInput=log10.(ResultV[PlotStep,:]); ColorMinMax=[-12,0] 
+PlotInput=log10.(ResultV[PlotStep,:]); ColorMinMax=[-12, 0] 
+# PlotInput=log10.(ResultV[PlotStep,:]); ColorMinMax=[MaxVLog-3,MaxVLog] 
 # PlotInput= Result_NormalStress[PlotStep,:] ; ColorMinMax=0
 # PlotInput=log10.(ResultPressure[PlotStep,:]); ColorMinMax=[3,6]
 # PlotInput= Result_NormalStress[PlotStep,:] -  Fault_NormalStress; ColorMinMax=[-1e6,1e6]
 # PlotInput=ResultDisp[PlotStep,:]; ColorMinMax=0 
+
 #############---------------------------#############
 
 
@@ -59,7 +60,7 @@ FaultLengthStrike= load(FileNameInput, "FaultLengthStrike")
 FaultLengthDip= load(FileNameInput, "FaultLengthDip")
 FaultStrikeAngle= load(FileNameInput, "FaultStrikeAngle")
 FaultDipAngle= load(FileNameInput, "FaultDipAngle")
-FaultLLRR= load(FileNameInput, "FaultLLRR")
+FaultRakeAngle= load(FileNameInput, "FaultRakeAngle")
 LoadingFaultCount= load(FileNameInput, "LoadingFaultCount")
 Fault_a= load(FileNameInput, "Fault_a")
 Fault_b= load(FileNameInput, "Fault_b")
@@ -78,7 +79,7 @@ end
 figure(1)
 clf()
 MaxVaule, MinValue = FaultPlot_3D_Color_General(FaultCenter,FaultLengthStrike, FaultLengthDip,
-    FaultStrikeAngle, FaultDipAngle, FaultLLRR, PlotInput, 
+    FaultStrikeAngle, FaultDipAngle, FaultRakeAngle, PlotInput, 
     PlotRotation, MinMax_Axis, ColorMinMax, Transparent, Edge, LoadingFaultCount)
 
     ax = subplot(projection="3d")
@@ -101,13 +102,13 @@ if Animation_Save == 1
     # PlotStepI=PlotStep
     isdir("3DPlot") || mkdir("3DPlot")
     for i=StepBegin:StepInterval:StepEnd
-        PlotStep = i#FaultPlot_3D(FaultCenter[1:FaultCount-2,:],FaultLengthStrike[1:FaultCount-2], FaultLengthDip[1:FaultCount-2], FaultStrikeAngle[1:FaultCount-2], FaultDipAngle[1:FaultCount-2], FaultLLRR[1:FaultCount-2])
-        #FaultPlot_3D_ColorDisp(FaultCenter[1:FaultCount-2,:],FaultLengthStrike[1:FaultCount-2], FaultLengthDip[1:FaultCount-2], FaultStrikeAngle[1:FaultCount-2], FaultDipAngle[1:FaultCount-2], FaultLLRR[1:FaultCount-2],ResultV[:,1:FaultCount-2], PlotStep)
+        PlotStep = i
+
         clf()
         PlotInput=log10.(ResultV[PlotStep,:])
 
         MaxVaule, MinValue = FaultPlot_3D_Color_General(FaultCenter,FaultLengthStrike, FaultLengthDip,
-        FaultStrikeAngle, FaultDipAngle, FaultLLRR, PlotInput, 
+        FaultStrikeAngle, FaultDipAngle, FaultRakeAngle, PlotInput, 
         PlotRotation, MinMax_Axis, ColorMinMax, Transparent, Edge, LoadingFaultCount)
         figure(1).canvas.draw()
         ax = subplot(projection="3d")
@@ -127,12 +128,12 @@ end
 
 
 
-# #Single element locator
+# # #Single element locator
 # # figure(1)
-# SelectedElements = [100]
+# SelectedElements = [1275,1277,1278,1274]
 # # clf()
 # MaxVaule, MinValue = FaultPlot_3D_Color_SelectedElements(FaultCenter,FaultLengthStrike, FaultLengthDip,
-#     FaultStrikeAngle, FaultDipAngle, FaultLLRR, PlotInput, 
+#     FaultStrikeAngle, FaultDipAngle, FaultRakeAngle, PlotInput, 
 #     PlotRotation, MinMax_Axis, ColorMinMax, Transparent, SelectedElements)
 
  

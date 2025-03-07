@@ -3,9 +3,9 @@ function main_H(ShearModulus, FaultCount, LoadingFaultCount, Mass, NormalStiffne
     a, b, Dc, ThetaI, Vini, FrictionI,
     InitialNormalStress, LoadingRate, 
     TotalStep, RecordStep, SwitchV, TimeStepping, SaveResultFileName,RockDensity,
-    FaultCenter,FaultLengthStrike, FaultLengthDip, FaultStrikeAngle, FaultDipAngle, FaultLLRR, SaveStep,
+    FaultCenter,FaultLengthStrike, FaultLengthDip, FaultStrikeAngle, FaultDipAngle, FaultRakeAngle, SaveStep,
     TimeStepOnlyBasedOnUnstablePatch, MinimumNormalStress, Alpha_Evo,
-    Ranks_Shear, Ranks_Normal, ElementRange_SR, NormalStiffness_H, ShearStiffness_H, ThreadCount, JacobiOrGS, w_factor)  
+    Ranks_Shear, Ranks_Normal, ElementRange_SR, NormalStiffness_H, ShearStiffness_H, ThreadCount, JacobiOrGS, w_factor, EvolutionDR)  
     
     ExternalStressExist=0;
 
@@ -255,7 +255,7 @@ function main_H(ShearModulus, FaultCount, LoadingFaultCount, Mass, NormalStiffne
                 ##########    External Stress Change    ###########
                 if ExternalStressExist ==1
                 
-                    D_EffStress_Normal, D_EffStress_Shear, D_Pressure = InterpolateFromStressChange(TOld+Dt, FaultCount,
+                    D_EffStress_Normal, D_EffStress_Shear, D_Pressure = InterpolateFromStressChange(TOld, FaultCount,
                     ExternalStress_Normal, ExternalStress_Shear,ExternalStress_TimeArray, ExternalStress_Pressure)
 
                 end
@@ -279,7 +279,7 @@ function main_H(ShearModulus, FaultCount, LoadingFaultCount, Mass, NormalStiffne
                 Mass,ShearModulus, 
                 EffNormalStress_i,Total_Loading_Disp, SolverSwitch,
                 V,Friction,Disp,Theta,EffNormalStress,Dt_All,Instability,
-                LoadingRate, LoadingFaultCount, FaultCount, RockDensity, D_EffStress_Shear, SwitchV, Alpha_Evo, EffNormalStress_Old)
+                LoadingRate, LoadingFaultCount, FaultCount, RockDensity, D_EffStress_Shear, SwitchV, Alpha_Evo, EffNormalStress_Old, EvolutionDR)
 
                 ############ End of One Step Solver ############
                 # println(findall(x->x==0, FLAG_GoodToGo))

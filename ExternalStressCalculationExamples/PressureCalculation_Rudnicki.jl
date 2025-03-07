@@ -30,7 +30,7 @@ FaultLengthStrike= load(LoadingInputFileName, "FaultLengthStrike")
 FaultLengthDip= load(LoadingInputFileName, "FaultLengthDip")
 FaultStrikeAngle= load(LoadingInputFileName, "FaultStrikeAngle")
 FaultDipAngle= load(LoadingInputFileName, "FaultDipAngle")
-FaultLLRR= load(LoadingInputFileName, "FaultLLRR")
+FaultRakeAngle= load(LoadingInputFileName, "FaultRakeAngle")
 
 Fault_BulkIndex= load(LoadingInputFileName, "Fault_BulkIndex")
 FaultLengthStrike_Bulk= load(LoadingInputFileName, "FaultLengthStrike_Bulk")
@@ -42,15 +42,15 @@ Switch_StrikeSlip_or_ReverseNormal = load(LoadingInputFileName, "Switch_StrikeSl
 ########^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^########
 ################################################################################
 
-
 TimeCount=150
 ExternalStress_TimeArray=zeros(TimeCount)
 for i=1:TimeCount
-ExternalStress_TimeArray[i]=0.001*1.2^i
+        ExternalStress_TimeArray[i]=0.001*1.2^i
 end
 
-function CalculateNSChange(t,FaultCenter, FaultDipAngle, FaultStrikeAngle, FaultLLRR, mu, nu, FlowRate, PressureOrigin, 
-        SSorRN, Permeability, Viscosity, B, nu_u, rho_0)
+
+function CalculateNSChange(t,FaultCenter, FaultDipAngle, FaultStrikeAngle, FaultRakeAngle, mu, nu, FlowRate, PressureOrigin, 
+        Permeability, Viscosity, B, nu_u, rho_0)
 
     q=FlowRate #Flow rate
     k = Permeability
@@ -106,23 +106,17 @@ function CalculateNSChange(t,FaultCenter, FaultDipAngle, FaultStrikeAngle, Fault
     RotationMat_FromFault_All=RotationMat_FromFault_Dip*RotationMat_FromFault_Strike;
     
     Stress_Fault=RotationMat_FromFault_All * sigEff_all * RotationMat_FromFault_All'    
-    
+
+
     D_Stress_Normal = - Stress_Fault[3,3] # tension is positive (negative to make it compression)
+    D_Stress_Shear =  cosd(FaultRakeAngle) * Stress_Fault[1,3] + sind(FaultRakeAngle) * Stress_Fault[2,3] 
 
-    if SSorRN == 1 
-        D_Stress_Shear = - FaultLLRR * Stress_Fault[1,3]  # Right Latteral become negative after rotation
-    elseif SSorRN == 2
-
-        if FaultDipAngle <= 90
-                D_Stress_Shear = - FaultLLRR * Stress_Fault[2,3]  # Nomal orientation is negative when dip angle is <90
-        else 
-                D_Stress_Shear = FaultLLRR * Stress_Fault[2,3]  # Nomal orientation is positive when dip angle is <90
-        end
-    end
 
     return D_Stress_Normal, D_Stress_Shear, Pressure
 
 end
+
+
 
 TotalPlotFault=FaultCount
 TimeArrayCount=length(ExternalStress_TimeArray)
@@ -136,8 +130,8 @@ for TimeIdx in eachindex(ExternalStress_TimeArray)
         println(Time)
         for i =1:TotalPlotFault
                 ExternalStress_Normal[TimeIdx,i], ExternalStress_Shear[TimeIdx,i], Pressure[TimeIdx,i] = 
-                        CalculateNSChange(Time,FaultCenter[i,:], FaultDipAngle[i], FaultStrikeAngle[i], FaultLLRR[i],  ShearModulus, PoissonRatio, FlowRate, PressureOrigin, 
-                        Switch_StrikeSlip_or_ReverseNormal, Permeability, Viscosity, SkemptonCoeff, PoissonRatio_Undrained, FluidDensity_Ref)
+                        CalculateNSChange(Time,FaultCenter[i,:], FaultDipAngle[i], FaultStrikeAngle[i], FaultRakeAngle[i],  ShearModulus, PoissonRatio, FlowRate, PressureOrigin, 
+                        Permeability, Viscosity, SkemptonCoeff, PoissonRatio_Undrained, FluidDensity_Ref)
         end
 end
 

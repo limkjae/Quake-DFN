@@ -1,9 +1,32 @@
 
+function EvolutionLaw(ThetaOld, Dt, V, Dc, Alpha_Evo, EffNormalStress, EffNormalStress_Old, b, Fast1_Slow0, EvolutionDR)
+
+    if EvolutionDR == 1 # Dieterich Law 
+        if Fast1_Slow0 == 1 
+            Const_T = V/Dc + Alpha_Evo * (EffNormalStress - EffNormalStress_Old) / Dt / b / EffNormalStress
+            Theta=(ThetaOld - 1/Const_T)*exp(-V/Dc*Dt) + 1/Const_T; #Dieterich Law Semi analytic with Alpha
+        else 
+            Theta = (ThetaOld+Dt)/(1 + Dt * V/Dc + Alpha_Evo * Dt * (EffNormalStress - EffNormalStress_Old) / Dt / b / EffNormalStress)
+        end
+    else
+        Theta = ThetaOld-V*ThetaOld/Dc*log(V*ThetaOld/Dc)*Dt; #Ruina Law
+    end
+    return Theta                
+end
+
+
+# function EvolutionLaw_Slow(ThetaOld, Dt, V, Dc, Alpha_Evo, EffNormalStress, EffNormalStress_Old, b)
+#     # Theta = (ThetaOld+Dt)/(1 + Dt * V/Dc + Alpha_Evo * Dt * (EffNormalStress - EffNormalStress_Old) / Dt / b / EffNormalStress)
+    
+#         Theta = ThetaOld-V*ThetaOld/Dc*log(V*ThetaOld/Dc)*Dt; #Ruina Law
+#     return Theta                
+# end
+
+
 function Solver_HighV_D(FaultIdx, ConvergenceCrit,DispOld,FrictionOld,ThetaOld,VOld,
     Friction0,a,b,Dc,V0,K_Self, Dt,Omega,
     Mass,ShearModulus,
-    EffNormalStress,Total_Loading_Disp,RockDensity, D_EffStress_Shear, SwitchV, Alpha_Evo, EffNormalStress_Old)
-
+    EffNormalStress,Total_Loading_Disp,RockDensity, D_EffStress_Shear, SwitchV, Alpha_Evo, EffNormalStress_Old, EvolutionDR)
 
 FLAG_GoodToGo=1
 Iteration=0;
@@ -25,15 +48,11 @@ end
 while maxDiff>ConvergenceCrit_Iter
     Iteration=Iteration+1;
 
-    VOldIter=copy(V);
+
+
+    # 
     VTest=copy(V); # Velocity tested in this NR iteration
-
-    #         Theta=ThetaOld-V*ThetaOld/Dc*log(V*ThetaOld/Dc)*Dt; %Ruina Law
-    #         Theta=ThetaOld+(1-V*ThetaOld/Dc)*Dt; %Dieterich Law
-    # Theta=(ThetaOld-Dc/V)*exp(-V/Dc*Dt)+Dc/V; #Dieterich Law Semi analytic
-
-    Const_T = V/Dc + Alpha_Evo * (EffNormalStress - EffNormalStress_Old) / Dt / b / EffNormalStress
-    Theta=(ThetaOld - 1/Const_T)*exp(-V/Dc*Dt) + 1/Const_T; #Dieterich Law Semi analytic with Alpha
+    Theta = EvolutionLaw(ThetaOld, Dt, V, Dc, Alpha_Evo, EffNormalStress, EffNormalStress_Old, b, 1, EvolutionDR)
 
     if Theta < 0        
         Dt=Dt/2; V=copy(VOld); Theta=copy(ThetaOld); Friction=copy(FrictionOld); Disp=copy(DispOld);  maxDiff=0; FLAG_GoodToGo=0; # println("Dt Change 1 ", FaultIdx, " V ", V, " VOld ",VOld, " Dt ", Dt)
@@ -41,36 +60,29 @@ while maxDiff>ConvergenceCrit_Iter
     end
 
 
-    Friction_RadDamp=Friction0+a*log(V/V0)+b*log(Theta*V0./Dc)+ShearModulus/2/sqrt(ShearModulus/RockDensity)/EffNormalStress*V - D_EffStress_Shear/EffNormalStress; # Initial friction
+    Friction_RadDamp=Friction0+a*log(V/V0)+b*log(Theta*V0./Dc) + ShearModulus/2/sqrt(ShearModulus/RockDensity)/EffNormalStress*V  - D_EffStress_Shear/EffNormalStress; # Initial friction
     F=Total_Loading_Disp-Friction_RadDamp*EffNormalStress/K_Self;
     Disp=(DispOld-F)*cos(Omega*Dt)+(VOld/Omega)*sin(Omega*Dt)+F; 
     V=(Disp-DispOld)/Dt*2-VOld;
-
-    FOriginal=VOldIter-V; 
-    
-    V=VOldIter+DV;
-    VOldIter=V;
+    FOriginal=VTest-V;     
 
 
-    #         Theta=ThetaOld-V*ThetaOld/Dc*log(V*ThetaOld/Dc)*Dt; %Ruina Law
-    #         Theta=ThetaOld+(1-V*ThetaOld/Dc)*Dt; %Dieterich Law
-    # Theta=(ThetaOld-Dc/V)*exp(-V/Dc*Dt)+Dc/V; #Dieterich Law Semi analytic
-    
-    Const_T = V/Dc + Alpha_Evo * (EffNormalStress - EffNormalStress_Old) / Dt / b / EffNormalStress
-    Theta=(ThetaOld - 1/Const_T)*exp(-V/Dc*Dt) + 1/Const_T; #Dieterich Law Semi analytic with Alpha
+    V=VTest+DV
+    VTest2 = copy(V)
+    Theta = EvolutionLaw(ThetaOld, Dt, V, Dc, Alpha_Evo, EffNormalStress, EffNormalStress_Old, b, 1, EvolutionDR)
 
     if Theta < 0        
         Dt=Dt/2; V=copy(VOld); Theta=copy(ThetaOld); Friction=copy(FrictionOld); Disp=copy(DispOld);  maxDiff=0; FLAG_GoodToGo=0; # println("Dt Change 1 ", FaultIdx, " V ", V, " VOld ",VOld, " Dt ", Dt)
         break 
     end
-    Friction_RadDamp=Friction0+a*log(V/V0)+b*log(Theta*V0./Dc)+ShearModulus/2/sqrt(ShearModulus/RockDensity)/EffNormalStress*V - D_EffStress_Shear/EffNormalStress; # Initial friction
+    Friction_RadDamp=Friction0+a*log(V/V0)+b*log(Theta*V0./Dc)+ShearModulus/2/sqrt(ShearModulus/RockDensity)/EffNormalStress*V  - D_EffStress_Shear/EffNormalStress; # Initial friction
     F=Total_Loading_Disp-Friction_RadDamp*EffNormalStress/K_Self;
     Disp=(DispOld-F)*cos(Omega*Dt)+(VOld/Omega)*sin(Omega*Dt)+F; 
     V=(Disp-DispOld)/Dt*2-VOld;
 
-    NRF=VOldIter-V; # We are testing this Newton Rhapson Function. Lets send this to zero
-    DF=(NRF-FOriginal)/DV; # tangent of the NR function
-    V=VTest-FOriginal/DF; # Update velocity
+    FUpdated=VTest2-V; # We are testing this Newton Rhapson Function. Lets send this to zero
+    
+    V=VTest-FOriginal*DV/(FUpdated-FOriginal); # Update velocity
 
     if V<0
         # println("No convergence at high speed", FaultIdx, " ", V, "  ", Dt)
@@ -122,13 +134,10 @@ while maxDiff>ConvergenceCrit_Iter
         end
 
     else 
-        Disp=DispOld+(VOld+V)/2*Dt; # Update disp
-        #         Theta=ThetaOld-V*ThetaOld/Dc*log(V*ThetaOld/Dc)*Dt; %Ruina Law
-        #         Theta=ThetaOld+(1-V*ThetaOld/Dc)*Dt; %Dieterich Law
-        # Theta=(ThetaOld-Dc/V)*exp(-V/Dc*Dt)+Dc/V; #Dieterich Law Semi analytic
-
-        Const_T = V/Dc + Alpha_Evo * (EffNormalStress - EffNormalStress_Old) / Dt / b / EffNormalStress
-        Theta=(ThetaOld - 1/Const_T)*exp(-V/Dc*Dt) + 1/Const_T; #Dieterich Law Semi analytic with Alpha
+        Disp=DispOld+(VOld+V)/2*Dt; # Update 
+        Theta = EvolutionLaw(ThetaOld, Dt, V, Dc, Alpha_Evo, EffNormalStress, EffNormalStress_Old, b, 1, EvolutionDR)
+        # Const_T = V/Dc + Alpha_Evo * (EffNormalStress - EffNormalStress_Old) / Dt / b / EffNormalStress
+        # Theta=(ThetaOld - 1/Const_T)*exp(-V/Dc*Dt) + 1/Const_T; #Dieterich Law Semi analytic with Alpha
 
         if Theta < 0        
             Dt=Dt/2; V=copy(VOld); Theta=copy(ThetaOld); Friction=copy(FrictionOld); Disp=copy(DispOld);  maxDiff=0; FLAG_GoodToGo=0; # println("Dt Change 1 ", FaultIdx, " V ", V, " VOld ",VOld, " Dt ", Dt)
@@ -176,7 +185,7 @@ end
 function Solver_LowV_D(FaultIdx, ConvergenceCrit,DispOld,FrictionOld,ThetaOld,VOld,
     Friction0,a,b,Dc,V0,K_Self, Dt,Omega,
     Mass,ShearModulus,
-    EffNormalStress,Total_Loading_Disp,RockDensity, D_EffStress_Shear, SwitchV, Alpha_Evo, EffNormalStress_Old)
+    EffNormalStress,Total_Loading_Disp,RockDensity, D_EffStress_Shear, SwitchV, Alpha_Evo, EffNormalStress_Old, EvolutionDR)
 
 
     FLAG_GoodToGo=1
@@ -196,10 +205,7 @@ function Solver_LowV_D(FaultIdx, ConvergenceCrit,DispOld,FrictionOld,ThetaOld,VO
         DV=VTest/1e10;
 
         Accel=(V-VOld)/Dt;
-        #         Theta=ThetaOld-V*ThetaOld/Dc*log(V*ThetaOld/Dc)*Dt; %Ruina Law
-        # Theta=ThetaOld+(1-V*ThetaOld/Dc)*Dt; #Dieterich Law
-        # Theta=(ThetaOld+Dt)/(1+V*Dt/Dc); #Dieterich Law
-        Theta = (ThetaOld+Dt)/(1 + Dt * V/Dc + Alpha_Evo * Dt * (EffNormalStress - EffNormalStress_Old) / Dt / b / EffNormalStress); #Dieterich Law with Alpha
+        Theta = EvolutionLaw(ThetaOld, Dt, V, Dc, Alpha_Evo, EffNormalStress, EffNormalStress_Old, b, 0, EvolutionDR)
 
         if Theta < 0        
             if Dt < SwitchV; InstabilityThistime=3; V=copy(VOld); Theta=copy(ThetaOld); Friction=copy(FrictionOld); Disp=copy(DispOld);  FLAG_GoodToGo=0; # println("Switch 1 ", FaultIdx, " V ", V, " VOld ",VOld, " Dt ", Dt)
@@ -217,20 +223,17 @@ function Solver_LowV_D(FaultIdx, ConvergenceCrit,DispOld,FrictionOld,ThetaOld,VO
         end
         
         Disp=DispOld+(VOld+V)/2*Dt
-        Friction= 1/EffNormalStress * (K_Self*(Total_Loading_Disp - Disp)  - ShearModulus/2/sqrt(ShearModulus/RockDensity) * V + D_EffStress_Shear - Mass*Accel);
+        Friction= 1/EffNormalStress * (K_Self*(Total_Loading_Disp - Disp)  - ShearModulus/2/sqrt(ShearModulus/RockDensity) * V  + D_EffStress_Shear - Mass*Accel);
         Vel = V0 * exp((Friction-Friction0-b*log(V0*Theta/Dc))/a);
-        FV=V-Vel;
-
+        
+        FV = VTest - Vel
         
         # Deviated value for NR
         V=V+DV;
+        VTest2 = copy(V)
 
         Accel=(V-VOld)/Dt;
-        #         Theta=ThetaOld-V*ThetaOld/Dc*log(V*ThetaOld/Dc)*Dt; %Ruina Law
-        # Theta=ThetaOld+(1-V*ThetaOld/Dc)*Dt; #Dieterich Law
-        # Theta=(ThetaOld+Dt)/(1+V*Dt/Dc); #Dieterich Law
-        Theta = (ThetaOld+Dt)/(1 + Dt * V/Dc + Alpha_Evo * Dt * (EffNormalStress - EffNormalStress_Old) / Dt / b / EffNormalStress); #Dieterich Law with Alpha
-
+        Theta = EvolutionLaw(ThetaOld, Dt, V, Dc, Alpha_Evo, EffNormalStress, EffNormalStress_Old, b, 0, EvolutionDR)
         if Theta < 0            
             if Dt < SwitchV; InstabilityThistime=3; V=copy(VOld); Theta=copy(ThetaOld); Friction=copy(FrictionOld); Disp=copy(DispOld);  FLAG_GoodToGo=0; # println("Switch 3 ", FaultIdx, " V ", V, " VOld ",VOld, " Dt ", Dt)
             elseif VOld == 0; V=copy(VOld); Theta=copy(ThetaOld); Friction=copy(FrictionOld); Disp=copy(DispOld);  FLAG_GoodToGo=1;  # println("No Switch 3")
@@ -245,23 +248,24 @@ function Solver_LowV_D(FaultIdx, ConvergenceCrit,DispOld,FrictionOld,ThetaOld,VO
             break 
         end
         Disp=DispOld+(VOld+V)/2*Dt
-        Friction= 1/EffNormalStress * (K_Self*(Total_Loading_Disp - Disp)  - ShearModulus/2/sqrt(ShearModulus/RockDensity) * V + D_EffStress_Shear - Mass*Accel);
+        Friction= 1/EffNormalStress * (K_Self*(Total_Loading_Disp - Disp)  - ShearModulus/2/sqrt(ShearModulus/RockDensity) * V  + D_EffStress_Shear - Mass*Accel);
         Vel = V0 * exp((Friction-Friction0-b*log(V0*Theta/Dc))/a);
-        FV_DeV=V-Vel
+        
+        FV_DeV = VTest2 - Vel
 
-
-        V=VTest-FV*DV/(FV_DeV-FV);
+        V = VTest-FV * DV/(FV_DeV-FV)
+        
+        if EvolutionDR != 1 && V < 0
+            V=exp(log(VTest)-FV*log(VTest2/VTest) /(FV_DeV-FV))
+            # println(log(VTest2/VTest))
+        end
 
 
         Accel=(V-VOld)/Dt;
 
 
         Disp=DispOld+(VOld+V)/2*Dt; # Update disp
-        #         Theta=ThetaOld-V*ThetaOld/Dc*log(V*ThetaOld/Dc)*Dt; #Ruina Law
-        # Theta=ThetaOld+(1-V*ThetaOld/Dc)*Dt; #Dieterich Law
-        # Theta=(ThetaOld+Dt)/(1+V*Dt/Dc); #Dieterich Law
-        Theta = (ThetaOld+Dt)/(1 + Dt * V/Dc + Alpha_Evo * Dt * (EffNormalStress - EffNormalStress_Old) / Dt / b / EffNormalStress); #Dieterich Law with Alpha
-
+        Theta = EvolutionLaw(ThetaOld, Dt, V, Dc, Alpha_Evo, EffNormalStress, EffNormalStress_Old, b, 0, EvolutionDR)
         if Theta < 0            
             if Dt < SwitchV; InstabilityThistime=3; V=copy(VOld); Theta=copy(ThetaOld); Friction=copy(FrictionOld); Disp=copy(DispOld);  FLAG_GoodToGo=0; # println("Switch 5 ", FaultIdx, " V ", V, " VOld ",VOld, " Dt ", Dt)
             elseif VOld == 0; V=copy(VOld); Theta=copy(ThetaOld); Friction=copy(FrictionOld); Disp=copy(DispOld);  FLAG_GoodToGo=1;  # println("No Switch 5")
@@ -287,20 +291,21 @@ function Solver_LowV_D(FaultIdx, ConvergenceCrit,DispOld,FrictionOld,ThetaOld,VO
         end
         Friction= 1/EffNormalStress * (K_Self*(Total_Loading_Disp - Disp)  - ShearModulus/2/sqrt(ShearModulus/RockDensity) * V - Mass*Accel);
         # InstabilityThistime=0;
-        maxDiff=abs(VTest./V-1);
+        maxDiff=abs(VTest/V-1);
 
 
 
 
-        if rem(Iteration,100)==0;
+        if rem(Iteration,200)==0;
             # ConvergenceCrit_Iter=ConvergenceCrit_Iter*10
             if Dt < 1e-4; 
                 #println("Switched 7 ", FaultIdx, " ", V, "  ", Dt)    
                 InstabilityThistime=3; V=copy(VOld); Theta=copy(ThetaOld); Friction=copy(FrictionOld); Disp=copy(DispOld);  FLAG_GoodToGo=0
+                # println("SolverConverted ")
                 break
             elseif Dt < 1e1
                 ConvergenceCrit_Iter=ConvergenceCrit_Iter*2; # Only used when convergence is failed
-                
+                # println("Crit Increased to ", ConvergenceCrit_Iter)
                 if ConvergenceCrit_Iter > 1e-6
                     println("!! Convergence crit increaded at low V to ",ConvergenceCrit_Iter, " FaultIdx ", FaultIdx, " V ", V, " Dt ", Dt)
                 end
@@ -331,14 +336,9 @@ function SolveOneTimeStep(ConvergenceCrit,DispOld,FrictionOld,
     Mass,ShearModulus, 
     EffNormalStress_i,Total_Loading_Disp, SolverSwitch,
     V,Friction,Disp,Theta,EffNormalStress,Dt_All,InstabilityThistime, 
-    LoadingRate, LoadingFaultCount, FaultCount,RockDensity, D_EffStress_Shear, SwitchV, Alpha_Evo, EffNormalStress_Old)
+    LoadingRate, LoadingFaultCount, FaultCount,RockDensity, D_EffStress_Shear, SwitchV, Alpha_Evo, EffNormalStress_Old, EvolutionDR)
 
     FLAG_GoodToGo=zeros(FaultCount)
-    
-    #@. DV=10^(log10(VOld)-(log10(VOld-AccelOld*DtOld)-log10(VOld))*Dt/DtOld);
-    #@. DV=VOld^2/(VOld-AccelOld*DtOld)
-    #@. DV=VOld*Dt*1e-3
-    #Threads.@threads for FaultIdx=1:FaultCount-LoadingFaultCount
 
     DtOld=copy(Dt)
     for FaultIdx=1:FaultCount-LoadingFaultCount
@@ -351,7 +351,7 @@ function SolveOneTimeStep(ConvergenceCrit,DispOld,FrictionOld,
             ThetaOld[FaultIdx],VOld[FaultIdx], Friction0[FaultIdx],a[FaultIdx],b[FaultIdx],
             Dc[FaultIdx],V0,K_Self[FaultIdx], DtOld, Omega[FaultIdx],
             Mass[FaultIdx],ShearModulus,
-            EffNormalStress_i[FaultIdx],Total_Loading_Disp[FaultIdx],RockDensity, D_EffStress_Shear[FaultIdx], SwitchV, Alpha_Evo, EffNormalStress_Old[FaultIdx])
+            EffNormalStress_i[FaultIdx],Total_Loading_Disp[FaultIdx],RockDensity, D_EffStress_Shear[FaultIdx], SwitchV, Alpha_Evo, EffNormalStress_Old[FaultIdx],EvolutionDR)
 
         else
             
@@ -361,7 +361,7 @@ function SolveOneTimeStep(ConvergenceCrit,DispOld,FrictionOld,
             ThetaOld[FaultIdx],VOld[FaultIdx], Friction0[FaultIdx],a[FaultIdx],b[FaultIdx],
             Dc[FaultIdx],V0,K_Self[FaultIdx], DtOld, Omega[FaultIdx],
             Mass[FaultIdx],ShearModulus, 
-            EffNormalStress_i[FaultIdx],Total_Loading_Disp[FaultIdx],RockDensity, D_EffStress_Shear[FaultIdx], SwitchV, Alpha_Evo, EffNormalStress_Old[FaultIdx])
+            EffNormalStress_i[FaultIdx],Total_Loading_Disp[FaultIdx],RockDensity, D_EffStress_Shear[FaultIdx], SwitchV, Alpha_Evo, EffNormalStress_Old[FaultIdx],EvolutionDR)
             
             
         end
@@ -537,4 +537,71 @@ function InterpolateFromStressChange(Time, FaultCount,
 
 
     return D_EffStress_Normal, D_EffStress_Shear, D_EffStress_Pressure
+end
+
+
+
+
+
+function ReduceTooStrongInteraction_Hmat(StrongInteractionCriteriaMultiple, Admissible,
+    FaultCount, ElementRange_SR, ShearStiffness_H, NormalStiffness_H)
+
+    LoadingStiffnessH, K_Self= StiffnessTransitionToLoading(ShearStiffness_H, ElementRange_SR, FaultCount)
+    StrongInteractionPair = zeros(Int,1,2)
+
+    BlockCount = length(Admissible)
+    for Block = 1:BlockCount
+        if Admissible[Block] == 0
+            SourceInThisBlock = 0
+            for SourceAt = ElementRange_SR[Block,1]:ElementRange_SR[Block,2]
+                SourceInThisBlock = SourceInThisBlock+1                
+                ReceiverInThisBlock = 0
+                for ReceiverAt = ElementRange_SR[Block,3]:ElementRange_SR[Block,4]
+                    ReceiverInThisBlock = ReceiverInThisBlock + 1
+                    if abs(K_Self[ReceiverAt]) * StrongInteractionCriteriaMultiple < abs( LoadingStiffnessH[Block][ReceiverInThisBlock,SourceInThisBlock]) 
+                        RedutionRatio = abs(K_Self[ReceiverAt]) * StrongInteractionCriteriaMultiple / abs(LoadingStiffnessH[Block][ReceiverInThisBlock,SourceInThisBlock])
+                        ShearStiffness_H[Block][ReceiverInThisBlock,SourceInThisBlock] = ShearStiffness_H[Block][ReceiverInThisBlock,SourceInThisBlock]  * RedutionRatio
+                                    # sign(LoadingStiffnessH[Block][ReceiverInThisBlock,SourceInThisBlock]) * abs(K_Self[ReceiverAt]) * StrongInteractionCriteriaMultiple
+                        
+                        NormalStiffness_H[Block][ReceiverInThisBlock,SourceInThisBlock] = NormalStiffness_H[Block][ReceiverInThisBlock,SourceInThisBlock] * RedutionRatio
+                        StrongInteractionPair = [StrongInteractionPair;  [SourceAt ReceiverAt]]
+                    end
+
+                end
+            end
+        end
+    end
+    StrongInteractionPair = StrongInteractionPair[2:end,:]
+
+    println(length(StrongInteractionPair[:,1]), "/", FaultCount^2," interaction is smoothened")
+
+    return ShearStiffness_H, NormalStiffness_H
+end
+
+
+
+
+
+
+function ReduceTooStrongInteraction(StrongInteractionCriteriaMultiple, FaultCount, StiffnessMatrixShear, StiffnessMatrixNormal)
+
+
+    StrongInteractionPair = zeros(Int,1,2)
+    for SourceAt = 1:FaultCount
+        for ReceiverAt = 1:FaultCount
+            if SourceAt != ReceiverAt
+                if abs(StiffnessMatrixShear[ReceiverAt, ReceiverAt]) * StrongInteractionCriteriaMultiple < abs( StiffnessMatrixShear[ReceiverAt, SourceAt]) 
+                    RedutionRatio = abs(StiffnessMatrixShear[ReceiverAt, ReceiverAt]) * StrongInteractionCriteriaMultiple /  abs( StiffnessMatrixShear[ReceiverAt, SourceAt]) 
+                    StiffnessMatrixShear[ReceiverAt, SourceAt]  = StiffnessMatrixShear[ReceiverAt, SourceAt] * RedutionRatio
+                    StiffnessMatrixNormal[ReceiverAt, SourceAt]  = StiffnessMatrixNormal[ReceiverAt, SourceAt] * RedutionRatio
+                    StrongInteractionPair = [StrongInteractionPair;  [SourceAt ReceiverAt]]
+                end
+
+            end
+        end
+    end
+    StrongInteractionPair = StrongInteractionPair[2:end,:]
+    println(length(StrongInteractionPair[:,1]), "/", FaultCount^2," interaction is smoothened")
+
+    return StiffnessMatrixShear, StiffnessMatrixNormal
 end

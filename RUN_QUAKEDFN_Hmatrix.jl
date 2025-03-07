@@ -27,8 +27,8 @@ LoadingInputFileName="Input_Discretized.jld2"
 ThreadCount = 8 # if zero, it uses current thread count opened in REPL
 
 ########################## Simulation Time Set ################################
-TotalStep = 1000 # Total simulation step
-SaveStep = 1000 # Automatically saved every this step
+TotalStep = 3000 # Total simulation step
+SaveStep = 3000 # Automatically saved every this step
 RecordStep = 10 # Simulation sampling rate !! should be a factor of SaveStep !!
 
 
@@ -43,16 +43,19 @@ TimeSteppingAdj =
     [0.0  0.0  0.0  0.0;   # Time step size
      0.0  0.0  0.0  0.0]   # Velocity
 
+########## Strong Interaction Supression for Numerical Stability ##############
+StrongInteractionCriteriaMultiple = 0.5 # only applied when larger than 0. The higher, the more tolerance of strong interaction. 
+
+
 ########################## Ax=b solver ############################
 JacobiOrGS = 2 # 1: Jacobi, 2: Gauss-Seidel (Ax=b solver that is required for initializing)
 # Jacobi is faster in general but Gauss-Seidel is stabler.
-w_factor = 1.5 # only used for Gauss-Seidel. should be 0 < w < 2. 
+w_factor = 1.0 # only used for Gauss-Seidel. should be 0 < w < 2. 
 # faster convergence when large but unstable.
 
 ############################# Plots before run? ################################
 DtPlot = 0 # 1 will plot dt vs maxV
 GeometryPlot = 0 # 1 will plot a-b
-
 
 
 
@@ -65,6 +68,15 @@ function RunRSFDFN3D(TotalStep, RecordStep, RuptureTimeStepMultiple,
         println("Theread Count is larger than Threads used in Julia")
         println("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
     end
+
+
+    if Threads.nthreads() == 1
+        println("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
+        println("          Only 1 thread is being used             ")
+        println("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
+    end
+
+
     ################################################################################
     ############################### Load Input Files ###############################
 
@@ -78,7 +90,7 @@ function RunRSFDFN3D(TotalStep, RecordStep, RuptureTimeStepMultiple,
     FaultLengthDip= load(LoadingInputFileName, "FaultLengthDip")
     FaultStrikeAngle= load(LoadingInputFileName, "FaultStrikeAngle")
     FaultDipAngle= load(LoadingInputFileName, "FaultDipAngle")
-    FaultLLRR= load(LoadingInputFileName, "FaultLLRR")
+    FaultRakeAngle= load(LoadingInputFileName, "FaultRakeAngle")
     Fault_a= load(LoadingInputFileName, "Fault_a")
     Fault_b= load(LoadingInputFileName, "Fault_b")
     Fault_Dc= load(LoadingInputFileName, "Fault_Dc")
@@ -99,8 +111,13 @@ function RunRSFDFN3D(TotalStep, RecordStep, RuptureTimeStepMultiple,
     ShearStiffness_H = load(LoadingInputFileName, "ShearStiffness_H")
     NormalStiffness_H = load(LoadingInputFileName, "NormalStiffness_H")
     NormalStiffnessZero = load(LoadingInputFileName, "NormalStiffnessZero")
+    Admissible = load(LoadingInputFileName,"Admissible")
     ################################################################################
     
+    if StrongInteractionCriteriaMultiple > 0
+        ShearStiffness_H, NormalStiffness_H = ReduceTooStrongInteraction_Hmat(StrongInteractionCriteriaMultiple, Admissible,
+        FaultCount, ElementRange_SR, ShearStiffness_H, NormalStiffness_H)
+    end
     # NormalStiffnessZero = 1
 
     ################################################################################
@@ -114,7 +131,7 @@ function RunRSFDFN3D(TotalStep, RecordStep, RuptureTimeStepMultiple,
         Edge = 1
         clf()
         MaxVaule, MinValue = FaultPlot_3D_Color_General(FaultCenter,FaultLengthStrike, FaultLengthDip,
-            FaultStrikeAngle, FaultDipAngle, FaultLLRR, PlotInput, 
+            FaultStrikeAngle, FaultDipAngle, FaultRakeAngle, PlotInput, 
             PlotRotation, MinMax_Axis, ColorMinMax, Transparent, Edge, LoadingFaultCount)
         figure(1).canvas.draw()
     end
@@ -138,16 +155,17 @@ function RunRSFDFN3D(TotalStep, RecordStep, RuptureTimeStepMultiple,
     # FaultMass .= 1e6  
 
 
-    #####----------- Alpha in Evolution Law ----------#####
+    ############# Evolution and Alpha Value ################
     Alpha_Evo = 0.0
-
+    EvolutionDR = 1
+    ########################################################
     
     #######---------- Logical quick adjust ----------#######
     LoadingFaultCount, FaultMass, Fault_a, Fault_b, Fault_Dc, Fault_Theta_i, Fault_V_i, 
     Fault_Friction_i, Fault_NormalStress, Fault_V_Const, FaultCenter, FaultIndex_Adjusted, MinimumNormalStress = 
         ParameterAdj(LoadingFaultCount, FaultMass, Fault_a, Fault_b, Fault_Dc, Fault_Theta_i, Fault_V_i, 
         Fault_Friction_i, Fault_NormalStress, Fault_V_Const, 
-        FaultStrikeAngle, FaultDipAngle, FaultCenter, Fault_BulkIndex, FaultLLRR, MinimumNormalStress)
+        FaultStrikeAngle, FaultDipAngle, FaultCenter, Fault_BulkIndex, FaultRakeAngle, MinimumNormalStress)
 
     ############################### Adjust Parameters ##############################
     ################################################################################
@@ -220,7 +238,7 @@ function RunRSFDFN3D(TotalStep, RecordStep, RuptureTimeStepMultiple,
     # "StiffnessMatrixShear", StiffnessMatrixShear, "StiffnessMatrixNormal", StiffnessMatrixNormal, 
     "FaultCenter", FaultCenter, "ShearModulus", ShearModulus, "RockDensity", RockDensity, "PoissonRatio", PoissonRatio,
     "FaultLengthStrike", FaultLengthStrike, "FaultLengthDip", FaultLengthDip, "FaultStrikeAngle", FaultStrikeAngle, 
-    "FaultDipAngle", FaultDipAngle, "FaultLLRR", FaultLLRR, "Fault_a", Fault_a, "Fault_b", Fault_b, "Fault_Dc", Fault_Dc, 
+    "FaultDipAngle", FaultDipAngle, "FaultRakeAngle", FaultRakeAngle, "Fault_a", Fault_a, "Fault_b", Fault_b, "Fault_Dc", Fault_Dc, 
     "Fault_Theta_i", Fault_Theta_i, "Fault_V_i", Fault_V_i, "Fault_Friction_i", Fault_Friction_i, "Fault_NormalStress", Fault_NormalStress, 
     "Fault_V_Const", Fault_V_Const, "Fault_BulkIndex", Fault_BulkIndex, "FaultLengthStrike_Bulk", FaultLengthStrike_Bulk, 
     "FaultLengthDip_Bulk", FaultLengthDip_Bulk, "FaultCount", FaultCount, "LoadingFaultCount", LoadingFaultCount, "FaultMass", FaultMass, "MinimumNormalStress", MinimumNormalStress,
@@ -236,9 +254,9 @@ function RunRSFDFN3D(TotalStep, RecordStep, RuptureTimeStepMultiple,
     Fault_a, Fault_b, Fault_Dc, Fault_Theta_i, Fault_V_i, Fault_Friction_i,
     Fault_NormalStress, Fault_V_Const,
     TotalStep, RecordStep, SwitchV, TimeStepping, SaveResultFileName,RockDensity,
-    FaultCenter,FaultLengthStrike, FaultLengthDip, FaultStrikeAngle, FaultDipAngle, FaultLLRR, SaveStep,
+    FaultCenter,FaultLengthStrike, FaultLengthDip, FaultStrikeAngle, FaultDipAngle, FaultRakeAngle, SaveStep,
     TimeStepOnlyBasedOnUnstablePatch, MinimumNormalStress, Alpha_Evo,
-    Ranks_Shear, Ranks_Normal, ElementRange_SR, NormalStiffness_H, ShearStiffness_H, ThreadCount, JacobiOrGS, w_factor)    
+    Ranks_Shear, Ranks_Normal, ElementRange_SR, NormalStiffness_H, ShearStiffness_H, ThreadCount, JacobiOrGS, w_factor, EvolutionDR)    
 
     ################################ Run Simulation ###############################
     ###############################################################################

@@ -338,7 +338,7 @@ function StiffnessMatrix_ByParts_Calculation_StrikeSlip(Input_SegmentSource, Inp
     FaultLengthDipSource=Input_SegmentSource[:,5]
     FaultStrikeAngleSource=Input_SegmentSource[:,6]
     FaultDipAngleSource=Input_SegmentSource[:,7]
-    FaultLLRRSource=Input_SegmentSource[:,8]
+    FaultRakeSource=Input_SegmentSource[:,8]
 
     FaultCountReceiver=size(Input_SegmentReceiver,1)
     FaultCenterReceiver=Input_SegmentReceiver[:,1:3]
@@ -346,7 +346,7 @@ function StiffnessMatrix_ByParts_Calculation_StrikeSlip(Input_SegmentSource, Inp
     FaultLengthDipReceiver=Input_SegmentReceiver[:,5]
     FaultStrikeAngleReceiver=Input_SegmentReceiver[:,6]
     FaultDipAngleReceiver=Input_SegmentReceiver[:,7]
-    FaultLLRRReceiver=Input_SegmentReceiver[:,8]
+    FaultRakeReceiver=Input_SegmentReceiver[:,8]
     # println(FaultCountSource, "  ", FaultCountReceiver)
 
     StiffnessMatrixShear = zeros(FaultCountReceiver,FaultCountSource)
@@ -365,17 +365,17 @@ function StiffnessMatrix_ByParts_Calculation_StrikeSlip(Input_SegmentSource, Inp
             SourceLengthDip = FaultLengthDipSource[SourceIndex];
             SourceStrikeAngle = FaultStrikeAngleSource[SourceIndex];
             SourceDipAngle = FaultDipAngleSource[SourceIndex];
-            SourceLLRR = FaultLLRRSource[SourceIndex];
+            SourceRake = FaultRakeSource[SourceIndex];
                     
             ReceiverCenter = FaultCenterReceiver;
             ReceiverStrikeAngle = FaultStrikeAngleReceiver;
             ReceiverDipAngle = FaultDipAngleReceiver;
-            ReceiverLLRR = FaultLLRRReceiver;
+            ReceiverRake = FaultRakeReceiver;
             RelativeStrkieAngle = ReceiverStrikeAngle .- SourceStrikeAngle
             
 
-            DISL1 = -SourceLLRR; # Left Latteral is +1 for Okada
-            DISL2 = 0;
+            DISL1 = cosd(SourceRake); # Left Latteral is +1 for Okada
+            DISL2 = sind(SourceRake);
             DISL3 = 0;            
                     
             DEPTH=SourceCenter[3]; # Source Depth
@@ -441,7 +441,7 @@ function StiffnessMatrix_ByParts_Calculation_StrikeSlip(Input_SegmentSource, Inp
                 #######################################################################
                 ##### Read Normal and Shear Stress Change
                 StiffnessMatrixNormal[ReceiverIdx,SourceIndex] = - Stress_Receiver[3,3]  # compression is negative
-                StiffnessMatrixShear[ReceiverIdx,SourceIndex] = - ReceiverLLRR[ReceiverIdx] * Stress_Receiver[1,3]  # right latteral is negative
+                StiffnessMatrixShear[ReceiverIdx,SourceIndex] = cosd(ReceiverRake[ReceiverIdx]) * Stress_Receiver[1,3] + sind(ReceiverRake[ReceiverIdx]) * Stress_Receiver[2,3]  # right latteral is negative
 
                 # println(SourceDipAngle,"  ",Z,"  ",DEPTH, " ", StressZZ_SourceFrame, "  ",Stress_Receiver[3,3])
             end

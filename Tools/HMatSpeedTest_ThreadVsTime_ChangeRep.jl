@@ -6,11 +6,9 @@ using JLD2
 using LinearAlgebra
 using Printf
 using SpecialFunctions
-using HMatrices
 using StaticArrays
 using LowRankApprox
 using Distributed
-using LoopVectorization
 using Statistics
 pygui(true)
 

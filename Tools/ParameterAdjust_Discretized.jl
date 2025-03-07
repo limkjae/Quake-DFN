@@ -17,10 +17,10 @@ pygui(true)
 LoadingInputFileName="Input_Discretized.jld2" 
 
 FaultCenter= load(LoadingInputFileName, "FaultCenter")
-FaultMass= load(LoadingInputFileName, "FaultMass")
+# FaultMass= load(LoadingInputFileName, "FaultMass")
 FaultStrikeAngle= load(LoadingInputFileName, "FaultStrikeAngle")
 FaultDipAngle= load(LoadingInputFileName, "FaultDipAngle")
-FaultLLRR= load(LoadingInputFileName, "FaultLLRR")
+FaultLLRR= load(LoadingInputFileName, "FaultRakeAngle")
 Fault_a= load(LoadingInputFileName, "Fault_a")
 Fault_b= load(LoadingInputFileName, "Fault_b")
 Fault_Dc= load(LoadingInputFileName, "Fault_Dc")
@@ -35,11 +35,12 @@ MinimumNormalStress = load(LoadingInputFileName, "MinimumNormalStress")
 
 
 
-function ParameterAdj_permanent(LoadingFaultCount, FaultMass, Fault_a, Fault_b, Fault_Dc, 
+function ParameterAdj_permanent(LoadingFaultCount, Fault_a, Fault_b, Fault_Dc, 
     Fault_Theta_i, Fault_V_i, Fault_Friction_i, Fault_NormalStress, Fault_V_Const,
      FaultStrikeAngle, FaultDipAngle, FaultCenter, Fault_BulkIndex, FaultLLRR, MinimumNormalStress)
 
-    FaultMass_Original = copy(FaultMass)
+    Save = 1 # save result if 1
+    
     Fault_a_Original = copy(Fault_a)
     Fault_b_Original = copy(Fault_b)
     Fault_Dc_Original = copy(Fault_Dc)
@@ -65,6 +66,30 @@ function ParameterAdj_permanent(LoadingFaultCount, FaultMass, Fault_a, Fault_b, 
 
     ##########^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^#############
     ######################################################################################################
+
+
+    #####################################################################################################
+    #########################  Calculation of initial velocit from defined Mu zero ######################
+    
+    Fault_Theta_i .= 1e8
+    Fault_V_i .= 0.0
+    V0=1e-9
+    Friction_0 = ones(FaultCount) * 0.58
+    
+    if iszero(Fault_V_i)
+        Fault_V_i = V0 .* exp.( (Fault_Friction_i .- Friction_0 .- Fault_b .* log.(Fault_Theta_i .* V0./Fault_Dc)) ./ Fault_a)
+        println("maximum Initial Velocity is ", maximum(Fault_V_i))
+    end    
+    
+    if iszero(Fault_Theta_i)
+        Fault_Theta_i = Fault_Dc ./ V0 .* exp.( (Fault_Friction_i .- Friction_0 .- Fault_a .* log.(Fault_V_i ./ V0)) ./ Fault_b)
+        println("maximum Theta is ", maximum(Fault_V_i))
+    end
+
+
+    #########^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^#############
+    #####################################################################################################
+    
 
 
     #####################################################################################################
@@ -119,73 +144,76 @@ function ParameterAdj_permanent(LoadingFaultCount, FaultMass, Fault_a, Fault_b, 
     ###^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^###
     #####################################################################################################
 
+    if Save == 1
 
 
+        file = jldopen(LoadingInputFileName, "a+")
 
-    file = jldopen(LoadingInputFileName, "a+")
+        # if FaultMass_Original != FaultMass
+        #     Base.delete!(file, "FaultMass") 
+        #     write(file, "FaultMass", FaultMass) 
+        #     println("- Fault Mass Adjusted")
+        # end
+        
+        if Fault_a_Original != Fault_a
+            Base.delete!(file, "Fault_a") 
+            write(file, "Fault_a", Fault_a) 
+            println("- Fault a Adjusted")
+        end
+        if Fault_b_Original != Fault_b
+            Base.delete!(file, "Fault_b") 
+            write(file, "Fault_b", Fault_b) 
+            println("- Fault b Adjusted")
+        end
+        if Fault_Dc_Original != Fault_Dc
+            Base.delete!(file, "Fault_Dc") 
+            write(file, "Fault_Dc", Fault_Dc) 
+            println("- Fault Dc Adjusted")
+        end
+        if Fault_Theta_i_Original != Fault_Theta_i
+            Base.delete!(file, "Fault_Theta_i") 
+            write(file, "Fault_Theta_i", Fault_Theta_i) 
+            println("- Fault Theta_i Adjusted")
+        end
+        if Fault_V_i_Original != Fault_V_i
+            Base.delete!(file, "Fault_V_i") 
+            write(file, "Fault_V_i", Fault_V_i) 
+            println("- Fault Fault_V_i Adjusted")
+        end
+        if Fault_Friction_i_Original != Fault_Friction_i
+            Base.delete!(file, "Fault_Friction_i") 
+            write(file, "Fault_Friction_i", Fault_Friction_i) 
+            println("- Fault Friction_i Adjusted")
+        end
+        if Fault_NormalStress_Original != Fault_NormalStress
+            Base.delete!(file, "Fault_NormalStress") 
+            write(file, "Fault_NormalStress", Fault_NormalStress) 
+            println("- Fault Normal stress Adjusted")
+        end
+        if Fault_V_Const_Original != Fault_V_Const
+            Base.delete!(file, "Fault_V_Const") 
+            write(file, "Fault_V_Const", Fault_V_Const) 
+            println("- Fault V_Const Adjusted")
+        end
+        if FaultCenter_Original != FaultCenter
+            Base.delete!(file, "FaultCenter") 
+            write(file, "FaultCenter", FaultCenter) 
+            println("- Fault Center Adjusted")
+        end 
 
-    if FaultMass_Original != FaultMass
-        Base.delete!(file, "FaultMass") 
-        write(file, "FaultMass", FaultMass) 
-        println("- Fault Mass Adjusted")
-    end
-    
-    if Fault_a_Original != Fault_a
-        Base.delete!(file, "Fault_a") 
-        write(file, "Fault_a", Fault_a) 
-        println("- Fault a Adjusted")
-    end
-    if Fault_b_Original != Fault_b
-        Base.delete!(file, "Fault_b") 
-        write(file, "Fault_b", Fault_b) 
-        println("- Fault b Adjusted")
-    end
-    if Fault_Dc_Original != Fault_Dc
-        Base.delete!(file, "Fault_Dc") 
-        write(file, "Fault_Dc", Fault_Dc) 
-        println("- Fault Dc Adjusted")
-    end
-    if Fault_Theta_i_Original != Fault_Theta_i
-        Base.delete!(file, "Fault_Theta_i") 
-        write(file, "Fault_Theta_i", Fault_Theta_i) 
-        println("- Fault Theta_i Adjusted")
-    end
-    if Fault_V_i_Original != Fault_V_i
-        Base.delete!(file, "Fault_V_i") 
-        write(file, "Fault_V_i", Fault_V_i) 
-        println("- Fault Fault_V_i Adjusted")
-    end
-    if Fault_Friction_i_Original != Fault_Friction_i
-        Base.delete!(file, "Fault_Friction_i") 
-        write(file, "Fault_Friction_i", Fault_Friction_i) 
-        println("- Fault Friction_i Adjusted")
-    end
-    if Fault_NormalStress_Original != Fault_NormalStress
-        Base.delete!(file, "Fault_NormalStress") 
-        write(file, "Fault_NormalStress", Fault_NormalStress) 
-        println("- Fault Normal stress Adjusted")
-    end
-    if Fault_V_Const_Original != Fault_V_Const
-        Base.delete!(file, "Fault_V_Const") 
-        write(file, "Fault_V_Const", Fault_V_Const) 
-        println("- Fault V_Const Adjusted")
-    end
-    if FaultCenter_Original != FaultCenter
-        Base.delete!(file, "FaultCenter") 
-        write(file, "FaultCenter", FaultCenter) 
-        println("- Fault Center Adjusted")
-    end 
+        if MinimumNormalStress_Original != MinimumNormalStress
+            Base.delete!(file, "MinimumNormalStress") 
+            write(file, "MinimumNormalStress", MinimumNormalStress) 
+            println("- Minimum NormalStress Adjusted")
+        end
 
-    if MinimumNormalStress_Original != MinimumNormalStress
-        Base.delete!(file, "MinimumNormalStress") 
-        write(file, "MinimumNormalStress", MinimumNormalStress) 
-        println("- Minimum NormalStress Adjusted")
+        close(file)
+    else 
+        println("Save inactive")
     end
 
-    close(file)
-
-    return LoadingFaultCount, FaultMass, Fault_a, Fault_b, Fault_Dc, Fault_Theta_i, Fault_V_i, 
-    Fault_Friction_i, Fault_NormalStress, Fault_V_Const, FaultCenter, FaultIndex_Adjusted, MinimumNormalStress
+    # return LoadingFaultCount, Fault_a, Fault_b, Fault_Dc, Fault_Theta_i, Fault_V_i, 
+    # Fault_Friction_i, Fault_NormalStress, Fault_V_Const, FaultCenter, FaultIndex_Adjusted, MinimumNormalStress
 
 
 end
@@ -228,6 +256,6 @@ end
 
 
 
-ParameterAdj_permanent(LoadingFaultCount, FaultMass, Fault_a, Fault_b, Fault_Dc, 
+ParameterAdj_permanent(LoadingFaultCount, Fault_a, Fault_b, Fault_Dc, 
     Fault_Theta_i, Fault_V_i, Fault_Friction_i, Fault_NormalStress, Fault_V_Const,
      FaultStrikeAngle, FaultDipAngle, FaultCenter, Fault_BulkIndex, FaultLLRR, MinimumNormalStress);

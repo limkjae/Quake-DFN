@@ -21,12 +21,7 @@ end
 function FaultPlot_3D_Color_General(FaultCenter,FaultLengthStrike, FaultLengthDip, FaultStrikeAngle,
     FaultDipAngle, FaultLLRR, InputProperty, PlotRotation, MinMax_Axis, ColorMinMax, Transparent, Edge, LoadingFaultCount)
 
-    # FaultPlot_3D_Color_General(FaultCenter[1:FaultCount-LoadingFaultCount,:],FaultLengthStrike[1:FaultCount-LoadingFaultCount], FaultLengthDip[1:FaultCount-LoadingFaultCount],
-    # FaultStrikeAngle[1:FaultCount-LoadingFaultCount], FaultDipAngle[1:FaultCount-LoadingFaultCount], FaultLLRR[1:FaultCount-LoadingFaultCount],ReMidPressure[:,1:FaultCount-LoadingFaultCount], 
-    # PlotRotation, MinMax_Axis, Transparent)
-
-    cm = get_cmap(:jet)
-    
+    cm = get_cmap(:jet)    
     buffer=300
     xmin=minimum(FaultCenter[1:end-LoadingFaultCount,1])-buffer
     xmax=maximum(FaultCenter[1:end-LoadingFaultCount,1])+buffer
@@ -68,12 +63,9 @@ function FaultPlot_3D_Color_General(FaultCenter,FaultLengthStrike, FaultLengthDi
     MaxValue=ColorMinMax[2]
     MinValue=ColorMinMax[1]
     end
-    #MaxDisp=maximum(ReMidDisp)
-    #ReMidDisp_Plot=copy(ReMidDisp)
-    # for FaultIdx in eachindex(FaultLengthStrike)  
+
     for FaultIdx = 1: length(FaultLengthStrike)  - LoadingFaultCount
-    # for FaultIdx = 1125
-        #print(FaultIdx)
+
         RotMatStrike=[cosd(FaultStrikeAngle[FaultIdx]) -sind(FaultStrikeAngle[FaultIdx]) 0
             sind(FaultStrikeAngle[FaultIdx]) cosd(FaultStrikeAngle[FaultIdx]) 0
             0  0 1]
@@ -88,19 +80,10 @@ function FaultPlot_3D_Color_General(FaultCenter,FaultLengthStrike, FaultLengthDi
         
         fig = figure(1)
         PlotValue=(InputProperty[FaultIdx]-MinValue)/(MaxValue-MinValue)
-        
-        #if FaultIdx==length(FaultLengthStrike)
-        #    ion()
-        #end
-        #ion() # ioff() for turn off drawnow
         art3d = PyObject(PyPlot.art3D)
 
         verts2 = ([tuple(p1...); tuple(p2...); tuple(p3...); tuple(p4...)],)
-        #p3c = PyObject(art3d.Poly3DCollection(verts2, linewidths=1, alpha=ReMidVel[PlotStep,FaultIdx]/MaxVel))
-        #p3c = PyObject(art3d.Poly3DCollection(verts2, linewidths=1, alpha=0.05+ReMidVel[PlotStep,FaultIdx]/MaxVel*0.95)) 
-        #p3c = PyObject(art3d.Poly3DCollection(verts2, linewidths=1, alpha=0.05+ReMidVelLog[PlotStep,FaultIdx]/MaxVelLog*0.95))
         p3c = PyObject(art3d.Poly3DCollection(verts2, linewidths=1))
-        # ReMidVel[PlotStep,FaultIdx]/MaxVel))
 
         ax = subplot(projection="3d")
         pycall(ax.add_collection3d, PyAny, p3c)
@@ -126,9 +109,202 @@ function FaultPlot_3D_Color_General(FaultCenter,FaultLengthStrike, FaultLengthDi
 
     end
     return MaxValue, MinValue
-
-
 end
+
+
+
+
+function FaultPlot_3D_Color_General_hsv(FaultCenter,FaultLengthStrike, FaultLengthDip, FaultStrikeAngle,
+    FaultDipAngle, FaultLLRR, InputProperty, PlotRotation, MinMax_Axis, ColorMinMax, Transparent, Edge, LoadingFaultCount)
+
+    cm = get_cmap(:hsv)    
+    buffer=300
+    xmin=minimum(FaultCenter[1:end-LoadingFaultCount,1])-buffer
+    xmax=maximum(FaultCenter[1:end-LoadingFaultCount,1])+buffer
+    ymin=minimum(FaultCenter[1:end-LoadingFaultCount,2])-buffer
+    ymax=maximum(FaultCenter[1:end-LoadingFaultCount,2])+buffer
+    zmax=0
+    zmin=-maximum(FaultCenter[1:end-LoadingFaultCount,3])-buffer
+
+    xCenter=(xmin+xmax)/2
+    yCenter=(ymin+ymax)/2
+    zCenter=(zmin+zmax)/2
+    
+    maxlength=maximum([xmax-xmin,ymax-ymin, -zmin+zmax])
+
+    if MinMax_Axis == 0
+        xmin=xCenter-maxlength/2
+        xmax=xCenter+maxlength/2
+        ymin=yCenter-maxlength/2
+        ymax=yCenter+maxlength/2
+        zmin=zCenter-maxlength/2
+
+    else
+        xmin=MinMax_Axis[1,1]
+        xmax=MinMax_Axis[1,2]
+        ymin=MinMax_Axis[2,1]
+        ymax=MinMax_Axis[2,2]
+        zmin=MinMax_Axis[3,1]
+        zmax=MinMax_Axis[3,2]
+    end
+    if ColorMinMax==0
+    MaxValue=maximum(InputProperty)
+    MinValue=minimum(InputProperty)
+        if MaxValue == MinValue
+            ColorRange = MaxValue*0.1
+            MaxValue = MaxValue + ColorRange
+            MinValue = MinValue - ColorRange
+        end
+    else
+    MaxValue=ColorMinMax[2]
+    MinValue=ColorMinMax[1]
+    end
+
+    for FaultIdx = 1: length(FaultLengthStrike)  - LoadingFaultCount
+
+        RotMatStrike=[cosd(FaultStrikeAngle[FaultIdx]) -sind(FaultStrikeAngle[FaultIdx]) 0
+            sind(FaultStrikeAngle[FaultIdx]) cosd(FaultStrikeAngle[FaultIdx]) 0
+            0  0 1]
+        RotMatDip=[1 0  0
+        0 cosd(FaultDipAngle[FaultIdx]) -sind(FaultDipAngle[FaultIdx])
+        0 sind(FaultDipAngle[FaultIdx]) cosd(FaultDipAngle[FaultIdx])]
+                
+        p1=RotMatStrike*RotMatDip*[FaultLengthStrike[FaultIdx]/2;-FaultLengthDip[FaultIdx]/2;0] + [FaultCenter[FaultIdx,1]; FaultCenter[FaultIdx,2]; -FaultCenter[FaultIdx,3]];
+        p2=RotMatStrike*RotMatDip*[-FaultLengthStrike[FaultIdx]/2;-FaultLengthDip[FaultIdx]/2;0] + [FaultCenter[FaultIdx,1]; FaultCenter[FaultIdx,2]; -FaultCenter[FaultIdx,3]];
+        p3=RotMatStrike*RotMatDip*[-FaultLengthStrike[FaultIdx]/2;+FaultLengthDip[FaultIdx]/2;0]+ [FaultCenter[FaultIdx,1]; FaultCenter[FaultIdx,2]; -FaultCenter[FaultIdx,3]];
+        p4=RotMatStrike*RotMatDip*[FaultLengthStrike[FaultIdx]/2;+FaultLengthDip[FaultIdx]/2;0]+ [FaultCenter[FaultIdx,1]; FaultCenter[FaultIdx,2]; -FaultCenter[FaultIdx,3]];
+        
+        fig = figure(8)
+        PlotValue=(InputProperty[FaultIdx]-MinValue)/(MaxValue-MinValue)
+        art3d = PyObject(PyPlot.art3D)
+
+        verts2 = ([tuple(p1...); tuple(p2...); tuple(p3...); tuple(p4...)],)
+        p3c = PyObject(art3d.Poly3DCollection(verts2, linewidths=1))
+
+        ax = subplot(projection="3d")
+        pycall(ax.add_collection3d, PyAny, p3c)
+        xlim(xmin,xmax )
+        ylim(ymin,ymax )
+        zlim(zmin,zmax )
+
+        if Transparent == 0
+            face_color = [cm(PlotValue)[1], cm(PlotValue)[2],cm(PlotValue)[3],1]#PlotValue]#ReMidVel[PlotStep,FaultIdx]]
+            edge_color = [0.5, 0.5, 0.5, 1.0]#ReMidVel[PlotStep,FaultIdx]]
+        else 
+            face_color = [cm(PlotValue)[1], cm(PlotValue)[2],cm(PlotValue)[3],0.3]#PlotValue]#ReMidVel[PlotStep,FaultIdx]]
+            edge_color = [0.5, 0.5, 0.5, 1.0]#ReMidVel[PlotStep,FaultIdx]]
+
+        end
+        if Edge == 0
+        edge_color = [0 0 0 0]
+        end
+        
+        pycall(p3c.set_facecolor, PyAny, face_color)
+        pycall(p3c.set_edgecolor, PyAny, edge_color)
+        ax.view_init(PlotRotation[1],PlotRotation[2])
+
+    end
+    return MaxValue, MinValue
+end
+
+
+
+
+
+function FaultPlot_3D_Color_AdjustedElements(FaultCenter,FaultLengthStrike, FaultLengthDip, FaultStrikeAngle,
+    FaultDipAngle, FaultLLRR, InputProperty, PlotRotation, MinMax_Axis, ColorMinMax,
+    Transparent, Edge, LoadingFaultCount)
+
+    cm = get_cmap(:jet)    
+    buffer=300
+    xmin=minimum(FaultCenter[1:end-LoadingFaultCount,1])-buffer
+    xmax=maximum(FaultCenter[1:end-LoadingFaultCount,1])+buffer
+    ymin=minimum(FaultCenter[1:end-LoadingFaultCount,2])-buffer
+    ymax=maximum(FaultCenter[1:end-LoadingFaultCount,2])+buffer
+    zmax=0
+    zmin=-maximum(FaultCenter[1:end-LoadingFaultCount,3])-buffer
+
+    xCenter=(xmin+xmax)/2
+    yCenter=(ymin+ymax)/2
+    zCenter=(zmin+zmax)/2
+    
+    maxlength=maximum([xmax-xmin,ymax-ymin, -zmin+zmax])
+
+    if MinMax_Axis == 0
+        xmin=xCenter-maxlength/2
+        xmax=xCenter+maxlength/2
+        ymin=yCenter-maxlength/2
+        ymax=yCenter+maxlength/2
+        zmin=zCenter-maxlength/2
+
+    else
+        xmin=MinMax_Axis[1,1]
+        xmax=MinMax_Axis[1,2]
+        ymin=MinMax_Axis[2,1]
+        ymax=MinMax_Axis[2,2]
+        zmin=MinMax_Axis[3,1]
+        zmax=MinMax_Axis[3,2]
+    end
+
+        MaxValue = 2
+        MinValue = 0
+
+    for FaultIdx = 1: length(FaultLengthStrike)  - LoadingFaultCount
+
+        RotMatStrike=[cosd(FaultStrikeAngle[FaultIdx]) -sind(FaultStrikeAngle[FaultIdx]) 0
+            sind(FaultStrikeAngle[FaultIdx]) cosd(FaultStrikeAngle[FaultIdx]) 0
+            0  0 1]
+        RotMatDip=[1 0  0
+        0 cosd(FaultDipAngle[FaultIdx]) -sind(FaultDipAngle[FaultIdx])
+        0 sind(FaultDipAngle[FaultIdx]) cosd(FaultDipAngle[FaultIdx])]
+                
+        p1=RotMatStrike*RotMatDip*[FaultLengthStrike[FaultIdx]/2;-FaultLengthDip[FaultIdx]/2;0] + [FaultCenter[FaultIdx,1]; FaultCenter[FaultIdx,2]; -FaultCenter[FaultIdx,3]];
+        p2=RotMatStrike*RotMatDip*[-FaultLengthStrike[FaultIdx]/2;-FaultLengthDip[FaultIdx]/2;0] + [FaultCenter[FaultIdx,1]; FaultCenter[FaultIdx,2]; -FaultCenter[FaultIdx,3]];
+        p3=RotMatStrike*RotMatDip*[-FaultLengthStrike[FaultIdx]/2;+FaultLengthDip[FaultIdx]/2;0]+ [FaultCenter[FaultIdx,1]; FaultCenter[FaultIdx,2]; -FaultCenter[FaultIdx,3]];
+        p4=RotMatStrike*RotMatDip*[FaultLengthStrike[FaultIdx]/2;+FaultLengthDip[FaultIdx]/2;0]+ [FaultCenter[FaultIdx,1]; FaultCenter[FaultIdx,2]; -FaultCenter[FaultIdx,3]];
+        
+        fig = figure(1)
+        PlotValue=(InputProperty[FaultIdx]-MinValue)/(MaxValue-MinValue)
+        art3d = PyObject(PyPlot.art3D)
+
+        verts2 = ([tuple(p1...); tuple(p2...); tuple(p3...); tuple(p4...)],)
+        p3c = PyObject(art3d.Poly3DCollection(verts2, linewidths=1))
+
+        ax = subplot(projection="3d")
+        pycall(ax.add_collection3d, PyAny, p3c)
+        xlim(xmin,xmax )
+        ylim(ymin,ymax )
+        zlim(zmin,zmax )
+
+        if InputProperty[FaultIdx] == 1
+            face_color = [cm(PlotValue)[1], cm(PlotValue)[2],cm(PlotValue)[3],0.0]#PlotValue]#ReMidVel[PlotStep,FaultIdx]]
+            edge_color = [0.5, 0.5, 0.5, 1.0]#ReMidVel[PlotStep,FaultIdx]]
+        else 
+            face_color = [cm(PlotValue)[1], cm(PlotValue)[2],cm(PlotValue)[3],0.8]#PlotValue]#ReMidVel[PlotStep,FaultIdx]]
+            edge_color = [0.5, 0.5, 0.5, 1.0]#ReMidVel[PlotStep,FaultIdx]]
+
+        end
+
+        # # if Transparent == 0
+        # #     face_color = [cm(PlotValue)[1], cm(PlotValue)[2],cm(PlotValue)[3],1]#PlotValue]#ReMidVel[PlotStep,FaultIdx]]
+        # #     edge_color = [0.5, 0.5, 0.5, 1.0]#ReMidVel[PlotStep,FaultIdx]]
+        # # else 
+        # #     face_color = [cm(PlotValue)[1], cm(PlotValue)[2],cm(PlotValue)[3],0.3]#PlotValue]#ReMidVel[PlotStep,FaultIdx]]
+        # #     edge_color = [0.5, 0.5, 0.5, 1.0]#ReMidVel[PlotStep,FaultIdx]]
+
+        # # end
+        # if Edge == 0
+        # edge_color = [0 0 0 0]
+        # end
+        
+        pycall(p3c.set_facecolor, PyAny, face_color)
+        pycall(p3c.set_edgecolor, PyAny, edge_color)
+        ax.view_init(PlotRotation[1],PlotRotation[2])
+
+    end
+    return MaxValue, MinValue
+end
+
 
 
 
@@ -211,7 +387,7 @@ function FaultPlot_3D_Color_SelectedElements(FaultCenter,FaultLengthStrike, Faul
         p3c = PyObject(art3d.Poly3DCollection(verts2, linewidths=1))
         # ReMidVel[PlotStep,FaultIdx]/MaxVel))
 
-        ax = gca(projection="3d")
+        ax = subplot(projection="3d")
         pycall(ax.add_collection3d, PyAny, p3c)
         xlim(xmin,xmax )
         ylim(ymin,ymax )
@@ -525,3 +701,113 @@ function SurfaceDeformaion_StrikeSlip(FaultCountSource, FaultCenterSource, Fault
     return DisplacementX,  DisplacementY, DisplacementZ
 end
  
+
+
+function PlotBulk_SenseOfSlip(RakeLRRN, Input_Bulk, PlotRotation, Transparent, Edge, MinMax_Axis)
+
+    ################# Adjust to Rake Angle if defined by Sense of Slip #################
+
+    Faultcount = length(Input_Bulk[:,1])
+    RakeAngle = Input_Bulk[:,8]
+    DipAngle =  Input_Bulk[:,7]
+    # adjust sense of slip to rake angle
+    if RakeLRRN ==1
+        for BulkIndex = 1: Faultcount
+            if RakeAngle[BulkIndex] == -1.0
+                RakeAngle[BulkIndex] = 0.0
+            else        
+                RakeAngle[BulkIndex] = 180.0
+            end    
+        end
+    elseif RakeLRRN ==2
+        for BulkIndex = 1: Faultcount
+            if DipAngle[BulkIndex] < 90.0
+                if RakeAngle[BulkIndex] == -1.0
+                    RakeAngle[BulkIndex] = 90.0
+                else        
+                    RakeAngle[BulkIndex] = 270.0
+                end    
+            else 
+                if RakeAngle[BulkIndex] == -1.0
+                    RakeAngle[BulkIndex] = 270.0
+                else        
+                    RakeAngle[BulkIndex] = 90.0
+                end    
+            end
+        end
+    end
+
+    RakeAngle_NRAdjusted = copy(RakeAngle)
+    for BulkIndex = 1: Faultcount
+        if DipAngle[BulkIndex] > 90.0
+            RakeAngle_NRAdjusted[BulkIndex] = 360 - RakeAngle_NRAdjusted[BulkIndex]
+
+        end
+    end
+    PlotInput=RakeAngle_NRAdjusted; ColorMinMax=[0, 360]
+
+        
+
+    ################# Draw Fault Surface #################
+
+    figure(8)
+    clf()
+    MaxVaule, MinValue = FaultPlot_3D_Color_General_hsv(Input_Bulk[:,1:3],
+        Input_Bulk[:,4], Input_Bulk[:,5], Input_Bulk[:,6], Input_Bulk[:,7], Input_Bulk[:,8], PlotInput, 
+        PlotRotation, MinMax_Axis, ColorMinMax, Transparent, Edge, 0)
+        ax = subplot(projection="3d")
+        xlabel("x")
+        ylabel("y")
+    plotforcbar=  scatter([1,1],[1,1],0.1, [MinValue,MaxVaule], cmap="hsv")
+    cbar  = colorbar(plotforcbar, pad=0.15)
+    cbar.set_ticks([0, 90, 180,270,360])
+    cbar.set_ticklabels(["Left Lateral", "Reverse", "Right Lateral", "Normal", "Left Lateral"])
+    figure(8).canvas.draw()
+
+    ################# Draw Sense of Slip ################
+
+
+    LineLength = vec(minimum([Input_Bulk[:,4] Input_Bulk[:,5]], dims=2)./2)
+
+    UnrotatedSlipUnitVec = [cosd.(RakeAngle) sind.(RakeAngle) zeros(Faultcount)]
+    UnrotatedGapVector = [0 0 1]
+    RotatedSlipUnitVec = UnrotatedSlipUnitVec .* 0.0 
+    VecStart = UnrotatedSlipUnitVec .* 0.0 
+    VecEnd = UnrotatedSlipUnitVec .* 0.0 
+    FaultCenter =  Input_Bulk[:,1:3]
+    FaultCenter[:,3] = -FaultCenter[:,3]
+    for BulkIndex = 1: Faultcount
+
+    RotationMat_Strike=
+    [cosd(Input_Bulk[BulkIndex,6]) -sind(Input_Bulk[BulkIndex,6])  0
+    sind(Input_Bulk[BulkIndex,6]) cosd(Input_Bulk[BulkIndex,6]) 0
+    0  0  1];
+
+    RotationMat_Dip=
+    [1 0 0
+    0 cosd(Input_Bulk[BulkIndex,7]) -sind(Input_Bulk[BulkIndex,7])
+    0 sind(Input_Bulk[BulkIndex,7]) cosd(Input_Bulk[BulkIndex,7])]
+
+    RotatedSlipUnitVec[BulkIndex,:] = RotationMat_Strike * RotationMat_Dip  * UnrotatedSlipUnitVec[BulkIndex,:]
+    RotatedGap = RotationMat_Strike * RotationMat_Dip  * UnrotatedGapVector' .* 50
+
+    VecStart[BulkIndex,:] = -RotatedSlipUnitVec[BulkIndex,:] /2 * LineLength[BulkIndex] .+ FaultCenter[BulkIndex,1:3] + RotatedGap
+    VecEnd[BulkIndex,:] = RotatedSlipUnitVec[BulkIndex,:]/2* LineLength[BulkIndex] .+ FaultCenter[BulkIndex,1:3] - + RotatedGap
+    end
+
+
+
+    for i =1:Faultcount 
+        ax.quiver(VecStart[i,1], VecStart[i,2], VecStart[i,3], 
+            RotatedSlipUnitVec[i,1] * LineLength[i], RotatedSlipUnitVec[i,2] * LineLength[i], RotatedSlipUnitVec[i,3] * LineLength[i],
+            color="k",arrow_length_ratio=0.2)
+        ax.quiver(VecEnd[i,1], VecEnd[i,2], VecEnd[i,3], 
+            -RotatedSlipUnitVec[i,1] * LineLength[i], -RotatedSlipUnitVec[i,2] * LineLength[i], -RotatedSlipUnitVec[i,3] * LineLength[i],
+            color="k",arrow_length_ratio=0.2)
+
+    end
+
+
+
+    return ax
+end

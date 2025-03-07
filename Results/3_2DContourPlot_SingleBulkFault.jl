@@ -7,7 +7,7 @@ using Statistics
 pygui(true)
 include("Functions_Plot.jl")
 
-PlotBulkIndex = 2
+PlotBulkIndex = 1
 TimeIndex = 100
 
 XPlotIndex = 2

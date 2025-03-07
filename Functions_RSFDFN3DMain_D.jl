@@ -4,58 +4,52 @@ function main(StiffnessMatrixShear, StiffnessMatrixNormal, NormalStiffnessZero,
     a, b, Dc, ThetaI, Vini, FrictionI,
     InitialNormalStress, LoadingRate, 
     TotalStep, RecordStep, SwitchV, TimeStepping, SaveResultFileName,RockDensity,
-    FaultCenter,FaultLengthStrike, FaultLengthDip, FaultStrikeAngle, FaultDipAngle, FaultLLRR, SaveStep,
-    TimeStepOnlyBasedOnUnstablePatch, MinimumNormalStress, Alpha_Evo)
+    FaultCenter,FaultLengthStrike, FaultLengthDip, FaultStrikeAngle, FaultDipAngle, FaultRakeAngle, SaveStep,
+    TimeStepOnlyBasedOnUnstablePatch, MinimumNormalStress, Alpha_Evo, EvolutionDR)
     
-    ExternalStressExist=0;
 
-    if  isfile("Input_ExternalStressChange.jld2")
-        
+
+
+    ############# if External Stress Exist, Load the external Stress ##############
+    ExternalStressExist=0
+    if  isfile("Input_ExternalStressChange.jld2")        
         ExternalStress_Normal = load("Input_ExternalStressChange.jld2", "ExternalStress_Normal")
         ExternalStress_Shear = load("Input_ExternalStressChange.jld2", "ExternalStress_Shear")
         ExternalStress_Pressure = load("Input_ExternalStressChange.jld2", "Pressure")
         ExternalStress_TimeArray = load("Input_ExternalStressChange.jld2", "ExternalStress_TimeArray")
-        # "ExternalStress_Normal", ExternalStress_Normal, "ExternalStress_Shear", ExternalStress_Shear, 
-        # "ExternalStress_TimeArray", ExternalStress_TimeArray)
         if size(ExternalStress_Normal)[2] == FaultCount
             println("External Stress Change Will be Applied")    
-            ExternalStressExist=1;
+            ExternalStressExist=1
         else
             println("External Stress Change Dosen't match the fault Count. Will not be applied")    
-        end
-            
+        end            
     else
         println("No External Stress Change Detected")
     end
+    ###############################################################################
 
 
-
-
-    V0=1e-9;
-    InitialShearStress=InitialNormalStress.*FrictionI;
-    
-    TotalRecord=Int(round(TotalStep/RecordStep));
-    Dt=1;
-    ConvergenceCrit=1e-9;
-
-
-    # define constant variables
+    ########################### Initialize ############################
+    V0=1e-9
+    InitialShearStress=InitialNormalStress.*FrictionI    
+    TotalRecord=Int(round(TotalStep/RecordStep))
+    Dt=1
+    ConvergenceCrit=1e-9
 
     K_Self=zeros(FaultCount)
     Omega=zeros(FaultCount)
     ElasticLoadingShearMatrix=zeros(FaultCount,FaultCount)
-    # ElasticLoadingNormal=zeros(FaultCount,FaultCount)
 
+    ############### Separate Loading Stiffness and Find unstable Patch ##############
     UnstablePatch=[0;]
     for i=1:FaultCount
-        K_Self[i]=abs(StiffnessMatrixShear[i,i]);
-        Omega[i]=sqrt(K_Self[i]/Mass[i]);
+        K_Self[i]=abs(StiffnessMatrixShear[i,i])
+        Omega[i]=sqrt(K_Self[i]/Mass[i])
         for j=1:FaultCount  
             if i==j
-                ElasticLoadingShearMatrix[i,j]=0.0;
+                ElasticLoadingShearMatrix[i,j]=0.0
             else
-                ElasticLoadingShearMatrix[i,j]=StiffnessMatrixShear[i,j]/StiffnessMatrixShear[i,i];
-                # ElasticLoadingNormal[i,j]=StiffnessMatrixNormal[i,j]/StiffnessMatrixShear[i,i];
+                ElasticLoadingShearMatrix[i,j]=StiffnessMatrixShear[i,j]/StiffnessMatrixShear[i,i]
             end
         end
         if a[i] - b[i] < 0
@@ -68,6 +62,8 @@ function main(StiffnessMatrixShear, StiffnessMatrixNormal, NormalStiffnessZero,
     else
         UnstablePatch = UnstablePatch[2:end]
     end
+    ################################################################################
+
 
     PlanarFault=0
     if NormalStiffnessZero == 1
@@ -76,36 +72,30 @@ function main(StiffnessMatrixShear, StiffnessMatrixNormal, NormalStiffnessZero,
     end
     
 
-
-
     Far_Load_Disp_Initial=-(StiffnessMatrixShear\InitialShearStress); # initial load point
-
-
     Friction0=FrictionI-a.*log.(Vini./V0)-b.*log.(ThetaI.*V0./Dc); # Initial friction
     Friction=copy(FrictionI);
 
+    ######################### Define Variables ###########################
+    TOld = 0.0
+    Step = 0
+    T = 0.0
+    TOld=copy(T)
 
-    # set zeros
-    TOld=0.0;
-    Step=0;
-    T=0.0;
-    TOld=copy(T);
+    FLAG_GoodToGo=zeros(FaultCount)
 
-    FLAG_GoodToGo=zeros(FaultCount);
-
-    Accel=zeros(FaultCount);
+    Accel=zeros(FaultCount)
     DtOld=copy(Dt)
-    Disp=zeros(FaultCount);
-    DispOld=zeros(FaultCount);
-    #DispDelta=copy(Disp)
-
-    Instability=zeros(FaultCount,1);
+    Disp=zeros(FaultCount)
+    DispOld=zeros(FaultCount)
+    
+    Instability=zeros(FaultCount,1)
     InstabilityThistime=zeros(FaultCount,1)
 
-    AccelOld=copy(Accel);
+    AccelOld=copy(Accel)
 
     EffNormalStress=zeros(FaultCount,1)
-    EffNormalStress_Old=copy(InitialNormalStress);
+    EffNormalStress_Old=copy(InitialNormalStress)
     EffNormalStress_i=copy(EffNormalStress)
     EffNormalStressMatrixProduct=zeros(FaultCount)
     D_EffStress_Normal = zeros(FaultCount,1)
@@ -115,50 +105,45 @@ function main(StiffnessMatrixShear, StiffnessMatrixNormal, NormalStiffnessZero,
 
     SolverSwitch=zeros(FaultCount)
 
-    #Total_Loading_Disp_Old=zeros(FaultCount,1)
-    #Total_Loading_Disp=zeros(FaultCount,1)
-    VOld=copy(Vini);
-    V=copy(VOld);
-    Theta=copy(ThetaI);
-    ThetaOld=copy(Theta);
-    FrictionOld=copy(Friction);
-    SlowOrFast=0;
-    Instability=copy(InstabilityThistime);
+    VOld=copy(Vini)
+    V=copy(VOld)
+    Theta=copy(ThetaI)
+    ThetaOld=copy(Theta)
+    FrictionOld=copy(Friction)
+    SlowOrFast=0
+    Instability=copy(InstabilityThistime)
 
     Elastic_Load_Disp_Old=ElasticLoadingShearMatrix*Far_Load_Disp_Initial
-    # Elastic_Load_Disp_Old=ElasticLoadingShearMatrix_H*Far_Load_Disp_Initial
     Elastic_Load_Disp=zeros(FaultCount)
     Elastic_Load_Vel=ElasticLoadingShearMatrix*(-VOld)    
-    # Elastic_Load_Vel=ElasticLoadingShearMatrix_H*(-VOld)
-    Elastic_Load_Vel_Old=copy(Elastic_Load_Vel)
-    
+    Elastic_Load_Vel_Old=copy(Elastic_Load_Vel)    
 
-    # Define Histories
-    History_Time =zeros(TotalRecord,1);
-    History_Disp =zeros(TotalRecord,FaultCount);
-    History_V =zeros(TotalRecord,FaultCount);
-    History_Dt =zeros(TotalRecord,1);
-    History_NormalStress =zeros(TotalRecord,FaultCount);
-    History_Theta =zeros(TotalRecord,FaultCount);
-    History_Pressure =zeros(TotalRecord,FaultCount);
-    History_External_Shear = zeros(TotalRecord,FaultCount);
-    History_External_Normal = zeros(TotalRecord,FaultCount);
-    
+    # Define History variables
+    History_Time =zeros(TotalRecord,1)
+    History_Disp =zeros(TotalRecord,FaultCount)
+    History_V =zeros(TotalRecord,FaultCount)
+    History_Dt =zeros(TotalRecord,1)
+    History_NormalStress =zeros(TotalRecord,FaultCount)
+    History_Theta =zeros(TotalRecord,FaultCount)
+    History_Pressure =zeros(TotalRecord,FaultCount)
+    History_External_Shear = zeros(TotalRecord,FaultCount)
+    History_External_Normal = zeros(TotalRecord,FaultCount)
+
+    ########################## Simulation begins ##############################
     DtRef=1.0
     @time begin
         for i=1:TotalStep
 
-
             FLAG_GoodToGo .= 0
-            V=copy(VOld);
-            if TimeStepOnlyBasedOnUnstablePatch ==1
-                Vmax=maximum(V[UnstablePatch]);
-            else
-                Vmax=maximum(V[1:length(V)-LoadingFaultCount]);
-            end
-            
+            V=copy(VOld)
 
-            #Dt = DtAdjust(Dt, maximum(V), SwitchV, MinDt, maximum(Instability))
+            ############ Adjust Dt based on the Maximum Velocity #############
+            if TimeStepOnlyBasedOnUnstablePatch ==1
+                Vmax=maximum(V[UnstablePatch])
+            else
+                Vmax=maximum(V[1:length(V)-LoadingFaultCount])
+            end            
+
             DtRef = FunctionDtRef(Vmax, TimeStepping, SlowOrFast)
             if DtRef == TimeStepping[1,4]
                 Dt=DtRef;
@@ -166,7 +151,7 @@ function main(StiffnessMatrixShear, StiffnessMatrixNormal, NormalStiffnessZero,
                 Dt=Dt*1.2;
             else
                 Dt=DtRef;
-            end    
+            end  
 
             SolverSwitch .= 0
             for FaultIdx=1:FaultCount
@@ -185,13 +170,13 @@ function main(StiffnessMatrixShear, StiffnessMatrixNormal, NormalStiffnessZero,
             SwitchTime=0;
 
             
-            ##########    Shear and Normal Stress Change    ###########
+            ##########    Calculate Shear and Normal Stress Change    ###########
             Elastic_Load_Disp=ElasticLoadingShearMatrix * (Far_Load_Disp_Initial-DispOld) 
             if PlanarFault == 0
                 EffNormalStressMatrixProduct = StiffnessMatrixNormal * DispOld
             end
 
-
+            #################### One step Solve ####################
             while Terminate==0
                 Iteration=Iteration+1;
                 
@@ -202,6 +187,7 @@ function main(StiffnessMatrixShear, StiffnessMatrixNormal, NormalStiffnessZero,
                 if ExternalStressExist ==1
                     D_EffStress_Normal, D_EffStress_Shear, D_Pressure = InterpolateFromStressChange(TOld, FaultCount,
                     ExternalStress_Normal, ExternalStress_Shear,ExternalStress_TimeArray, ExternalStress_Pressure)
+                    # println(maximum(D_EffStress_Normal))
                 end
 
                 EffNormalStress_i = EffNormalStressMatrixProduct + InitialNormalStress + D_EffStress_Normal
@@ -221,26 +207,18 @@ function main(StiffnessMatrixShear, StiffnessMatrixNormal, NormalStiffnessZero,
                 Mass,ShearModulus, 
                 EffNormalStress_i,Total_Loading_Disp, SolverSwitch,
                 V,Friction,Disp,Theta,EffNormalStress,Dt_All,Instability,
-                LoadingRate, LoadingFaultCount, FaultCount, RockDensity, D_EffStress_Shear, SwitchV, Alpha_Evo, EffNormalStress_Old)
+                LoadingRate, LoadingFaultCount, FaultCount, RockDensity, D_EffStress_Shear, SwitchV, Alpha_Evo, EffNormalStress_Old, EvolutionDR)
 
                 ############ End of One Step Solver ############
 
-
+                ############# Did it converged? ###########
                 if minimum(FLAG_GoodToGo) ==0
-                # if minimum(Dt_All) < maximum(Dt_All)
-
-                    Dt= minimum(Dt_All);
-                    # println(findmin(Dt_All))
-                    
+                    Dt= minimum(Dt_All);                    
                     for FaultIdx=1:FaultCount
                         if InstabilityThistime[FaultIdx]==3
-                            #println("Switching to 1 fault index ", FaultIdx, ", Dt ", Dt,", VOld ",VOld[FaultIdx])
                             SolverSwitch[FaultIdx]=1;
-                            # Dt=RecommendedTimeStep
                         elseif InstabilityThistime[FaultIdx]==4
-                            #println("Switching to 0 fault index ", FaultIdx, ", Dt ", Dt,", VOld ",VOld[FaultIdx])
-                            SolverSwitch[FaultIdx]=0;
-                            
+                            SolverSwitch[FaultIdx]=0;                            
                             Dt=1e-3
                         end
                     end
@@ -258,6 +236,7 @@ function main(StiffnessMatrixShear, StiffnessMatrixNormal, NormalStiffnessZero,
             
             Dt=minimum(Dt_All);
             
+            ######################## Save the result ##########################
             if rem(i,RecordStep)==0
                 Step=Step+1;
 
@@ -279,20 +258,15 @@ function main(StiffnessMatrixShear, StiffnessMatrixNormal, NormalStiffnessZero,
 
                 @printf("%.5f %.5f   %.3e   %.3e    %i \n", i/TotalStep, T/60/60/24, maximum(V[1:FaultCount-LoadingFaultCount]), Dt ,SlowOrFast )
 
-                if rem(i,SaveStep)==0
-                    
+                if rem(i,SaveStep)==0                    
                     save(SaveResultFileName, 
                     "History_V", History_V, "History_Disp", History_Disp, 
-                    "History_Time", History_Time, "History_Theta", History_Theta, "History_NormalStress", History_NormalStress,
-                    # "History_External_Shear", History_External_Shear, "History_External_Normal", History_External_Normal,
-                    ) 
+                    "History_Time", History_Time, "History_Theta", History_Theta, "History_NormalStress", History_NormalStress) 
                     println("Saved Upto Here")
-                    #writedlm("geek.txt", History_V')
                 end
                 
             end
             
-            # if maximum(V[1:end-2])>SwitchV
             if maximum(SolverSwitch[1:FaultCount-LoadingFaultCount]) > 0
                 SlowOrFast=1;
             else
@@ -318,10 +292,4 @@ function main(StiffnessMatrixShear, StiffnessMatrixNormal, NormalStiffnessZero,
             
         end
     end
-
-        #println(Return_V)
-        #println(Return_Friction)
-        #println(Return_Disp)
-    
-
 end

@@ -1,9 +1,6 @@
 
-
-
 ################################################################################
 ###### This file generate Hmatrix Structure File from Bulk Fault Geometry ######
-###### H-matrix approximation should  be 
 
 using DelimitedFiles
 using Base
@@ -40,8 +37,6 @@ function BuildHMatStructure()
     PlotBlock3D = 0
     ##########################################################################
     
-
-    ElementPartRoughCount = 2000
     
     ############################# Read Bulk Input ##################################
     ######++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++######
@@ -67,7 +62,35 @@ function BuildHMatStructure()
 
     Input_Bulk=Input_Bulk[4:end,:]
     Input_Bulk=Input_Bulk[sortperm(Input_Bulk[:, 17]), :]
-    
+
+    BulkFaultcount = length(Input_Bulk[:,1])
+    # Adjust LRRN to rake angle
+    if Switch_StrikeSlip_or_ReverseNormal == 1
+        for BulkIndex = 1: BulkFaultcount
+            if Input_Bulk[BulkIndex,8] == -1.0
+                Input_Bulk[BulkIndex,8] = 0.0
+            else        
+                Input_Bulk[BulkIndex,8] = 180.0
+            end    
+        end
+    elseif Switch_StrikeSlip_or_ReverseNormal ==2
+        for BulkIndex = 1: BulkFaultcount
+            if Input_Bulk[BulkIndex,7] < 90.0
+                if Input_Bulk[BulkIndex,8] == -1.0
+                    Input_Bulk[BulkIndex,8] = 90.0
+                else        
+                    Input_Bulk[BulkIndex,8] = 270.0
+                end    
+            else 
+                if Input_Bulk[BulkIndex,8] == -1.0
+                    Input_Bulk[BulkIndex,8] = 270.0
+                else        
+                    Input_Bulk[BulkIndex,8] = 90.0
+                end    
+            end
+        end
+    end   
+
 
     # Adjust if positive depth exists
     for i in eachindex(Input_Bulk[:,1])
@@ -84,13 +107,13 @@ function BuildHMatStructure()
     ############################### Bulk to Segment ################################
     ######++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++######
     ## Segment File Order 
-    ##  1.Ctr_X     2.Ctr_Y 3.Ctr_Z 4.St_L	    5.Dip_L	    6.StAng	    7.DipAng	8.LR/RN
+    ##  1.Ctr_X     2.Ctr_Y 3.Ctr_Z 4.St_L	    5.Dip_L	    6.StAng	    7.DipAng	8.RakeAngle
     ##  9.a         10.b	11.Dc	12.Theta_i	13. V_i     14. Friction_i 15.NormalStress  
     ##  16. V_Const 17. Bulk Index     18. Bulk Strike Length      19. Bulk Dip Length
     Input_Segment = BulkToSegment(Input_Bulk);
     FaultCount=   size(Input_Segment,1)
     Input_Segment = [Input_Segment ones(FaultCount) zeros(FaultCount)]
-    Input_Segment = Input_Segment[sortperm(Input_Segment[:, 16]), :] # move the loading faults to the end
+    Input_Segment = Input_Segment[sortperm(Input_Segment[:, 16]), :] # move the loading faults to the top
     
 
 
@@ -146,7 +169,7 @@ function BuildHMatStructure()
                 c = PyObject(patches.Rectangle((ElementRange_SR[i,1]-1, -ElementRange_SR[i,3]+1), ElementRange_SR[i,2] - ElementRange_SR[i,1]+1, 
                             -ElementRange_SR[i,4] + ElementRange_SR[i,3]-1, linewidth=1, edgecolor="k", facecolor=[0.4  0.4  1]))    
             else           
-                  c = PyObject(patches.Rectangle((ElementRange_SR[i,1]-1, -ElementRange_SR[i,3]+1), ElementRange_SR[i,2] - ElementRange_SR[i,1]+1, 
+                c = PyObject(patches.Rectangle((ElementRange_SR[i,1]-1, -ElementRange_SR[i,3]+1), ElementRange_SR[i,2] - ElementRange_SR[i,1]+1, 
                             -ElementRange_SR[i,4] + ElementRange_SR[i,3]-1, linewidth=1, edgecolor="k",  facecolor=[1 0.4 0.4]))
             end
             # ax.text( (ElementRange_SR[i,3] + ElementRange_SR[i,4])/2, -(ElementRange_SR[i,1] + ElementRange_SR[i,2])/2, i ,size=8, horizontalalignment="center", verticalalignment="center", color="k") 

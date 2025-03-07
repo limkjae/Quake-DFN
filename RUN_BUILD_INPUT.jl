@@ -1,5 +1,3 @@
-
-
 using DelimitedFiles
 using Base
 using PyPlot
@@ -59,10 +57,10 @@ function BuildInputFromBulkGeometry_H()
             if Input_Bulk != Input_BulkfromFile
                 println("???????????????????????????????????????????????????????????????????????????????????????????")
                 println("???          H Matrix Structure File dosen't correspond to Bulk Input File              ???")
+                println("???                                Check if not intended                                ???")
                 println("???????????????????????????????????????????????????????????????????????????????????????????")
             end
             FaultCount = length(Input_Segment[:,1])
-
 
         else 
             # println("H Matrix Structure File does not exist")
@@ -81,7 +79,7 @@ function BuildInputFromBulkGeometry_H()
         ##  1.SwitchSSRN  2.ShearMod  3.PoiRat  4.R_Density   
         ##  5. Crit_TooClose   6. TooCloseNormal_Multiplier
         ##  ----------------------------------------------------------------------------
-        ##  1.Ctr_X     2.Ctr_Y 3.Ctr_Z 4.St_L	    5.Dip_L	    6.StAng	    7.DipAng	8.LR/RN
+        ##  1.Ctr_X     2.Ctr_Y 3.Ctr_Z 4.St_L	    5.Dip_L	    6.StAng	    7.DipAng	8.Rake
         ##  9.a         10.b	11.Dc	12.Theta_i	13. V_i     14. Friction_i 15.NormalStress at surface [Pa]  
         ##  16. NoarmalStress Gradient [Pa] 17. V_Const     18. Minimum Segment Length
 
@@ -96,10 +94,39 @@ function BuildInputFromBulkGeometry_H()
         MinimumNS=Input_Bulk[2,7]
 
         Input_Bulk=Input_Bulk[4:end,:]
-        Input_Bulk=Input_Bulk[sortperm(Input_Bulk[:, 17]), :]
+        Input_Bulk=Input_Bulk[sortperm(Input_Bulk[:, 17]), :] # send the loading fault to the end
+        BulkFaultcount = length(Input_Bulk[:,1])
+
+
+        # Adjust LRRN to rake angle
+        if Switch_StrikeSlip_or_ReverseNormal == 1
+            for BulkIndex = 1: BulkFaultcount
+                if Input_Bulk[BulkIndex,8] == -1.0
+                    Input_Bulk[BulkIndex,8] = 0.0
+                else        
+                    Input_Bulk[BulkIndex,8] = 180.0
+                end    
+            end
+        elseif Switch_StrikeSlip_or_ReverseNormal ==2
+            for BulkIndex = 1: BulkFaultcount
+                if Input_Bulk[BulkIndex,7] < 90.0
+                    if Input_Bulk[BulkIndex,8] == -1.0
+                        Input_Bulk[BulkIndex,8] = 90.0
+                    else        
+                        Input_Bulk[BulkIndex,8] = 270.0
+                    end    
+                else 
+                    if Input_Bulk[BulkIndex,8] == -1.0
+                        Input_Bulk[BulkIndex,8] = 270.0
+                    else        
+                        Input_Bulk[BulkIndex,8] = 90.0
+                    end    
+                end
+            end
+        end
         
 
-        # Adjust if positive depth exists
+        # Warning if positive depth exists
         for i in eachindex(Input_Bulk[:,1])
             if Input_Bulk[i,3]<Input_Bulk[i,5]/2*sind(Input_Bulk[i,7])
                 println("Caution! Fault ",i," may have negative depth")
@@ -220,20 +247,10 @@ function BuildInputFromBulkGeometry_H()
                         BlockSize = BlockSize + (Fin_S - Init_S) * (Fin_R - Init_R)
                         println("Part: ", CurrentPart,"/",DivisionCountS*DivisionCountR, " BlockIndex: ",BlockIndex, "/",BlockCount," Progress:",BlockSize/TotalElments)
 
-                        if Switch_StrikeSlip_or_ReverseNormal == 1
                         StiffnessMatrixShearThisBlock[Init_R:Fin_R,Init_S:Fin_S], StiffnessMatrixNormalThisBlock[Init_R:Fin_R,Init_S:Fin_S] = 
                         StiffnessMatrix_ByParts_Calculation_StrikeSlip(Input_SegmentS[Init_S:Fin_S,:], Input_SegmentR[Init_R:Fin_R,:], ShearModulus, PoissonRatio,
                                                             CurrentPart, TotalParts)
 
-                        elseif Switch_StrikeSlip_or_ReverseNormal == 2                                                        
-                        StiffnessMatrixShearThisBlock[Init_R:Fin_R,Init_S:Fin_S], StiffnessMatrixNormalThisBlock[Init_R:Fin_R,Init_S:Fin_S] = 
-                        StiffnessMatrix_ByParts_Calculation_NormalReverse(Input_SegmentS[Init_S:Fin_S,:], Input_SegmentR[Init_R:Fin_R,:], ShearModulus, PoissonRatio,
-                                                            CurrentPart, TotalParts)                                                                    
-                        else
-                            println("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
-                            println("!!!!!!! Switch_StrikeSlip_or_ReverseNormal should be either 1 or 2  !!!!!!!")
-                            println("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
-                        end
                     end
                 end                        
                 
@@ -261,23 +278,11 @@ function BuildInputFromBulkGeometry_H()
 
             StiffnessMatrixShearOriginal=zeros(FaultCount,FaultCount)
             StiffnessMatrixNormalOriginal=zeros(FaultCount,FaultCount)    
-            if Switch_StrikeSlip_or_ReverseNormal == 1
 
-                println("Preparing for discretization")
-                StiffnessMatrixShearOriginal, StiffnessMatrixNormalOriginal = 
-                    BuildMatrixByPartsStrikeSlip(FaultCount, ElementPartRoughCount, Input_Segment,  ShearModulus, PoissonRatio)
+            println("Preparing for discretization")
+            StiffnessMatrixShearOriginal, StiffnessMatrixNormalOriginal = 
+                BuildMatrixByPartsStrikeSlip(FaultCount, ElementPartRoughCount, Input_Segment,  ShearModulus, PoissonRatio)
                 
-            elseif Switch_StrikeSlip_or_ReverseNormal == 2
-                println("Preparing for discretization")
-                StiffnessMatrixShearOriginal, StiffnessMatrixNormalOriginal = 
-                    BuildMatrixByPartsNormalReverse(FaultCount, ElementPartRoughCount, Input_Segment,  ShearModulus, PoissonRatio)
-    
-            else
-                println("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
-                println("!!!!!!! Switch_StrikeSlip_or_ReverseNormal should be either 1 or 2  !!!!!!!")
-                println("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
-            end
-
             BlockCount = length(ElementRange_SR[:,1])
             ShearStiffness_H = Any[0]
             Ranks_Shear = zeros(Int, BlockCount)
@@ -316,21 +321,10 @@ function BuildInputFromBulkGeometry_H()
         StiffnessMatrixShearOriginal=zeros(FaultCount,FaultCount)
         StiffnessMatrixNormalOriginal=zeros(FaultCount,FaultCount)
 
-        if Switch_StrikeSlip_or_ReverseNormal == 1
             println("Preparing for discretization")
             StiffnessMatrixShearOriginal, StiffnessMatrixNormalOriginal = 
                 BuildMatrixByPartsStrikeSlip(FaultCount, ElementPartRoughCount, Input_Segment,  ShearModulus, PoissonRatio)
             
-        elseif Switch_StrikeSlip_or_ReverseNormal == 2
-            println("Preparing for discretization")
-            StiffnessMatrixShearOriginal, StiffnessMatrixNormalOriginal = 
-                BuildMatrixByPartsNormalReverse(FaultCount, ElementPartRoughCount, Input_Segment,  ShearModulus, PoissonRatio)
-
-        else
-            println("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
-            println("!!!!!!! Switch_StrikeSlip_or_ReverseNormal should be either 1 or 2  !!!!!!!")
-            println("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
-        end
 
     end
 
@@ -346,7 +340,7 @@ function BuildInputFromBulkGeometry_H()
     FaultLengthDip = Input_Segment[:,5]
     FaultStrikeAngle = Input_Segment[:,6]
     FaultDipAngle = Input_Segment[:,7]
-    FaultLLRR = Input_Segment[:,8]
+    FaultRakeAngle = Input_Segment[:,8]
     Fault_a = Input_Segment[:,9]
     Fault_b = Input_Segment[:,10]
     Fault_Dc = Input_Segment[:,11]
@@ -367,7 +361,7 @@ function BuildInputFromBulkGeometry_H()
             "StiffnessMatrixShear", StiffnessMatrixShearOriginal, "StiffnessMatrixNormal", StiffnessMatrixNormalOriginal, "FaultCenter", FaultCenter,
             "ShearModulus", ShearModulus, "RockDensity", RockDensity, "PoissonRatio", PoissonRatio,
             "FaultLengthStrike", FaultLengthStrike, "FaultLengthDip", FaultLengthDip, "FaultStrikeAngle", FaultStrikeAngle, 
-            "FaultDipAngle", FaultDipAngle, "FaultLLRR", FaultLLRR, "Fault_a", Fault_a, "Fault_b", Fault_b, "Fault_Dc", Fault_Dc, 
+            "FaultDipAngle", FaultDipAngle, "FaultRakeAngle", FaultRakeAngle, "Fault_a", Fault_a, "Fault_b", Fault_b, "Fault_Dc", Fault_Dc, 
             "Fault_Theta_i", Fault_Theta_i, "Fault_V_i", Fault_V_i, "Fault_Friction_i", Fault_Friction_i, "Fault_NormalStress", Fault_NormalStress, 
             "Fault_V_Const", Fault_V_Const, "Fault_BulkIndex", Fault_BulkIndex, "FaultLengthStrike_Bulk", FaultLengthStrike_Bulk, 
             "FaultLengthDip_Bulk", FaultLengthDip_Bulk, "FaultCount", FaultCount, "LoadingFaultCount", LoadingFaultCount, 
@@ -380,7 +374,7 @@ function BuildInputFromBulkGeometry_H()
             "FaultCenter", FaultCenter,
             "ShearModulus", ShearModulus, "RockDensity", RockDensity, "PoissonRatio", PoissonRatio,
             "FaultLengthStrike", FaultLengthStrike, "FaultLengthDip", FaultLengthDip, "FaultStrikeAngle", FaultStrikeAngle, 
-            "FaultDipAngle", FaultDipAngle, "FaultLLRR", FaultLLRR, "Fault_a", Fault_a, "Fault_b", Fault_b, "Fault_Dc", Fault_Dc, 
+            "FaultDipAngle", FaultDipAngle, "FaultRakeAngle", FaultRakeAngle, "Fault_a", Fault_a, "Fault_b", Fault_b, "Fault_Dc", Fault_Dc, 
             "Fault_Theta_i", Fault_Theta_i, "Fault_V_i", Fault_V_i, "Fault_Friction_i", Fault_Friction_i, "Fault_NormalStress", Fault_NormalStress, 
             "Fault_V_Const", Fault_V_Const, "Fault_BulkIndex", Fault_BulkIndex, "FaultLengthStrike_Bulk", FaultLengthStrike_Bulk, 
             "FaultLengthDip_Bulk", FaultLengthDip_Bulk, "FaultCount", FaultCount, "LoadingFaultCount", LoadingFaultCount, 
@@ -395,7 +389,7 @@ function BuildInputFromBulkGeometry_H()
             "StiffnessMatrixShear", StiffnessMatrixShearOriginal, "StiffnessMatrixNormal", StiffnessMatrixNormalOriginal, "FaultCenter", FaultCenter,
             "ShearModulus", ShearModulus, "RockDensity", RockDensity, "PoissonRatio", PoissonRatio,
             "FaultLengthStrike", FaultLengthStrike, "FaultLengthDip", FaultLengthDip, "FaultStrikeAngle", FaultStrikeAngle, 
-            "FaultDipAngle", FaultDipAngle, "FaultLLRR", FaultLLRR, "Fault_a", Fault_a, "Fault_b", Fault_b, "Fault_Dc", Fault_Dc, 
+            "FaultDipAngle", FaultDipAngle, "FaultRakeAngle", FaultRakeAngle, "Fault_a", Fault_a, "Fault_b", Fault_b, "Fault_Dc", Fault_Dc, 
             "Fault_Theta_i", Fault_Theta_i, "Fault_V_i", Fault_V_i, "Fault_Friction_i", Fault_Friction_i, "Fault_NormalStress", Fault_NormalStress, 
             "Fault_V_Const", Fault_V_Const, "Fault_BulkIndex", Fault_BulkIndex, "FaultLengthStrike_Bulk", FaultLengthStrike_Bulk, 
             "FaultLengthDip_Bulk", FaultLengthDip_Bulk, "FaultCount", FaultCount, "LoadingFaultCount", LoadingFaultCount,

@@ -38,7 +38,8 @@ TimeSteppingAdj =
         [0.0  0.0  0.0  0.0;   # Time step size
          0.0  0.0  0.0  0.0]   # Velocity
 
-
+########## Strong Interaction Supression for Numerical Stability ##############
+StrongInteractionCriteriaMultiple = 0.5 # only applied when larger than 0. The higher, the more tolerance of strong interaction. 
 
 ############################# Plots before run? ################################
 DtPlot = 0 # 1 will plot dt vs maxV
@@ -63,7 +64,7 @@ function RunRSFDFN3D(TotalStep, RecordStep,
     FaultLengthDip= load(LoadingInputFileName, "FaultLengthDip")
     FaultStrikeAngle= load(LoadingInputFileName, "FaultStrikeAngle")
     FaultDipAngle= load(LoadingInputFileName, "FaultDipAngle")
-    FaultLLRR= load(LoadingInputFileName, "FaultLLRR")
+    FaultRakeAngle= load(LoadingInputFileName, "FaultRakeAngle")
     Fault_a= load(LoadingInputFileName, "Fault_a")
     Fault_b= load(LoadingInputFileName, "Fault_b")
     Fault_Dc= load(LoadingInputFileName, "Fault_Dc")
@@ -82,7 +83,13 @@ function RunRSFDFN3D(TotalStep, RecordStep,
     ########^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^########
     ################################################################################
 
-    # NormalStiffnessZero = 1
+
+    if StrongInteractionCriteriaMultiple > 0    
+        StiffnessMatrixShear, StiffnessMatrixNormal = 
+            ReduceTooStrongInteraction(StrongInteractionCriteriaMultiple, FaultCount - LoadingFaultCount, StiffnessMatrixShear, StiffnessMatrixNormal)
+    end
+
+
 
     if GeometryPlot==1
         PlotRotation=[45,-45]
@@ -93,11 +100,17 @@ function RunRSFDFN3D(TotalStep, RecordStep,
         Edge = 1
         clf()
         MaxVaule, MinValue = FaultPlot_3D_Color_General(FaultCenter,FaultLengthStrike, FaultLengthDip,
-            FaultStrikeAngle, FaultDipAngle, FaultLLRR, PlotInput, 
+            FaultStrikeAngle, FaultDipAngle, FaultRakeAngle, PlotInput, 
             PlotRotation, MinMax_Axis, ColorMinMax, Transparent, Edge, LoadingFaultCount)
         figure(1).canvas.draw()
     end
     
+    ############# Evolution and Alpha Value ################
+    Alpha_Evo = 0.0
+    EvolutionDR = 1
+    ########################################################
+
+
     ################################ Run Simulation ################################
     ######++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++######
 
@@ -109,28 +122,14 @@ function RunRSFDFN3D(TotalStep, RecordStep,
         VertScale = VerticalLengthScaleforM
     end    
     FaultMass = ones(FaultCount) .* VertScale * RockDensity / 2
-    Alpha_Evo = 0.0
+
 
     LoadingFaultCount, FaultMass, Fault_a, Fault_b, Fault_Dc, Fault_Theta_i, Fault_V_i, 
     Fault_Friction_i, Fault_NormalStress, Fault_V_Const,  FaultCenter, FaultIndex_Adjusted, MinimumNormalStress = 
         ParameterAdj(LoadingFaultCount, FaultMass, Fault_a, Fault_b, Fault_Dc, Fault_Theta_i, Fault_V_i, 
         Fault_Friction_i, Fault_NormalStress, Fault_V_Const, 
-        FaultStrikeAngle, FaultDipAngle, FaultCenter, Fault_BulkIndex, FaultLLRR, MinimumNormalStress)
+        FaultStrikeAngle, FaultDipAngle, FaultCenter, Fault_BulkIndex, FaultRakeAngle, MinimumNormalStress)
     
-    # if AdjustStiffnessPlot == 1 # 1 will plot dt vs maxV
-    #     PlotRotation=[45,-45]
-    #     Transparent=0
-    #     MinMax_Axis=[-3000 3000; -3000 3000; -4000 0]
-    #     ColorMinMax=0
-    #     PlotInput=Fault_a - Fault_b    
-    #     clf()
-        
-    #     MaxVaule, MinValue = FaultPlot_3D_Color_SelectedElements(FaultCenter,FaultLengthStrike, FaultLengthDip,
-    #     FaultStrikeAngle, FaultDipAngle, FaultLLRR, PlotInput, 
-    #     PlotRotation, MinMax_Axis, ColorMinMax, Transparent, FaultIndex_Adjusted)
-    #     figure(1).canvas.draw()
-    # end
-
 
 
     ######+++++++++++++++++++++++++   Time Step Set   ++++++++++++++++++++++++######
@@ -188,7 +187,7 @@ function RunRSFDFN3D(TotalStep, RecordStep,
     # "StiffnessMatrixShear", StiffnessMatrixShear, "StiffnessMatrixNormal", StiffnessMatrixNormal, 
     "FaultCenter", FaultCenter, "ShearModulus", ShearModulus, "RockDensity", RockDensity, "PoissonRatio", PoissonRatio,
     "FaultLengthStrike", FaultLengthStrike, "FaultLengthDip", FaultLengthDip, "FaultStrikeAngle", FaultStrikeAngle, 
-    "FaultDipAngle", FaultDipAngle, "FaultLLRR", FaultLLRR, "Fault_a", Fault_a, "Fault_b", Fault_b, "Fault_Dc", Fault_Dc, 
+    "FaultDipAngle", FaultDipAngle, "FaultRakeAngle", FaultRakeAngle, "Fault_a", Fault_a, "Fault_b", Fault_b, "Fault_Dc", Fault_Dc, 
     "Fault_Theta_i", Fault_Theta_i, "Fault_V_i", Fault_V_i, "Fault_Friction_i", Fault_Friction_i, "Fault_NormalStress", Fault_NormalStress, 
     "Fault_V_Const", Fault_V_Const, "Fault_BulkIndex", Fault_BulkIndex, "FaultLengthStrike_Bulk", FaultLengthStrike_Bulk, 
     "FaultLengthDip_Bulk", FaultLengthDip_Bulk, "FaultCount", FaultCount, "LoadingFaultCount", LoadingFaultCount, "FaultMass", FaultMass, "MinimumNormalStress", MinimumNormalStress)
@@ -200,8 +199,8 @@ function RunRSFDFN3D(TotalStep, RecordStep,
     Fault_a, Fault_b, Fault_Dc, Fault_Theta_i, Fault_V_i, Fault_Friction_i,
     Fault_NormalStress, Fault_V_Const,
     TotalStep, RecordStep, SwitchV, TimeStepping, SaveResultFileName,RockDensity,
-    FaultCenter,FaultLengthStrike, FaultLengthDip, FaultStrikeAngle, FaultDipAngle, FaultLLRR, SaveStep,
-    TimeStepOnlyBasedOnUnstablePatch, MinimumNormalStress, Alpha_Evo)  
+    FaultCenter,FaultLengthStrike, FaultLengthDip, FaultStrikeAngle, FaultDipAngle, FaultRakeAngle, SaveStep,
+    TimeStepOnlyBasedOnUnstablePatch, MinimumNormalStress, Alpha_Evo, EvolutionDR)  
 
 
     ########^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^########
@@ -213,19 +212,3 @@ end
 RunRSFDFN3D(TotalStep, RecordStep, 
     LoadingInputFileName, SaveResultFileName, RuptureTimeStepMultiple)
 
-
-
-
-
-
-
-    
-# ResultTime=load("Results/Result.jld","History_Time")
-# ResultDisp=load("Results/Result.jld","History_Disp")
-# ResultV=load("Results/Result.jld","History_V")
-
-# figure(3)
-# clf()
-# PyPlot.plot(ResultTime[1:end-1], log10.(ResultV[1:end-1,:]), linewidth=1)
-# figure(4)
-# PyPlot.plot( log10.(ResultV[1:end-1,:]), linewidth=1)

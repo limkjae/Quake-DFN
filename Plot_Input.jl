@@ -31,7 +31,7 @@ function RunPlotInput(LoadingInputFileName)
     FaultLengthDip= load(LoadingInputFileName, "FaultLengthDip")
     FaultStrikeAngle= load(LoadingInputFileName, "FaultStrikeAngle")
     FaultDipAngle= load(LoadingInputFileName, "FaultDipAngle")
-    FaultLLRR= load(LoadingInputFileName, "FaultLLRR")
+    FaultRakeAngle= load(LoadingInputFileName, "FaultRakeAngle")
     Fault_a= load(LoadingInputFileName, "Fault_a")
     Fault_b= load(LoadingInputFileName, "Fault_b")
     Fault_Dc= load(LoadingInputFileName, "Fault_Dc")
@@ -52,7 +52,7 @@ function RunPlotInput(LoadingInputFileName)
     ################################################################################
 
 
-
+    println("FaultCount: ", FaultCount)
 
     
     ################################################################################
@@ -61,7 +61,7 @@ function RunPlotInput(LoadingInputFileName)
     Fault_NormalStress, Fault_V_Const, FaultCenter, FaultIndex_Adjusted = 
         ParameterAdj(LoadingFaultCount, FaultMass, Fault_a, Fault_b, Fault_Dc, Fault_Theta_i, Fault_V_i, 
         Fault_Friction_i, Fault_NormalStress, Fault_V_Const, 
-        FaultStrikeAngle, FaultDipAngle, FaultCenter, Fault_BulkIndex, FaultLLRR, MinimumNormalStress)
+        FaultStrikeAngle, FaultDipAngle, FaultCenter, Fault_BulkIndex, FaultRakeAngle, MinimumNormalStress)
         
     ########^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^########
     ################################################################################
@@ -107,14 +107,14 @@ function RunPlotInput(LoadingInputFileName)
         ColorMinMax = 0  
         # PlotInput = log10.(Fault_Theta_i); ColorMinMax = 0 
         # PlotInput = log10.(Fault_V_i); ColorMinMax = 0  
-        # PlotInput =Fault_NormalStress; ColorMinMax = 0    
-        PlotInput =KoverKC ;ColorMinMax=[0,5]
+        PlotInput =Fault_NormalStress; ColorMinMax = 0    
+        # PlotInput =KoverKC ;ColorMinMax=[0,5]
         # PlotInput =UnderResolved ;ColorMinMax=[0,1]
         # PlotInput = Fault_a - Fault_b; ColorMinMax = 0  
         # PlotInput =  Fault_BulkIndex; ColorMinMax = 0  
         # PlotInput = Fault_Dc; ColorMinMax = 0  
-        # PlotInput = FaultLLRR; ColorMinMax = 0  
-        # PlotInput = FaultLLRR .* Fault_Friction_i; ColorMinMax = 0  
+        # PlotInput = FaultRakeAngle; ColorMinMax = 0  
+        # PlotInput = FaultRakeAngle .* Fault_Friction_i; ColorMinMax = 0  
         # PlotInput = Fault_Friction_i; ColorMinMax = 0  
 
         PlotRotation=[45,-30]
@@ -136,7 +136,7 @@ function RunPlotInput(LoadingInputFileName)
     figure(1)
     clf()
     MaxVaule, MinValue = FaultPlot_3D_Color_General(FaultCenter,FaultLengthStrike, FaultLengthDip,
-        FaultStrikeAngle, FaultDipAngle, FaultLLRR, PlotInput, 
+        FaultStrikeAngle, FaultDipAngle, FaultRakeAngle, PlotInput, 
         PlotRotation, MinMax_Axis, ColorMinMax, Transparent, Edge, LoadingFaultCount)
     
     # figure(1)
@@ -165,7 +165,7 @@ function RunPlotInput(LoadingInputFileName)
         MinMax_Axis=0 # automatically detect max and min 
     clf()
      MaxVaule, MinValue = FaultPlot_3D_Color_SelectedElements(FaultCenter,FaultLengthStrike, FaultLengthDip,
-         FaultStrikeAngle, FaultDipAngle, FaultLLRR, PlotInput, 
+         FaultStrikeAngle, FaultDipAngle, FaultRakeAngle, PlotInput, 
          PlotRotation, MinMax_Axis, ColorMinMax, Transparent, SelectedElements)
     =#
     ########^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^########
