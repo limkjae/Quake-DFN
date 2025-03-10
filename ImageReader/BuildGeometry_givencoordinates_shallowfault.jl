@@ -16,23 +16,17 @@ function calculation(i, j, k, L, line)
     SigGrad = 0
     V_Const = 0
     MaxLeng = 1000
+    FaultThickness = 5000
     #########################################
 
     Ctr_X = (i + k) / 2 * 1000
     Ctr_Y = (j + L) / 2 * 1000
     St_L = sqrt((i - k)^2 + (j - L)^2) * 1000
+    Ctr_Z = FaultThickness /2 
+    StAng = atan((L - j) / (k - i)) * (180 / π) + 180
+    LR = 1
+    Dip_L = FaultThickness 
 
-    if line <= 900
-        Ctr_Z = 5 * 1000
-        StAng = atan((L - j) / (k - i)) * (180 / π) + 180
-        LR = 1
-        Dip_L = 10 * 1000
-    else
-        Ctr_Z = 3.5 * 1000
-        StAng = atan((L - j) / (k - i)) * (180 / π)
-        LR = -1
-        Dip_L = 7 * 1000
-    end
 
     return Ctr_X, Ctr_Y, Ctr_Z, St_L, Dip_L, StAng, DipAng, LR, a, b, Dc, Theta_i, V_i, Fric_i, Sig0, SigGrad, V_Const, MaxLeng
 end
