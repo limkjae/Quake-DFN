@@ -24,10 +24,15 @@ function calculation(i, j, k, L, line)
     St_L = sqrt((i - k)^2 + (j - L)^2) * 1000
     Ctr_Z = FaultThickness /2 
     StAng = atan((L - j) / (k - i)) * (180 / π) + 180
+    LR = 1
+    
     if StAng > 180
         StAng = StAng - 180
     end
-    LR = 1
+
+    if StAng < 90
+        LR = -1
+    end
     Dip_L = FaultThickness 
 
 
