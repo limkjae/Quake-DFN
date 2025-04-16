@@ -323,7 +323,7 @@ function ChangeBulk()
         RotatedStessZ[1] , RotatedStessZ[2] , RotatedStessZ[3] ,
         color="k",arrow_length_ratio=Arrow_length_ratio, linewidth =Linewidth)
         
-        ax.set_aspect("equal")
+        ax.set_aspect("auto")
     end
 
     ################ Traction Vector Plots ###############
