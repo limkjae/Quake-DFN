@@ -25,18 +25,19 @@ with coordinates scaled to real-world units (kilometers).
 
 
 # Give the scale length (units correspond to its real-life length in kilometers)
-scale_length = 10.0
+scale_length = 100.0
 
 # Define the min and max segment lengths in real-world units, then convert to pixels
-min_length_units = 2.0  # minimum segment length in units
-max_length_units = 5.0   # maximum segment length in units
+min_length_units = 1.9  # minimum segment length in units    # finecase: 2.9
+max_length_units = 2.5   # maximum segment length in units   # finecase: 3.7
 
 # Change this line to rename the file you want to analyze
 base_name = "ImageReader/Faultimage"
 
 # Write the real file names and paths
 drawing_file = f"{base_name}.jpg"
-no_background_file = f"{base_name}_drawing_no_background.jpg"
+# no_background_file = f"{base_name}_drawing_no_background.jpg"
+no_background_file = f"{base_name}.jpg"
 segmented_endpoints_file = f"{base_name}_segmented_endpoints.txt"
 segmented_file = f"{base_name}_segmented.jpg"
 
@@ -178,7 +179,7 @@ def fault_segmentation():
     skeleton = skeletonize(binary_bool)
 
     # Build a graph from the skeleton using sknw
-    graph = sknw.build_sknw(skeleton.astype(np.uint8))
+    graph = sknw.build_sknw(skeleton.astype(np.uint8),ring=True)
 
     min_length_pixels = min_length_units / scale_factor
     max_length_pixels = max_length_units / scale_factor
