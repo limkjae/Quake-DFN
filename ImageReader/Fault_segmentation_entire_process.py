@@ -25,11 +25,11 @@ with coordinates scaled to real-world units (kilometers).
 
 
 # Give the scale length (units correspond to its real-life length in kilometers)
-scale_length = 100.0
+scale_length = 10.0
 
 # Define the min and max segment lengths in real-world units, then convert to pixels
-min_length_units = 1.9  # minimum segment length in units    # finecase: 2.9
-max_length_units = 2.5   # maximum segment length in units   # finecase: 3.7
+min_length_units = 1.0  # minimum segment length in units    # finecase: 2.9
+max_length_units = 3.0   # maximum segment length in units   # finecase: 3.7
 
 # Change this line to rename the file you want to analyze
 base_name = "ImageReader/Faultimage"
