@@ -2,7 +2,7 @@
 function main_H(ShearModulus, FaultCount, LoadingFaultCount, Mass, NormalStiffnessZero,
     a, b, Dc, ThetaI, Vini, FrictionI,
     InitialNormalStress, LoadingRate, 
-    TotalStep, RecordStep, SwitchV, TimeStepping, SaveResultFileName,RockDensity,
+    TotalStep, RecordStep, SwitchV, DtCut, RuptureDt, MaximumDt, SaveResultFileName,RockDensity,
     FaultCenter,FaultLengthStrike, FaultLengthDip, FaultStrikeAngle, FaultDipAngle, FaultRakeAngle, SaveStep,
     TimeStepOnlyBasedOnUnstablePatch, MinimumNormalStress, Alpha_Evo,
     Ranks_Shear, Ranks_Normal, ElementRange_SR, NormalStiffness_H, ShearStiffness_H, ThreadCount, JacobiOrGS, w_factor, EvolutionDR)  
@@ -202,22 +202,7 @@ function main_H(ShearModulus, FaultCount, LoadingFaultCount, Mass, NormalStiffne
 
             FLAG_GoodToGo .= 0
             V=copy(VOld);
-            if TimeStepOnlyBasedOnUnstablePatch ==1
-                Vmax=maximum(V[UnstablePatch]);
-            else
-                Vmax=maximum(V[1:length(V)-LoadingFaultCount]);
-            end
-            
 
-            #Dt = DtAdjust(Dt, maximum(V), SwitchV, MinDt, maximum(Instability))
-            DtRef = FunctionDtRef(Vmax, TimeStepping, SlowOrFast)
-            if DtRef == TimeStepping[1,4]
-                Dt=DtRef;
-            elseif Dt<DtRef/1.2
-                Dt=Dt*1.2;
-            else
-                Dt=DtRef;
-            end    
 
             SolverSwitch .= 0
             for FaultIdx=1:FaultCount
@@ -230,12 +215,44 @@ function main_H(ShearModulus, FaultCount, LoadingFaultCount, Mass, NormalStiffne
             end
 
 
+            ############ Adjust Dt based on the Maximum Velocity #############
+            if TimeStepOnlyBasedOnUnstablePatch ==1
+                Vmax=maximum(V[UnstablePatch])
+                Dtmin = minimum(abs.(V[UnstablePatch] ./ Accel[UnstablePatch]))/DtCut
+            else
+                Vmax=maximum(V[1:length(V)-LoadingFaultCount])
+                Dtmin = minimum(abs.(V[1:length(V)-LoadingFaultCount] ./ Accel[1:length(V)-LoadingFaultCount]))/DtCut
+            end            
+   
+            if Vmax > SwitchV
+                DtRef = RuptureDt
+            elseif Dtmin > MaximumDt
+                DtRef = MaximumDt
+            else 
+                DtRef = Dtmin
+            end
+
+            # DtRef = FunctionDtRef(Vmax, TimeStepping, SlowOrFast)
+
+            if DtRef == RuptureDt
+                Dt=DtRef;
+            elseif Dt<DtRef/1.2
+                Dt=Dt*1.2;
+            else
+                Dt=DtRef;
+            end  
+                # Dt=DtRef;
+            ####################################################################    
+
+
+
             FaultIdx=0;
             Terminate=0;
             Iteration=0;
             SwitchTime=0;
 
 
+            ##########    Calculate Shear and Normal Stress Change    ###########
             NetDisp = Far_Load_Disp_Initial - DispOld
             Elastic_Load_Disp = HmatSolver_Pararllel(NetDisp, LoadingStiffnessH, ElementRange_SR, 
                                  Par_ElementDivision_Shear, ThreadCount, zeros(FaultCount, ThreadCount)) ./ -K_Self
@@ -245,6 +262,7 @@ function main_H(ShearModulus, FaultCount, LoadingFaultCount, Mass, NormalStiffne
                                 Par_ElementDivision_Normal, ThreadCount, zeros(FaultCount, ThreadCount))  
             end
 
+            #################### One step Solve ####################
             while Terminate==0
                 Iteration=Iteration+1;
                 
