@@ -167,7 +167,7 @@ function main(StiffnessMatrixShear, StiffnessMatrixNormal, NormalStiffnessZero,
 
             # DtRef = FunctionDtRef(Vmax, TimeStepping, SlowOrFast)
 
-            if DtRef == RuptureDt
+            if DtRef < RuptureDt
                 Dt=DtRef;
             elseif Dt<DtRef/1.2
                 Dt=Dt*1.2;
