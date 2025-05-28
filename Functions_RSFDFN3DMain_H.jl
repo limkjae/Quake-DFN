@@ -215,16 +215,17 @@ function main_H(ShearModulus, FaultCount, LoadingFaultCount, Mass, NormalStiffne
             end
 
 
+
             ############ Adjust Dt based on the Maximum Velocity #############
             if TimeStepOnlyBasedOnUnstablePatch ==1
                 Vmax=maximum(V[UnstablePatch])
-                Dtmin = minimum(filter(!isnan, abs.(V[UnstablePatch] ./ Accel[UnstablePatch])))/DtCut
+                Dtmin = minimum( filter!(x -> x != 0, filter(!isnan, abs.(V[UnstablePatch] ./ Accel[UnstablePatch]))))/DtCut
             else
                 Vmax=maximum(V[1:length(V)-LoadingFaultCount])
-                Dtmin = minimum(filter(!isnan, abs.(V[1:length(V)-LoadingFaultCount] ./ Accel[1:length(V)-LoadingFaultCount])))/DtCut
+                Dtmin = minimum( filter!(x -> x != 0,  filter(!isnan, abs.(V[1:length(V)-LoadingFaultCount] ./ Accel[1:length(V)-LoadingFaultCount]))))/DtCut
             end            
-   
 
+            
             
             if Vmax > SwitchV
                 DtRef = RuptureDt
