@@ -22,7 +22,7 @@ LoadingInputFileName="Input_Discretized.jld2"
 
 
 ########################## Simulation Time Set ################################
-TotalStep = 20000 # Total simulation step
+TotalStep = 5000 # Total simulation step
 SaveStep = 5000 # Automatically saved every this step
 RecordStep = 10 # Simulation sampling rate
 
@@ -30,7 +30,7 @@ RecordStep = 10 # Simulation sampling rate
 ########################## Time Stepping Setup ################################
 DtCut = 5
 SwitchV = 1e-2
-RuptureTimeStepMultiple = 5
+RuptureTimeStepMultiple = 3
 MaximumDt = 1e7
 TimeStepOnlyBasedOnUnstablePatch = 1 # if 1, time step is calculated only based on the unstable patch
 VerticalLengthScaleforM = 0 # if 0, Mass is automatically determined based on the fault length (radiation damping dominated for large rupture). If not, M = VerticalLengthScaleforM * density / 2
