@@ -5,7 +5,7 @@ Quake-DFN is the boundary element simulator developed for earthquake rupture sim
 
 Installation Guide:   https://www.youtube.com/watch?v=H8_1SLRd4HA
 
-Example Simulations:   https://www.youtube.com/watch?v=-HZFHSbxHB8
+Example Simulations (NOTE!! Time Stepping in the code adjusted after this video):   https://www.youtube.com/watch?v=-HZFHSbxHB8
 
 Simulation Demonstration (v1.1 New): https://www.youtube.com/watch?v=qcVs4QxyRgQ
 
