@@ -3,7 +3,7 @@ function main(StiffnessMatrixShear, StiffnessMatrixNormal, NormalStiffnessZero,
     ShearModulus, FaultCount, LoadingFaultCount, Mass,
     a, b, Dc, ThetaI, Vini, FrictionI,
     InitialNormalStress, LoadingRate, 
-    TotalStep, RecordStep, SwitchV, TimeStepping, SaveResultFileName,RockDensity,
+    TotalStep, RecordStep, SwitchV, DtCut, RuptureDt, MaximumDt, SaveResultFileName,RockDensity,
     FaultCenter,FaultLengthStrike, FaultLengthDip, FaultStrikeAngle, FaultDipAngle, FaultRakeAngle, SaveStep,
     TimeStepOnlyBasedOnUnstablePatch, MinimumNormalStress, Alpha_Evo, EvolutionDR)
     
@@ -137,21 +137,6 @@ function main(StiffnessMatrixShear, StiffnessMatrixNormal, NormalStiffnessZero,
             FLAG_GoodToGo .= 0
             V=copy(VOld)
 
-            ############ Adjust Dt based on the Maximum Velocity #############
-            if TimeStepOnlyBasedOnUnstablePatch ==1
-                Vmax=maximum(V[UnstablePatch])
-            else
-                Vmax=maximum(V[1:length(V)-LoadingFaultCount])
-            end            
-
-            DtRef = FunctionDtRef(Vmax, TimeStepping, SlowOrFast)
-            if DtRef == TimeStepping[1,4]
-                Dt=DtRef;
-            elseif Dt<DtRef/1.2
-                Dt=Dt*1.2;
-            else
-                Dt=DtRef;
-            end  
 
             SolverSwitch .= 0
             for FaultIdx=1:FaultCount
@@ -163,11 +148,40 @@ function main(StiffnessMatrixShear, StiffnessMatrixNormal, NormalStiffnessZero,
                 
             end
 
+            ############ Adjust Dt based on the Maximum Velocity #############
+            if TimeStepOnlyBasedOnUnstablePatch ==1
+                Vmax=maximum(V[UnstablePatch])
+                Dtmin = minimum( filter!(x -> x != 0, filter(!isnan, abs.(V[UnstablePatch] ./ Accel[UnstablePatch]))))/DtCut
+            else
+                Vmax=maximum(V[1:length(V)-LoadingFaultCount])
+                Dtmin = minimum( filter!(x -> x != 0,  filter(!isnan, abs.(V[1:length(V)-LoadingFaultCount] ./ Accel[1:length(V)-LoadingFaultCount]))))/DtCut
+            end            
+   
+            if Vmax > SwitchV
+                DtRef = RuptureDt
+            elseif Dtmin > MaximumDt
+                DtRef = MaximumDt
+            else 
+                DtRef = Dtmin
+            end
 
-            FaultIdx=0;
-            Terminate=0;
-            Iteration=0;
-            SwitchTime=0;
+            # DtRef = FunctionDtRef(Vmax, TimeStepping, SlowOrFast)
+
+            if DtRef <= RuptureDt
+                Dt=DtRef;
+            elseif Dt<DtRef/1.2
+                Dt=Dt*1.2;
+            else
+                Dt=DtRef;
+            end  
+                # Dt=DtRef;
+            ####################################################################    
+
+
+
+            FaultIdx=0
+            Terminate=0
+            Iteration=0
 
             
             ##########    Calculate Shear and Normal Stress Change    ###########

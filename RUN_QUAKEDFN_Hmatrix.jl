@@ -34,14 +34,12 @@ RecordStep = 10 # Simulation sampling rate !! should be a factor of SaveStep !!
 
 ########################## Time Stepping Setup ################################
 TimeStepOnlyBasedOnUnstablePatch = 1 # if 1, time step is calculated only based on the unstable patch
-TimeStepPreset = 3 # 1: conservative --> 4: optimistic
-RuptureTimeStepMultiple = 3
+DtCut = 5 
+SwitchV = 1e-2
+RuptureTimeStepMultiple = 5
+MaximumDt = 1e7
 VerticalLengthScaleforM = 0 # if 0, Mass is automatically determined based on the fault length (radiation damping dominated for large rupture). If not, M = VerticalLengthScaleforM * density / 2
 
-# Manually adjust time step below. No change when 0.0
-TimeSteppingAdj =   
-    [0.0  0.0  0.0  0.0;   # Time step size
-     0.0  0.0  0.0  0.0]   # Velocity
 
 ########## Strong Interaction Supression for Numerical Stability ##############
 StrongInteractionCriteriaMultiple = 0.5 # only applied when larger than 0. The higher, the more tolerance of strong interaction. 
@@ -184,39 +182,7 @@ function RunRSFDFN3D(TotalStep, RecordStep, RuptureTimeStepMultiple,
     println("Recommended TimeStep: ",RecTimeStep)
     RuptureDt = RecTimeStep* RuptureTimeStepMultiple
 
-    if TimeStepPreset ==1
-        global TimeStepping =
-        [1e4 1e1 RuptureDt RuptureDt;
-        1e-7 1e-5  1e-3 1e-2]
 
-    elseif TimeStepPreset ==2
-        global TimeStepping =
-        [1e5 1e1 RuptureDt RuptureDt;
-        1e-8 1e-5  1e-3 1e-2]
-                
-    elseif TimeStepPreset ==3
-        global TimeStepping =
-        [1e6 RecTimeStep*1000 RuptureDt RuptureDt;
-        1e-9 1e-5  1e-3 1e-2]
-
-    elseif TimeStepPreset ==4
-        global TimeStepping =
-        [1e7 RecTimeStep*1000 RuptureDt RuptureDt;
-        1e-9 1e-5  1e-3 1e-2]
-
-    end
-
-    for i=1:length(TimeStepping[:,1])
-        for j=1:length(TimeStepping[1,:])
-            if TimeSteppingAdj[i,j] != 0
-                global TimeStepping[i,j]=TimeSteppingAdj[i,j]
-            end
-        end
-    end
-    SwitchV=TimeStepping[2,3]
-    if DtPlot==1
-    FunctionDTPlot(SwitchV , TimeStepping, RecTimeStep)
-    end
 
     if isfile(SaveResultFileName)
         println(" *******************************************************")
@@ -253,10 +219,10 @@ function RunRSFDFN3D(TotalStep, RecordStep, RuptureTimeStepMultiple,
     main_H(ShearModulus, FaultCount, LoadingFaultCount, FaultMass, NormalStiffnessZero,
     Fault_a, Fault_b, Fault_Dc, Fault_Theta_i, Fault_V_i, Fault_Friction_i,
     Fault_NormalStress, Fault_V_Const,
-    TotalStep, RecordStep, SwitchV, TimeStepping, SaveResultFileName,RockDensity,
+    TotalStep, RecordStep, SwitchV, DtCut, RuptureDt, MaximumDt, SaveResultFileName,RockDensity,
     FaultCenter,FaultLengthStrike, FaultLengthDip, FaultStrikeAngle, FaultDipAngle, FaultRakeAngle, SaveStep,
     TimeStepOnlyBasedOnUnstablePatch, MinimumNormalStress, Alpha_Evo,
-    Ranks_Shear, Ranks_Normal, ElementRange_SR, NormalStiffness_H, ShearStiffness_H, ThreadCount, JacobiOrGS, w_factor, EvolutionDR)    
+    Ranks_Shear, Ranks_Normal, ElementRange_SR, NormalStiffness_H, ShearStiffness_H, ThreadCount, JacobiOrGS, w_factor, EvolutionDR)   
 
     ################################ Run Simulation ###############################
     ###############################################################################
