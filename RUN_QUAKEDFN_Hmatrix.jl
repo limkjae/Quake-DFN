@@ -33,11 +33,11 @@ RecordStep = 10 # Simulation sampling rate !! should be a factor of SaveStep !!
 
 
 ########################## Time Stepping Setup ################################
-TimeStepOnlyBasedOnUnstablePatch = 1 # if 1, time step is calculated only based on the unstable patch
 DtCut = 5 
 SwitchV = 1e-2
 RuptureTimeStepMultiple = 5
 MaximumDt = 1e7
+TimeStepOnlyBasedOnUnstablePatch = 1 # if 1, time step is calculated only based on the unstable patch
 VerticalLengthScaleforM = 0 # if 0, Mass is automatically determined based on the fault length (radiation damping dominated for large rupture). If not, M = VerticalLengthScaleforM * density / 2
 
 

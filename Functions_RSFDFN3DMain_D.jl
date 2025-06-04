@@ -199,7 +199,7 @@ function main(StiffnessMatrixShear, StiffnessMatrixNormal, NormalStiffnessZero,
                 ###################################################
                 ##########    External Stress Change    ###########
                 if ExternalStressExist ==1
-                    D_EffStress_Normal, D_EffStress_Shear, D_Pressure = InterpolateFromStressChange(TOld, FaultCount,
+                    D_EffStress_Normal, D_EffStress_Shear, D_Pressure = InterpolateFromStressChange(TOld+Dt, FaultCount,
                     ExternalStress_Normal, ExternalStress_Shear,ExternalStress_TimeArray, ExternalStress_Pressure)
                     # println(maximum(D_EffStress_Normal))
                 end

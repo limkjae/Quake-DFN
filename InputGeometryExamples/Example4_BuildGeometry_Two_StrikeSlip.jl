@@ -79,7 +79,7 @@ function BuildBulk()
     ### Common Values 
     Fault[:,9] .= 0.003;
     Fault[:,10] .= 0.006;
-    Fault[:,11] .= 2e-4;
+    Fault[:,11] .= 1e-4;
     Fault[:,12] .= 1e10;
     Fault[:,13] .= 1e-15;
 
