@@ -1,11 +1,13 @@
 # Quake-DFN
 
+Version 1.2 Time Step Optimized. 
+
 Quake-DFN is the boundary element simulator developed for earthquake rupture simulation of discretely distributed faults governed by rate and state friction law. The simulator formulation is consistent with the widely used quasi-dynamic formulation with radiation damping but with a lumped mass representing overshoot effects.
 
 
 Installation Guide:   https://www.youtube.com/watch?v=H8_1SLRd4HA
 
-Example Simulations (NOTE!! Time Stepping in the code adjusted after this video):   https://www.youtube.com/watch?v=-HZFHSbxHB8
+Example Simulations (NOTE!! Time Stepping in the code adjusted after this video) (Video taken before timestep adjust):   https://www.youtube.com/watch?v=-HZFHSbxHB8
 
 Simulation Demonstration (v1.1 New): https://www.youtube.com/watch?v=qcVs4QxyRgQ
 
