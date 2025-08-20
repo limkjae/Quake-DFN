@@ -107,8 +107,8 @@ function RunPlotInput(LoadingInputFileName)
         ColorMinMax = 0  
         # PlotInput = log10.(Fault_Theta_i); ColorMinMax = 0 
         # PlotInput = log10.(Fault_V_i); ColorMinMax = 0  
-        PlotInput =Fault_NormalStress; ColorMinMax = 0    
-        # PlotInput =KoverKC ;ColorMinMax=[0,5]
+        # PlotInput =Fault_NormalStress; ColorMinMax = 0    
+        PlotInput =KoverKC ;ColorMinMax=[0,5]
         # PlotInput =UnderResolved ;ColorMinMax=[0,1]
         # PlotInput = Fault_a - Fault_b; ColorMinMax = 0  
         # PlotInput =  Fault_BulkIndex; ColorMinMax = 0  

@@ -8,7 +8,7 @@ pygui(true)
 include("Functions_Plot.jl")
 
 
-ResultName="Result"
+ResultName="Result_Tri_StepOver200"
 FileName="Results/" * ResultName * ".jld2"
 FileNameInput="Results/" * ResultName * "_Input.jld2"
 
@@ -19,12 +19,10 @@ ResultV[ResultV.<=0] .= 1e-100
 #######################################################################################
 ############################### Figure Configuration ##################################
 
-
-
 # figure(10); clf(); PyPlot.plot(log10.(ResultV[:,1:1:end])); xlabel("Record Step")
-PlotStep = 200
+PlotStep = 40
 
-PlotRotation = [17,-89]
+PlotRotation = [17,-90]
 Transparent = 0 # 1 for transparent fault plot. 0 for no-transparency
 Edge = 0 # 0 for no element boudary. 1 for plotting element boundary
 MinMax_Axis = 0 # 0 for automatically selected axis minimim and maximum 
@@ -40,23 +38,18 @@ PlotInput=log10.(ResultV[PlotStep,:]); ColorMinMax=[-12, 0]
 # PlotInput= Result_NormalStress[PlotStep,:] ; ColorMinMax=0
 # PlotInput=log10.(ResultPressure[PlotStep,:]); ColorMinMax=[3,6]
 # PlotInput= Result_NormalStress[PlotStep,:] -  Fault_NormalStress; ColorMinMax=[-1e6,1e6]
-# PlotInput=ResultDisp[PlotStep,:]; ColorMinMax= [0, 0.07]
+# PlotInput=ResultDisp[PlotStep,:]; ColorMinMax= [0.03, 0.08] 
 
 #############---------------------------#############
 
 
-############# Saving Multiple Figures ###############
-Animation_Save = 0 # 1 for save
-StepBegin = 10 # first record step
-StepEnd = 100
-StepInterval = 10
-###################^^^^^^^^^^^^^^^###################
 
 ##############+++++++++++++++++++++++++++++++++++++++++++++++++++++++++################
 #######################################################################################
 
 
 
+P1, P2, P3 = load(FileNameInput, "P1", "P2", "P3")
 FaultCount= load(FileNameInput, "FaultCount")
 FaultCenter= load(FileNameInput, "FaultCenter")
 FaultLengthStrike= load(FileNameInput, "FaultLengthStrike")
@@ -74,59 +67,105 @@ Fault_Friction_i= load(FileNameInput, "Fault_Friction_i")
 Fault_NormalStress= load(FileNameInput, "Fault_NormalStress")
 Fault_BulkIndex= load(FileNameInput, "Fault_BulkIndex")
 FaultMass= load(FileNameInput, "FaultMass")
-
-if LoadingFaultPlot==1
-LoadingFaultCount=0
+TotalElemCount = FaultCount
+if ColorMinMax == 0 
+MaxValue=maximum(PlotInput)
+MinValue=minimum(PlotInput)
+else
+MaxValue=ColorMinMax[2]
+MinValue=ColorMinMax[1]
 end
+
+
+isdir("3DPlot") || mkdir("3DPlot")
 figure(1)
-
+# fig = figure(1)
+for i=10:10:1000
+PlotInput=log10.(ResultV[i,:]); ColorMinMax=[-12, 0] 
     clf()
-    MaxVaule, MinValue = FaultPlot_3D_Color_General(FaultCenter,FaultLengthStrike, FaultLengthDip,
-        FaultStrikeAngle, FaultDipAngle, FaultRakeAngle, PlotInput, 
-        PlotRotation, MinMax_Axis, ColorMinMax, Transparent, Edge, LoadingFaultCount)
+    art3d = PyObject(PyPlot.art3D)
+    ax = subplot(projection="3d")
+    for ElemIdx = 1:TotalElemCount- LoadingFaultCount
+        cm = get_cmap(:jet)
+        PlotValue=(PlotInput[ElemIdx]-MinValue)/(MaxValue-MinValue)
 
-        ax = subplot(projection="3d")
-        PlotTime=ResultTime[PlotStep]/60/60/24
-        if ShowDay ==1 
-        # ax.text(-5000, 10, 1300, "Day: ",size=10)
-        ax.text(DayLocation[1], DayLocation[2], DayLocation[3], PlotTime,size=10)    
-        end    
-        xlabel("x")
-        ylabel("y")
-    plotforcbar=  scatter([1,1],[1,1],0.1, [MinValue,MaxVaule], cmap="jet")
-    colorbar(plotforcbar, pad=0.15)
-    figure(1).canvas.draw()
+        face_color = [cm(PlotValue)[1], cm(PlotValue)[2],cm(PlotValue)[3],1.0]
 
+        verts = ((P1[ElemIdx,:],P2[ElemIdx,:],P3[ElemIdx,:]), )
+        p3c = PyObject(art3d.Poly3DCollection(verts))
+        pycall(ax.add_collection3d, PyAny, p3c)
+
+        # face_color = [0.3, 0.8, 0.3, 0.5]         
+        edge_color = [0.2, 0.2, 0.2, 0.0]
+
+        pycall(p3c.set_facecolor, PyAny, face_color)
+        pycall(p3c.set_edgecolor, PyAny, edge_color)
+        ax.view_init(PlotRotation[1],PlotRotation[2])
         ax.set_aspect("equal")
-
-if Animation_Save == 1
-
-    # PlotStepI=PlotStep
-    isdir("3DPlot") || mkdir("3DPlot")
-    for i=StepBegin:StepInterval:StepEnd
-        PlotStep = i
-
-        clf()
-        PlotInput=log10.(ResultV[PlotStep,:])
-
-        MaxVaule, MinValue = FaultPlot_3D_Color_General(FaultCenter,FaultLengthStrike, FaultLengthDip,
-        FaultStrikeAngle, FaultDipAngle, FaultRakeAngle, PlotInput, 
-        PlotRotation, MinMax_Axis, ColorMinMax, Transparent, Edge, LoadingFaultCount)
-        figure(1).canvas.draw()
-        ax = subplot(projection="3d")
-        PlotTime=ResultTime[PlotStep]/60/60/24
-        if ShowDay ==1 
-        # ax.text(-5000, 10, 1300, "Day: ",size=10)
-        ax.text(DayLocation[1], DayLocation[2], DayLocation[3], PlotTime,size=10)    
-        end    
-        figure(1).canvas.draw()
-
-        println(PlotStep)
-        
-        PyPlot.savefig("3DPlot/" * ResultName * "_" * string(i) * ".png")
+    
     end
-
+    
+    println(i)
+    PyPlot.savefig("3DPlot/" * ResultName * "_" * string(i) * ".png")
 end
+
+
+
+
+
+# if LoadingFaultPlot==1
+# LoadingFaultCount=0
+# end
+
+# figure(1)
+# clf()
+# MaxVaule, MinValue = FaultPlot_3D_Color_General(FaultCenter,FaultLengthStrike, FaultLengthDip,
+#     FaultStrikeAngle, FaultDipAngle, FaultRakeAngle, PlotInput, 
+#     PlotRotation, MinMax_Axis, ColorMinMax, Transparent, Edge, LoadingFaultCount)
+
+#     ax = subplot(projection="3d")
+#     PlotTime=ResultTime[PlotStep]/60/60/24
+#     if ShowDay ==1 
+#     # ax.text(-5000, 10, 1300, "Day: ",size=10)
+#     ax.text(DayLocation[1], DayLocation[2], DayLocation[3], PlotTime,size=10)    
+#     end    
+#     xlabel("x")
+#     ylabel("y")
+# plotforcbar=  scatter([1,1],[1,1],0.1, [MinValue,MaxVaule], cmap="jet")
+# colorbar(plotforcbar, pad=0.15)
+# figure(1).canvas.draw()
+
+
+
+
+# if Animation_Save == 1
+
+#     # PlotStepI=PlotStep
+#     isdir("3DPlot") || mkdir("3DPlot")
+#     for i=StepBegin:StepInterval:StepEnd
+#         PlotStep = i
+
+#         clf()
+#         PlotInput=log10.(ResultV[PlotStep,:])
+
+#         MaxVaule, MinValue = FaultPlot_3D_Color_General(FaultCenter,FaultLengthStrike, FaultLengthDip,
+#         FaultStrikeAngle, FaultDipAngle, FaultRakeAngle, PlotInput, 
+#         PlotRotation, MinMax_Axis, ColorMinMax, Transparent, Edge, LoadingFaultCount)
+#         figure(1).canvas.draw()
+#         ax = subplot(projection="3d")
+#         PlotTime=ResultTime[PlotStep]/60/60/24
+#         if ShowDay ==1 
+#         # ax.text(-5000, 10, 1300, "Day: ",size=10)
+#         ax.text(DayLocation[1], DayLocation[2], DayLocation[3], PlotTime,size=10)    
+#         end    
+#         figure(1).canvas.draw()
+
+#         println(PlotStep)
+        
+#         PyPlot.savefig("3DPlot/" * ResultName * "_" * string(i) * ".png")
+#     end
+
+# end
 
 
 
@@ -138,4 +177,3 @@ end
 #     FaultStrikeAngle, FaultDipAngle, FaultRakeAngle, PlotInput, 
 #     PlotRotation, MinMax_Axis, ColorMinMax, Transparent, SelectedElements)
 
- 

@@ -21,8 +21,9 @@ SaveInputInfoFileName="Results/Result_Input.jld2"
 LoadingInputFileName="Input_Discretized.jld2" 
 
 
+
 ########################## Simulation Time Set ################################
-TotalStep = 5000 # Total simulation step
+TotalStep = 10000 # Total simulation step
 SaveStep = 5000 # Automatically saved every this step
 RecordStep = 10 # Simulation sampling rate
 
@@ -119,8 +120,8 @@ function RunRSFDFN3D(TotalStep, RecordStep,
     else 
         VertScale = VerticalLengthScaleforM
     end    
-    FaultMass = ones(FaultCount) .* VertScale * RockDensity / 2
-
+    FaultMass = ones(FaultCount) .* VertScale * RockDensity / 2 / 2
+    println(VertScale)
 
     LoadingFaultCount, FaultMass, Fault_a, Fault_b, Fault_Dc, Fault_Theta_i, Fault_V_i, 
     Fault_Friction_i, Fault_NormalStress, Fault_V_Const,  FaultCenter, FaultIndex_Adjusted, MinimumNormalStress = 
