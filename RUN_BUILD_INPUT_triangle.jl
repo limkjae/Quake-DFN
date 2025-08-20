@@ -12,15 +12,15 @@ using Statistics
 
 pygui(true)
 
-include("../Functions_BuildInputFile.jl")
-include("../Functions_OKADA3D.jl")
-include("../Results/Functions_Plot.jl")
-include("../Functions_Hmatrix.jl")
+include("Functions_BuildInputFile.jl")
+include("Functions_OKADA3D.jl")
+include("Results/Functions_Plot.jl")
+include("Functions_Hmatrix.jl")
 
 
 AAA = @isdefined FunctionRead
 if AAA == false
-    include("Functions_TDstressHS.jl")
+    include("TriangleDev/Functions_TDstressHS.jl")
     FunctionRead = 1
 end
 

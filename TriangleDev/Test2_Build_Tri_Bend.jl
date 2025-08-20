@@ -17,8 +17,8 @@ OutputFileName="Input_BulkFaultGeometry.txt"
 Length = 1000
 Depth = 1000
 Amplitude = 200
-XElemCount = 45
-ZElemCount = 45
+XElemCount = 20
+ZElemCount = 20
 TotalElemCount = XElemCount * ZElemCount * 2 + ZElemCount
 TotalElementInRow = XElemCount * 2 + 1
 ArrowLength = 50
@@ -32,7 +32,7 @@ TooCloseNormal_Multiplier = 0.6
 MinNormalStress = 2e6
 
 
-Rake = 0
+Rake = 45
 a = 0.003
 b = 0.006
 Dc = 3e-4
@@ -111,12 +111,12 @@ for ElemIdx = 1 : TotalElemCount
     P1_i = [x[1], y[1], z[1]]
     P2_i = [x[2], y[2], z[2]]
     P3_i = [x[3], y[3], z[3]]
-    UnitVector_Normal_i = cross(P2_i-P1_i, P3_i-P1_i) / norm(cross(P2_i-P1_i, P3_i-P1_i))
-    if angle(UnitVector_Normal_i[1] + UnitVector_Normal_i[2]*im) <= 0 
-        P_temp = P1_i
-        P1_i = P2_i
-        P2_i = P_temp        
-    end
+    # UnitVector_Normal_i = cross(P2_i-P1_i, P3_i-P1_i) / norm(cross(P2_i-P1_i, P3_i-P1_i))
+    # if angle(UnitVector_Normal_i[1] + UnitVector_Normal_i[2]*im) <= 0 
+    #     P_temp = P1_i
+    #     P1_i = P2_i
+    #     P2_i = P_temp        
+    # end
 
     P1[ElemIdx,:] = P1_i
     P2[ElemIdx,:] = P2_i
