@@ -100,7 +100,7 @@ function ParameterAdj(LoadingFaultCount, FaultMass, Fault_a, Fault_b, Fault_Dc,
     #     end
     # end
 
-    Fault_Theta_i .= 0.9e10
+    # Fault_Theta_i .= 0.9e10
     # Fault_Dc .= 3e-4
     # Fault_a .= 0.05
     # Fault_b .= 0.003
@@ -109,7 +109,7 @@ function ParameterAdj(LoadingFaultCount, FaultMass, Fault_a, Fault_b, Fault_Dc,
     # Fault_Theta_i .= 1e10
     # MinimumNormalStress= 1e6
 
-    FaultMass .= 1e5
+    # FaultMass .= 1e5
     # FaultMass .= 1e6
     ###^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^###
     #####################################################################################################

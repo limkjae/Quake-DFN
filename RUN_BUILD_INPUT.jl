@@ -24,7 +24,7 @@ function BuildInputFromBulkGeometry_H()
     HMatrixStructureFile = "Input_HmatrixStructure.jld2"
     ##########################################################################
     ########################## Hmatrix compress? #############################
-    HMatrixCompress = 1 # If this is 1, stiffness Matrix will be compressed using Input_HmatrixStructure.jld2
+    HMatrixCompress = 0 # If this is 1, stiffness Matrix will be compressed using Input_HmatrixStructure.jld2
     SaveOriginalMatrix = 0  # 1: save Original Matrix (can be very large), 0: Discard Original Matrix. 
     
     #####----- Hmatrix compression Tolerance ----#####
@@ -323,7 +323,7 @@ function BuildInputFromBulkGeometry_H()
 
             println("Preparing for discretization")
             StiffnessMatrixShearOriginal, StiffnessMatrixNormalOriginal = 
-                BuildMatrixByPartsStrikeSlip(FaultCount, ElementPartRoughCount, Input_Segment,  ShearModulus, PoissonRatio)
+                BuildMatrixByParts(FaultCount, ElementPartRoughCount, Input_Segment,  ShearModulus, PoissonRatio)
             
 
     end

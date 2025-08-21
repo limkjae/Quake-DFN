@@ -633,7 +633,7 @@ end
 
 
 
-function BuildMatrixByPartsStrikeSlip(FaultCount, ElementPartRoughCount, Input_Segment,  ShearModulus, PoissonRatio)
+function BuildMatrixByParts(FaultCount, ElementPartRoughCount, Input_Segment,  ShearModulus, PoissonRatio)
 
     DivisionCount = round(Int,FaultCount / ElementPartRoughCount)
     if DivisionCount == 0; DivisionCount =1; end
@@ -693,4 +693,211 @@ function LRtoRake(Switch_StrikeSlip_or_ReverseNormal, Input_Bulk)
     
     return Input_Bulk
 
+end
+
+
+function ReadBulkInput(InputBulkFileName)
+
+    ######################### Check if Rectangle or Triangle #############################
+    RorT = ""
+    Input_Bulk=readdlm(InputBulkFileName)
+    if size(Input_Bulk, 2) == 18
+        println("Rectangle")
+        RorT = "R"
+    elseif  size(Input_Bulk, 2) == 20
+        println("Triangle")
+        RorT = "T"
+    else 
+        error("Input Bulk Fault Geometry file should have 18 or 20 columns")
+    end
+
+
+    ########################## Read and Remove Header then Segmentize #########################
+    Switch_StrikeSlip_or_ReverseNormal = Input_Bulk[2,1] 
+    ShearModulus = Input_Bulk[2,2]
+    PoissonRatio = Input_Bulk[2,3]
+    RockDensity = Input_Bulk[2,4]
+    DropCrit= Input_Bulk[2,5]
+    DropCritNormalStressMultiplier= Input_Bulk[2,6]
+    MinimumNS=Input_Bulk[2,7]
+    Input_Bulk=Input_Bulk[4:end,:]
+    TotalElemCount = size(Input_Bulk, 1)
+    LoadingFaultCount   = 0
+
+    if RorT == "R"
+        Input_Bulk=Input_Bulk[sortperm(Input_Bulk[:, 17]), :]  
+        Input_Bulk = LRtoRake(Switch_StrikeSlip_or_ReverseNormal, Input_Bulk)# Adjust LRRN to rake angle    
+        for i in eachindex(Input_Bulk[:,1]) # Warning if positive depth exists
+            if Input_Bulk[i,3]<Input_Bulk[i,5]/2*sind(Input_Bulk[i,7])
+                println("Caution! Fault ",i," may have negative depth")
+            end
+        end
+        Input_Segment = BulkToSegment(Input_Bulk);
+        FaultCount=   size(Input_Segment,1)
+        Input_Segment = Input_Segment[sortperm(Input_Segment[:, 16]), :] # move the loading faults to the top
+        LoadingFaultCount = sum(Input_Segment[:,16] .> 0)
+
+    elseif RorT == "T"
+        Input_Bulk = Input_Bulk[sortperm(Input_Bulk[:, 19]), :]     
+        Input_Segment = Input_Bulk
+        FaultCount=   size(Input_Segment,1)
+        Input_Segment = Input_Segment[sortperm(Input_Segment[:, 19]), :] # move the loading faults to the top
+        LoadingFaultCount = sum(Input_Segment[:,19] .> 0)
+
+        P1 = Input_Segment[:,1:3]
+        P2 = Input_Segment[:,4:6]
+        P3 = Input_Segment[:,7:9]
+        FaultRakeAngle = Input_Segment[:,10]
+        FaultCenter = zeros(FaultCount,3)
+        FaultCenter[:,1] = (P1[:,1] + P2[:,1] + P3[:,1]) /3
+        FaultCenter[:,2] = (P1[:,2] + P2[:,2] + P3[:,2]) /3
+        FaultCenter[:,3] = (P1[:,3] + P2[:,3] + P3[:,3]) /3
+        
+        Fault_a = Input_Segment[:,11]
+        Fault_b = Input_Segment[:,12]
+        Fault_Dc = Input_Segment[:,13]
+        Fault_Theta_i = Input_Segment[:,14]
+        Fault_V_i = Input_Segment[:,15]
+        Fault_Friction_i = Input_Segment[:,16]
+        Fault_NormalStress = Input_Segment[:,17] - Input_Segment[:,18] .*  FaultCenter[:,3]
+        Fault_V_Const = Input_Segment[:,19]
+        Fault_BulkIndex = FaultRakeAngle * 0
+        FaultLengthStrike = maximum.(eachrow(abs.([P1-P2 P2-P3 P1-P3])))
+        FaultLengthDip = FaultLengthStrike
+        FaultStrikeAngle = zeros(FaultCount)
+        FaultDipAngle = zeros(FaultCount)
+        LoadingFaultCount = count(!iszero,Fault_V_Const)
+        FaultLengthStrike_Bulk = FaultLengthStrike
+        FaultLengthDip_Bulk = FaultLengthDip
+        NormalStiffnessZero = 0
+    end
+
+return FaultCenter, Fault_a, Fault_b, Fault_Dc, Fault_Theta_i, Fault_V_i, Fault_Friction_i, Fault_NormalStress, 
+        Fault_V_Const, Fault_BulkIndex, FaultLengthStrike, FaultLengthDip, FaultStrikeAngle, 
+        FaultDipAngle, FaultRakeAngle, FaultLengthStrike_Bulk, FaultLengthDip_Bulk, NormalStiffnessZero,
+        Input_Segment, LoadingFaultCount, ShearModulus, PoissonRatio, RockDensity, 
+        Switch_StrikeSlip_or_ReverseNormal, DropCrit, DropCritNormalStressMultiplier, MinimumNS, RorT, FaultCount
+
+end
+
+
+function RotVerts_UnitVectors(Input_Segment, FaultCount, Rake)
+
+    P1 = Input_Segment[:,1:3]
+    P2 = Input_Segment[:,4:6]
+    P3 = Input_Segment[:,7:9]
+    UnitVector_Normal = zeros(FaultCount,3)
+    UnitVector_StrikeSlip = zeros(FaultCount,3)
+    UnitVector_DipSlip = zeros(FaultCount,3)
+    UnitVector_Slip = zeros(FaultCount,3)
+
+    for ElemIdx = 1:FaultCount
+        P1_i = P1[ElemIdx,:] 
+        P2_i = P2[ElemIdx,:] 
+        P3_i = P3[ElemIdx,:] 
+
+        UnitVector_Normal_i = cross(P2_i-P1_i, P3_i-P1_i) / norm(cross(P2_i-P1_i, P3_i-P1_i))
+        if angle(UnitVector_Normal_i[1] + UnitVector_Normal_i[2]*im) <= 0 
+            P_temp = P1_i
+            P1_i = P2_i
+            P2_i = P_temp        
+            println("Verts order reversed")
+        end
+        P1[ElemIdx,:] = P1_i
+        P2[ElemIdx,:] = P2_i
+        P3[ElemIdx,:] = P3_i
+        
+        UnitVector_Normal[ElemIdx,:]= cross(P2_i-P1_i, P3_i-P1_i) / norm(cross(P2_i-P1_i, P3_i-P1_i))
+        UnitVector_StrikeSlip[ElemIdx,:] = cross(UnitVector_Normal[ElemIdx,:], [0, 0, 1]) / 
+                                            norm(cross(UnitVector_Normal[ElemIdx,:], [0, 0, 1]) )
+        UnitVector_DipSlip[ElemIdx,:] = cross(UnitVector_StrikeSlip[ElemIdx,:], UnitVector_Normal[ElemIdx,:]) /
+                                            norm(cross(UnitVector_StrikeSlip[ElemIdx,:], UnitVector_Normal[ElemIdx,:]))
+        UnitVector_Slip[ElemIdx,:] = UnitVector_StrikeSlip[ElemIdx,:] * cosd(Rake[ElemIdx]) + 
+                                        UnitVector_DipSlip[ElemIdx,:] * sind(Rake[ElemIdx])
+
+    end
+
+    return P1, P2, P3, UnitVector_Normal, UnitVector_StrikeSlip, UnitVector_DipSlip, UnitVector_Slip
+end
+
+
+function StiffnessMatrix_ByParts_Calculation_Tri(P1, P2, P3, Rake, FaultCenter, ShearModulus, lambda,
+                            UnitVector_Normal, UnitVector_Slip)
+    
+    
+
+    FaultCountSource=size(P1,1)
+    FaultCountReceiver=size(FaultCenter,1)
+    StiffnessMatrix_Normal_Part= zeros(FaultCountReceiver, FaultCountSource)
+    StiffnessMatrix_Shear_Part = zeros(FaultCountReceiver, FaultCountSource)
+    for ElemIdx = 1:FaultCountSource
+    p1 = P1[ElemIdx,:]
+    p2 = P2[ElemIdx,:]
+    p3 = P3[ElemIdx,:]
+    Ss = -cosd(Rake[ElemIdx])
+    Ds = sind(Rake[ElemIdx])
+    # println(Ss, "  ", Ds)
+    Ts = 0.0
+        Stress,Strain = TDstressHS(FaultCenter[:,1],FaultCenter[:,2],FaultCenter[:,3],p1,p2,p3,
+        Ss,Ds,Ts,ShearModulus,lambda)
+        println(ElemIdx)   
+        for ElemIdx2 = 1:FaultCountReceiver
+            Stress_i = [Stress[ElemIdx2,1] Stress[ElemIdx2,4] Stress[ElemIdx2,5]
+                        Stress[ElemIdx2,4] Stress[ElemIdx2,2] Stress[ElemIdx2,6]
+                        Stress[ElemIdx2,5] Stress[ElemIdx2,6] Stress[ElemIdx2,3]]
+
+            TVector = Stress_i * UnitVector_Normal[ElemIdx2,:]
+            Stress_Normal = dot(TVector, UnitVector_Normal[ElemIdx2,:])
+            # Stress_SS = dot(TVector, UnitVector_StrikeSlip[ElemIdx2,:])
+            # Stress_Dip = dot(TVector, UnitVector_DipSlip[ElemIdx2,:])
+            Stress_Shear = dot(TVector, UnitVector_Slip[ElemIdx2,:])
+            StiffnessMatrix_Normal_Part[ElemIdx2, ElemIdx] = Stress_Normal
+            StiffnessMatrix_Shear_Part[ElemIdx2, ElemIdx] = Stress_Shear
+        end
+
+    end
+    println("Fault Count Source: ", FaultCountSource, " Fault Count Receiver: ", FaultCountReceiver)
+    return StiffnessMatrix_Shear_Part, StiffnessMatrix_Normal_Part
+
+end 
+
+
+
+
+function BuildMatrixByParts_Even_Tri(P1, P2, P3, Rake, FaultCenter, UnitVector_Normal, UnitVector_Slip,
+                                FaultCount, ElementPartRoughCount,  ShearModulus, PoissonRatio)
+
+
+    StiffnessMatrix_Shear=zeros(FaultCount,FaultCount)
+    StiffnessMatrix_Normal=zeros(FaultCount,FaultCount)
+
+    DivisionCount = round(Int,FaultCount / ElementPartRoughCount)
+    if DivisionCount == 0; DivisionCount =1; end
+    PartedElementCount = FaultCount ÷ DivisionCount
+    TotalParts = DivisionCount^2
+    CurrentPart = 0
+    lambda = 2 * ShearModulus * PoissonRatio / (1 - 2 * PoissonRatio)
+    println("preparing for discretization by parts. Total Parts ", TotalParts)
+    println("Compiling Stiffness Matrix Function. This may take a while if first run")
+
+    for i=1:DivisionCount
+        for j=1:DivisionCount
+            CurrentPart =  CurrentPart +1 
+            Init_S = (i-1)*PartedElementCount+1
+            Fin_S = i*PartedElementCount
+            Init_R =  (j-1)*PartedElementCount+1
+            Fin_R = j*PartedElementCount
+            if i == DivisionCount; Fin_S = FaultCount; end
+            if j == DivisionCount; Fin_R = FaultCount; end
+
+            StiffnessMatrix_Shear[Init_R:Fin_R,Init_S:Fin_S], StiffnessMatrix_Normal[Init_R:Fin_R,Init_S:Fin_S] = 
+            StiffnessMatrix_ByParts_Calculation_Tri(P1[Init_S:Fin_S,:], P2[Init_S:Fin_S,:], P3[Init_S:Fin_S,:], Rake[Init_S:Fin_S,:],
+                                                    FaultCenter[Init_R:Fin_R,:], ShearModulus, lambda,  
+                                                    UnitVector_Normal[Init_R:Fin_R,:], UnitVector_Slip[Init_R:Fin_R,:])    
+                                        
+        end
+    end
+
+    
+    return StiffnessMatrix_Shear, StiffnessMatrix_Normal
 end

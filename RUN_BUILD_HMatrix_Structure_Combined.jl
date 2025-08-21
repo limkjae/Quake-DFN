@@ -19,7 +19,7 @@ include("Functions_OKADA3D.jl")
 include("Results/Functions_Plot.jl")
 include("Functions_Hmatrix.jl")
 
-# function BuildHMatStructure()
+function BuildHMatStructure()
 
     InputBulkFileName="Input_BulkFaultGeometry.txt"
     OutputFileName="Input_HmatrixStructure.jld2"
@@ -27,7 +27,7 @@ include("Functions_Hmatrix.jl")
     ##########################################################################
     #####----- Hmatrix compression detail ----#####
     TotalHierarchyLevel = 8
-    MinimumElementsToCut = 30
+    MinimumElementsToCut = 10
     DistDiamRatioCrit = 1.0     
     ArrangePoint = [10000,6000,10000] ### Arrange point
     # ArrangePoint = [0,0,-1000] ### Arrange point
@@ -36,57 +36,18 @@ include("Functions_Hmatrix.jl")
     PlotHMat = 1 # HMatrix structure plot
     PlotBlock3D = 0
     ##########################################################################
-    
-
-    ######################### Check if Rectangle or Triangle #############################
-    RorT = ""
-    Input_Bulk=readdlm(InputBulkFileName)
-    if size(Input_Bulk, 2) == 18
-        println("Rectangle")
-        RorT = "R"
-    elseif  size(Input_Bulk, 2) == 20
-        println("Triangle")
-        RorT = "T"
-    else 
-        error("Input Bulk Fault Geometry file should have 18 or 20 columns")
-    end
 
 
-    ########################## Read and Remove Header Segmentize #########################
-    Switch_StrikeSlip_or_ReverseNormal = Input_Bulk[2,1] 
-    ShearModulus = Input_Bulk[2,2]
-    PoissonRatio = Input_Bulk[2,3]
-    RockDensity = Input_Bulk[2,4]
-    DropCrit= Input_Bulk[2,5]
-    DropCritNormalStressMultiplier= Input_Bulk[2,6]
-    MinimumNS=Input_Bulk[2,7]
-    Input_Bulk=Input_Bulk[4:end,:]
-    TotalElemCount = size(Input_Bulk, 1)
-    LoadingFaultCount   = 0
+    ######################## Read Bulk Input File ########################
+    Input_Segment, LoadingFaultCount, ShearModulus, PoissonRatio, RockDensity, 
+    Switch_StrikeSlip_or_ReverseNormal, DropCrit, DropCritNormalStressMultiplier, MinimumNS, RorT, FaultCount =
+        ReadBulkInput(InputBulkFileName)
 
-    if RorT == "R"
-        Input_Bulk=Input_Bulk[sortperm(Input_Bulk[:, 17]), :]  # Adjust LRRN to rake angle    
-        Input_Bulk = LRtoRake(Switch_StrikeSlip_or_ReverseNormal, Input_Bulk) # Warning if positive depth exists
-        for i in eachindex(Input_Bulk[:,1])
-            if Input_Bulk[i,3]<Input_Bulk[i,5]/2*sind(Input_Bulk[i,7])
-                println("Caution! Fault ",i," may have negative depth")
-            end
-        end
-        Input_Segment = BulkToSegment(Input_Bulk);
-        FaultCount=   size(Input_Segment,1)
-        Input_Segment = [Input_Segment ones(FaultCount) zeros(FaultCount)]
-        Input_Segment = Input_Segment[sortperm(Input_Segment[:, 16]), :] # move the loading faults to the top
-        LoadingFaultCount = sum(Input_Segment[:,16] .> 0)
 
-    elseif RorT == "T"
-        Input_Bulk = Input_Bulk[sortperm(Input_Bulk[:, 19]), :]
-        Input_Segment = Input_Bulk
-        FaultCount=   size(Input_Segment,1)
-        Input_Segment = [Input_Segment ones(FaultCount) zeros(FaultCount)]
-        Input_Segment = Input_Segment[sortperm(Input_Segment[:, 19]), :] # move the loading faults to the top
-        LoadingFaultCount = sum(Input_Segment[:,19] .> 0)
-    end
+    Input_Segment = [Input_Segment ones(FaultCount) zeros(FaultCount)]
 
+
+    ######################## Build Hmatrix structure ########################
     Block_Ctr_Diam, Block_Range_Level, Input_Segment, LoadingFaultExist = 
         GroupAndSort_AllLevel(TotalHierarchyLevel, MinimumElementsToCut,
                             ArrangePoint, Input_Segment, RorT)  
@@ -117,14 +78,15 @@ include("Functions_Hmatrix.jl")
     "RockDensity", RockDensity, 
     "DropCrit", DropCrit, 
     "DropCritNormalStressMultiplier", DropCritNormalStressMultiplier, 
-    "MinimumNS", MinimumNS)
+    "MinimumNS", MinimumNS,
+    "RorT", RorT)
     println("Input files saved to ", OutputFileName) 
 
      
 
 
 
-
+  ############### Plots ####################
 
 
   figure(2)
@@ -206,7 +168,7 @@ include("Functions_Hmatrix.jl")
         clf()
         art3d = PyObject(PyPlot.art3D)
         ax = subplot(projection="3d")
-        for ElemIdx = 1:TotalElemCount- LoadingFaultCount
+        for ElemIdx = 1:FaultCount- LoadingFaultCount
             cm = get_cmap(:prism)
             P1 = Input_Segment[:,1:3]
             P2 = Input_Segment[:,4:6]
@@ -228,7 +190,9 @@ include("Functions_Hmatrix.jl")
         end
     end
 
+end
 
+BuildHMatStructure()
 
         # figure(2)
         # println("Plotting Hmatrix Structure")
