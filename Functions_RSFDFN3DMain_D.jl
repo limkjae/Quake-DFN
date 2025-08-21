@@ -39,6 +39,7 @@ function main(StiffnessMatrixShear, StiffnessMatrixNormal, NormalStiffnessZero,
     K_Self=zeros(FaultCount)
     Omega=zeros(FaultCount)
     ElasticLoadingShearMatrix=zeros(FaultCount,FaultCount)
+
     ############### Separate Loading Stiffness and Find unstable Patch ##############
     UnstablePatch=[0;]
     for i=1:FaultCount
@@ -55,7 +56,6 @@ function main(StiffnessMatrixShear, StiffnessMatrixNormal, NormalStiffnessZero,
             UnstablePatch = [UnstablePatch;i]
         end
     end
-    
     if length(UnstablePatch) == 1
         println("No Unstable Patch")
         TimeStepOnlyBasedOnUnstablePatch = 0

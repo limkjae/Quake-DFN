@@ -1,11 +1,22 @@
-function GroupAndSort(Input_Segment_Part, HowManyDivision, 
+function GroupAndSort(Input_Segment_Part,  HowManyDivision, 
                         ArrangePoint, InitialBlockIdx, BlockBegin, TotalHierarchyLevel, 
-                        CurrentLevel, HierarchyLevelHistory)
+                        CurrentLevel, HierarchyLevelHistory, RorT)
+    if RorT == "R"
+        FaultCenter = Input_Segment_Part[:,1:3]'
+        LevelIdx = 20
+    else
+        FaultCenterX = (Input_Segment_Part[:,1]+Input_Segment_Part[:,4]+Input_Segment_Part[:,7]) ./ 3
+        FaultCenterY = (Input_Segment_Part[:,2]+Input_Segment_Part[:,5]+Input_Segment_Part[:,8]) ./ 3
+        FaultCenterZ = (Input_Segment_Part[:,3]+Input_Segment_Part[:,6]+Input_Segment_Part[:,9]) ./ 3
+        FaultCenter = [FaultCenterX FaultCenterY FaultCenterZ]'
+        LevelIdx = 21
+    end
 
-    R = kmeans(Input_Segment_Part[:,1:3]', HowManyDivision; maxiter=200)#, display=:iter)
+    R = kmeans(FaultCenter, HowManyDivision; maxiter=200)#, display=:iter)
     a = assignments(R) # get the assignments of points to clusters
     c = counts(R) # get the cluster sizes
     M = R.centers # get the cluster centers
+
 
     GroupDistanceFromArrangePoint = norm.(eachcol(M .- ArrangePoint))
     GroupOrder = sortperm(GroupDistanceFromArrangePoint)
@@ -19,11 +30,11 @@ function GroupAndSort(Input_Segment_Part, HowManyDivision,
         OriginalAssignment[GroupOrder[OrderIndex]] = OrderIndex
     end
     
-    Input_Segment_Part[:,20]= OriginalAssignment[a]  .+ (InitialBlockIdx - 1)
-    Input_Segment_Part[:,21]= GroupDistanceFromArrangePoint[a]
+    Input_Segment_Part[:,LevelIdx]= OriginalAssignment[a]  .+ (InitialBlockIdx - 1)
+    Input_Segment_Part[:,LevelIdx+1]= GroupDistanceFromArrangePoint[a]
     # Input_Segment=[Input_Segment OriginalAssignment[a] GroupDistanceFromArrangePoint[a]]
 
-    Input_Segment_Part=sortslices(Input_Segment_Part, dims = 1, by = x -> x[20])
+    Input_Segment_Part=sortslices(Input_Segment_Part, dims = 1, by = x -> x[LevelIdx])
 
     AddedBlock_Range_Level = zeros(Int,HowManyDivision, 3 + TotalHierarchyLevel)
     AddedBlock_Ctr_Diam = zeros(HowManyDivision, 4)
@@ -59,8 +70,13 @@ function GroupAndSort(Input_Segment_Part, HowManyDivision,
 end
 
 
-function GroupAndSort_AllLevel(HowManyDivisionEachLevel, TotalHierarchyLevel, MinimumElementsToCut,
-                                ArrangePoint, FaultCount, Input_Segment)
+function GroupAndSort_AllLevel(TotalHierarchyLevel, MinimumElementsToCut,
+                                ArrangePoint, Input_Segment,RorT)
+if RorT == "R"
+    VconstIdx = 16; LevelIdx = 20
+else
+    VconstIdx = 19; LevelIdx = 21
+end
 
 Block_Range_Level = zeros(Int,1, 3 + TotalHierarchyLevel)
 Block_Ctr_Diam = zeros(1, 4)
@@ -68,10 +84,10 @@ BlockCountPrevLevel = zeros(Int,TotalHierarchyLevel)
 LevelBeign = 0
 LevelEnd = 0
 LoadingFaultExist = 0
-NonLoadingFaultRange = [minimum(findall(x->x==0, Input_Segment[:,16])), maximum(findall(x->x==0, Input_Segment[:,16]))]
+NonLoadingFaultRange = [minimum(findall(x->x==0, Input_Segment[:,VconstIdx])), maximum(findall(x->x==0, Input_Segment[:,VconstIdx]))]
 if maximum(Input_Segment[:,16])>0
     LoadingFaultExist= 1
-    LoadingFaultRange = [minimum(findall(x->x>0, Input_Segment[:,16])), maximum(findall(x->x>0, Input_Segment[:,16]))]
+    LoadingFaultRange = [minimum(findall(x->x>0, Input_Segment[:,VconstIdx])), maximum(findall(x->x>0, Input_Segment[:,VconstIdx]))]
     Block_Range_Level[1:2] = LoadingFaultRange # Loading fault range level
     Block_Range_Level[3] = 0
 end
@@ -81,16 +97,16 @@ for CurrentLevel = 1:TotalHierarchyLevel
     if CurrentLevel == 1
         BlockBegin = NonLoadingFaultRange[1]
         BlockEnd = NonLoadingFaultRange[2]
-        InitialBlockIdx = Input_Segment[BlockBegin,20]
-        Input_Segment[BlockEnd:end,20] = Input_Segment[BlockEnd:end,20] .+ (HowManyDivisionEachLevel -1 )
+        InitialBlockIdx = Input_Segment[BlockBegin,LevelIdx]
+        Input_Segment[BlockEnd:end,LevelIdx] = Input_Segment[BlockEnd:end,LevelIdx] .+ (2 -1 )
 
         HierarchyLevelHistory = Block_Range_Level[1,4:end]
         
         Input_Segment[BlockBegin:BlockEnd,:], ClusterCenter, GroupOrder, ClusterSize, Diameter, 
             AddedBlock_Range_Level, AddedBlock_Ctr_Diam = 
-            GroupAndSort(Input_Segment[BlockBegin:BlockEnd,:], HowManyDivisionEachLevel, 
+            GroupAndSort(Input_Segment[BlockBegin:BlockEnd,:], 2,
                             ArrangePoint, InitialBlockIdx, BlockBegin, TotalHierarchyLevel, 
-                            CurrentLevel, HierarchyLevelHistory)
+                            CurrentLevel, HierarchyLevelHistory, RorT)
 
         Block_Range_Level = [Block_Range_Level; AddedBlock_Range_Level]
         Block_Ctr_Diam = [Block_Ctr_Diam; AddedBlock_Ctr_Diam]
@@ -113,16 +129,16 @@ for CurrentLevel = 1:TotalHierarchyLevel
             if BlockEnd - BlockBegin < MinimumElementsToCut
                 DivisionThisTime = 1
             else
-                DivisionThisTime = HowManyDivisionEachLevel
+                DivisionThisTime = 2
             end
                 HierarchyLevelHistory = Block_Range_Level[highLevelidx,4:end]
-                InitialBlockIdx = Input_Segment[BlockBegin,20]
-                Input_Segment[BlockEnd:end,20] = Input_Segment[BlockEnd:end,20] .+ (DivisionThisTime -1 )
+                InitialBlockIdx = Input_Segment[BlockBegin,LevelIdx]
+                Input_Segment[BlockEnd:end,LevelIdx] = Input_Segment[BlockEnd:end,LevelIdx] .+ (DivisionThisTime -1 )
 
                 Input_Segment[BlockBegin:BlockEnd,:], ClusterCenter, GroupOrder, ClusterSize, Diameter, 
                     AddedBlock_Range_Level, AddedBlock_Ctr_Diam = 
                     GroupAndSort(Input_Segment[BlockBegin:BlockEnd,:], DivisionThisTime, 
-                                    ArrangePoint, InitialBlockIdx, BlockBegin, TotalHierarchyLevel, CurrentLevel, HierarchyLevelHistory)
+                                    ArrangePoint, InitialBlockIdx, BlockBegin, TotalHierarchyLevel, CurrentLevel, HierarchyLevelHistory, RorT) 
 
                 Block_Range_Level = [Block_Range_Level; AddedBlock_Range_Level]
                 Block_Ctr_Diam = [Block_Ctr_Diam; AddedBlock_Ctr_Diam]

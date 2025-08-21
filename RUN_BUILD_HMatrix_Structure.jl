@@ -65,6 +65,7 @@ function BuildHMatStructure()
 
     BulkFaultcount = length(Input_Bulk[:,1])
     # Adjust LRRN to rake angle
+    
     if Switch_StrikeSlip_or_ReverseNormal == 1
         for BulkIndex = 1: BulkFaultcount
             if Input_Bulk[BulkIndex,8] == -1.0
