@@ -721,7 +721,6 @@ function ReadBulkInput(InputBulkFileName)
     DropCritNormalStressMultiplier= Input_Bulk[2,6]
     MinimumNS=Input_Bulk[2,7]
     Input_Bulk=Input_Bulk[4:end,:]
-    TotalElemCount = size(Input_Bulk, 1)
     LoadingFaultCount   = 0
 
     if RorT == "R"
@@ -744,6 +743,39 @@ function ReadBulkInput(InputBulkFileName)
         Input_Segment = Input_Segment[sortperm(Input_Segment[:, 19]), :] # move the loading faults to the top
         LoadingFaultCount = sum(Input_Segment[:,19] .> 0)
 
+    end
+
+    return Input_Segment, LoadingFaultCount, ShearModulus, PoissonRatio, RockDensity, 
+           Switch_StrikeSlip_or_ReverseNormal, DropCrit, DropCritNormalStressMultiplier, MinimumNS, RorT, FaultCount
+
+end
+
+
+
+function ReadSegmentInput(Input_Segment, FaultCount, RorT)
+
+    if RorT == "R"
+
+        FaultCenter = Input_Segment[:,1:3]
+        FaultLengthStrike = Input_Segment[:,4]
+        FaultLengthDip = Input_Segment[:,5]
+        FaultStrikeAngle = Input_Segment[:,6]
+        FaultDipAngle = Input_Segment[:,7]
+        FaultRakeAngle = Input_Segment[:,8]
+        Fault_a = Input_Segment[:,9]
+        Fault_b = Input_Segment[:,10]
+        Fault_Dc = Input_Segment[:,11]
+        Fault_Theta_i = Input_Segment[:,12]
+        Fault_V_i = Input_Segment[:,13]
+        Fault_Friction_i = Input_Segment[:,14]
+        Fault_NormalStress = Input_Segment[:,15]
+        Fault_V_Const = Input_Segment[:,16]
+        Fault_BulkIndex = Input_Segment[:,17]
+        FaultLengthStrike_Bulk = Input_Segment[:,18]
+        FaultLengthDip_Bulk = Input_Segment[:,19]
+        NormalStiffnessZero = 0
+
+    else
         P1 = Input_Segment[:,1:3]
         P2 = Input_Segment[:,4:6]
         P3 = Input_Segment[:,7:9]
@@ -766,19 +798,18 @@ function ReadBulkInput(InputBulkFileName)
         FaultLengthDip = FaultLengthStrike
         FaultStrikeAngle = zeros(FaultCount)
         FaultDipAngle = zeros(FaultCount)
-        LoadingFaultCount = count(!iszero,Fault_V_Const)
         FaultLengthStrike_Bulk = FaultLengthStrike
         FaultLengthDip_Bulk = FaultLengthDip
         NormalStiffnessZero = 0
     end
 
-return FaultCenter, Fault_a, Fault_b, Fault_Dc, Fault_Theta_i, Fault_V_i, Fault_Friction_i, Fault_NormalStress, 
-        Fault_V_Const, Fault_BulkIndex, FaultLengthStrike, FaultLengthDip, FaultStrikeAngle, 
-        FaultDipAngle, FaultRakeAngle, FaultLengthStrike_Bulk, FaultLengthDip_Bulk, NormalStiffnessZero,
-        Input_Segment, LoadingFaultCount, ShearModulus, PoissonRatio, RockDensity, 
-        Switch_StrikeSlip_or_ReverseNormal, DropCrit, DropCritNormalStressMultiplier, MinimumNS, RorT, FaultCount
-
+    return FaultCenter, Fault_a, Fault_b, Fault_Dc, Fault_Theta_i, Fault_V_i, Fault_Friction_i, Fault_NormalStress, 
+            Fault_V_Const, Fault_BulkIndex, FaultLengthStrike, FaultLengthDip, FaultStrikeAngle, 
+            FaultDipAngle, FaultRakeAngle, FaultLengthStrike_Bulk, FaultLengthDip_Bulk, NormalStiffnessZero
 end
+
+
+
 
 
 function RotVerts_UnitVectors(Input_Segment, FaultCount, Rake)

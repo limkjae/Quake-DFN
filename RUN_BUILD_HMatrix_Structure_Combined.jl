@@ -64,6 +64,7 @@ function BuildHMatStructure()
     ###############################################################################
     ############################### Save Input Files ##############################
     save(OutputFileName, 
+    "LoadingFaultCount", LoadingFaultCount,
     "Block_Ctr_Diam", Block_Ctr_Diam, 
     "Block_Range_Level", Block_Range_Level, 
     "Input_Segment", Input_Segment, 
