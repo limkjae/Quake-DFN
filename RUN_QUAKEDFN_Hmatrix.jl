@@ -27,7 +27,7 @@ LoadingInputFileName="Input_Discretized.jld2"
 ThreadCount = 8 # if zero, it uses current thread count opened in REPL
 
 ########################## Simulation Time Set ################################
-TotalStep = 20000 # Total simulation step
+TotalStep = 10000 # Total simulation step
 SaveStep = 5000 # Automatically saved every this step
 RecordStep = 10 # Simulation sampling rate !! should be a factor of SaveStep !!
 
@@ -80,6 +80,7 @@ function RunRSFDFN3D(TotalStep, RecordStep, RuptureTimeStepMultiple,
 
     # StiffnessMatrixShear= load(LoadingInputFileName, "StiffnessMatrixShear")
     # StiffnessMatrixNormal= load(LoadingInputFileName, "StiffnessMatrixNormal")
+    RorT = load(LoadingInputFileName, "RorT")
     FaultCenter= load(LoadingInputFileName, "FaultCenter")
     ShearModulus= load(LoadingInputFileName, "ShearModulus")
     RockDensity= load(LoadingInputFileName, "RockDensity")
@@ -110,6 +111,11 @@ function RunRSFDFN3D(TotalStep, RecordStep, RuptureTimeStepMultiple,
     NormalStiffness_H = load(LoadingInputFileName, "NormalStiffness_H")
     NormalStiffnessZero = load(LoadingInputFileName, "NormalStiffnessZero")
     Admissible = load(LoadingInputFileName,"Admissible")
+    if RorT == "T"
+        P1 = load(LoadingInputFileName, "P1")
+        P2 = load(LoadingInputFileName, "P2")
+        P3 = load(LoadingInputFileName, "P3")
+    end
     ################################################################################
     
     if StrongInteractionCriteriaMultiple > 0
@@ -209,7 +215,16 @@ function RunRSFDFN3D(TotalStep, RecordStep, RuptureTimeStepMultiple,
     "Fault_V_Const", Fault_V_Const, "Fault_BulkIndex", Fault_BulkIndex, "FaultLengthStrike_Bulk", FaultLengthStrike_Bulk, 
     "FaultLengthDip_Bulk", FaultLengthDip_Bulk, "FaultCount", FaultCount, "LoadingFaultCount", LoadingFaultCount, "FaultMass", FaultMass, "MinimumNormalStress", MinimumNormalStress,
     "Ranks_Shear", Ranks_Shear, "Ranks_Normal", Ranks_Normal,  "ElementRange_SR", ElementRange_SR, "NormalStiffness_H", NormalStiffness_H, "ShearStiffness_H", ShearStiffness_H)
-    
+    if RorT == "T"        
+        file = jldopen(SaveInputInfoFileName, "a+")
+        write(file, "P1", P1) 
+        write(file, "P2", P2) 
+        write(file, "P3", P3) 
+        close(file)
+
+    end
+
+
     ############################### Save Input Files ##############################
     ###############################################################################
 

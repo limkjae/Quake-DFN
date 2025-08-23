@@ -32,7 +32,7 @@ TooCloseNormal_Multiplier = 0.6
 MinNormalStress = 2e6
 
 
-Rake = 45
+Rake = 0
 a = 0.003
 b = 0.006
 Dc = 3e-4
