@@ -19,7 +19,8 @@ function BuildBulk()
     Crit_TooClose= 1.05
     TooCloseNormal_Multiplier = 0.6
     MinNormalStress = 2e6
-
+    
+    RakeAngle = 0
     Faultlength = 1000
     Amplitude = 200.0 
     FaultDepthCenter=500.0
@@ -59,7 +60,6 @@ function BuildBulk()
     # end
 
 
-    F_LR = 0.0
     F_a = 0.003 
     F_b =0.006 
     F_Dc = 3e-4 
@@ -85,7 +85,7 @@ function BuildBulk()
     FaultInfo[:,5] .= FaultDepthCenter*2
     FaultInfo[:,6] = FaultStrikeAngle;
     FaultInfo[:,7] .= 90.0;
-    FaultInfo[:,8] .= F_LR;
+    FaultInfo[:,8] .= RakeAngle;
     FaultInfo[:,9] .= F_a;
     FaultInfo[:,10] .= F_b;
     FaultInfo[:,11] .= F_Dc;

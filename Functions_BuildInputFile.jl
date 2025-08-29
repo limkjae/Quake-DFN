@@ -825,8 +825,8 @@ end
  
 
 
-function BuildMatrixByParts_Even_Rec(FaultCount, ElementPartRoughCount, Input_Segment,  ShearModulus, PoissonRatio)
-
+function BuildMatrixByParts_Even_Rec(FaultCount, Input_Segment,  ShearModulus, PoissonRatio)
+    ElementPartRoughCount = 2000
     DivisionCount = round(Int,FaultCount / ElementPartRoughCount)
     if DivisionCount == 0; DivisionCount =1; end
     PartedElementCount = FaultCount ÷ DivisionCount
@@ -837,7 +837,12 @@ function BuildMatrixByParts_Even_Rec(FaultCount, ElementPartRoughCount, Input_Se
     println("preparing for discretization by parts. Total Parts ", TotalParts)
     for i=1:DivisionCount
         for j=1:DivisionCount
+            
+
             CurrentPart =  CurrentPart +1
+            
+            println("Part: ", CurrentPart,"/",DivisionCount*DivisionCount)
+
             Init_S = (i-1)*PartedElementCount+1
             Fin_S = i*PartedElementCount
             Init_R =  (j-1)*PartedElementCount+1
@@ -857,7 +862,6 @@ end
 
 function StiffnessMatrix_ByParts_Calculation_Tri(P1, P2, P3, Rake, FaultCenter, ShearModulus, lambda,
                             UnitVector_Normal, UnitVector_Slip)
-    
     
 
     FaultCountSource=size(P1,1)
@@ -900,8 +904,9 @@ end
 
 
 function BuildMatrixByParts_Even_Tri(P1, P2, P3, Rake, FaultCenter, UnitVector_Normal, UnitVector_Slip,
-                                FaultCount, ElementPartRoughCount,  ShearModulus, PoissonRatio)
+                                FaultCount, ShearModulus, PoissonRatio)
 
+    ElementPartRoughCount = 2000
 
     StiffnessMatrix_Shear=zeros(FaultCount,FaultCount)
     StiffnessMatrix_Normal=zeros(FaultCount,FaultCount)
@@ -918,6 +923,8 @@ function BuildMatrixByParts_Even_Tri(P1, P2, P3, Rake, FaultCenter, UnitVector_N
     for i=1:DivisionCount
         for j=1:DivisionCount
             CurrentPart =  CurrentPart +1 
+            
+            println("Part: ", CurrentPart,"/",DivisionCount*DivisionCount)
             Init_S = (i-1)*PartedElementCount+1
             Fin_S = i*PartedElementCount
             Init_R =  (j-1)*PartedElementCount+1
@@ -935,4 +942,172 @@ function BuildMatrixByParts_Even_Tri(P1, P2, P3, Rake, FaultCenter, UnitVector_N
 
     
     return StiffnessMatrix_Shear, StiffnessMatrix_Normal
+end
+
+
+
+
+function HmatBuild_T(ShearModulus, PoissonRatio, ElementRange_SR, FaultRakeAngle, FaultCenter,
+                        UnitVector_Normal, UnitVector_Slip)
+
+    ################################  Discritize ##############################
+    ElementPartRoughCount = 2000
+
+    lambda = 2 * ShearModulus * PoissonRatio / (1 - 2 * PoissonRatio)
+    BlockCount = length(ElementRange_SR[:,1])
+    ShearStiffness_H = Any[0]
+    NormalStiffness_H = Any[0]
+    Ranks_Shear = zeros(Int, BlockCount)
+    Ranks_Normal = zeros(Int, BlockCount)
+
+    TotalElments = FaultCount * FaultCount 
+    println("Building Hmatrix Block by Block")
+    println("Full Matrix Will not be saved")
+    println("Preparing for discretization")
+    BlockSize = 0.0
+
+    for BlockIndex = 1: BlockCount
+        P1_S = P1[ElementRange_SR[BlockIndex,1]:ElementRange_SR[BlockIndex,2],:]
+        P2_S = P2[ElementRange_SR[BlockIndex,1]:ElementRange_SR[BlockIndex,2],:]
+        P3_S = P3[ElementRange_SR[BlockIndex,1]:ElementRange_SR[BlockIndex,2],:]
+        FaultRakeAngle_S = FaultRakeAngle[ElementRange_SR[BlockIndex,1]:ElementRange_SR[BlockIndex,2]]
+        FaultCenter_R = FaultCenter[ElementRange_SR[BlockIndex,3]:ElementRange_SR[BlockIndex,4],:]
+        UnitVector_Normal_R = UnitVector_Normal[ElementRange_SR[BlockIndex,3]:ElementRange_SR[BlockIndex,4],:]
+        UnitVector_Slip_R = UnitVector_Slip[ElementRange_SR[BlockIndex,3]:ElementRange_SR[BlockIndex,4],:]
+
+        SourceCount = ElementRange_SR[BlockIndex,2] - ElementRange_SR[BlockIndex,1] + 1
+        ReceiverCount = ElementRange_SR[BlockIndex,4] - ElementRange_SR[BlockIndex,3] + 1
+        StiffnessMatrixShearThisBlock=zeros(ReceiverCount,SourceCount)
+        StiffnessMatrixNormalThisBlock=zeros(ReceiverCount,SourceCount)
+        DivisionCountS = round(Int,SourceCount / ElementPartRoughCount)
+        DivisionCountR = round(Int,ReceiverCount / ElementPartRoughCount)
+        if DivisionCountS == 0; DivisionCountS =1; end
+        if DivisionCountR == 0; DivisionCountR =1; end
+        PartedElementCountS = SourceCount ÷ DivisionCountS
+        PartedElementCountR = ReceiverCount ÷ DivisionCountR
+        TotalParts = DivisionCountS * DivisionCountR
+        CurrentPart = 0
+        for i=1:DivisionCountS
+            for j=1:DivisionCountR
+                CurrentPart =  CurrentPart +1
+                Init_S = (i-1)*PartedElementCountS + 1
+                Fin_S = i*PartedElementCountS
+                Init_R =  (j-1)*PartedElementCountR + 1
+                Fin_R = j*PartedElementCountR
+                if i == DivisionCountS; Fin_S = SourceCount; end
+                if j == DivisionCountR; Fin_R = ReceiverCount; end
+                BlockSize = BlockSize + (Fin_S - Init_S) * (Fin_R - Init_R)
+                println("Part: ", CurrentPart,"/",DivisionCountS*DivisionCountR, " BlockIndex: ",BlockIndex, "/",BlockCount," Progress:",BlockSize/TotalElments)
+
+                StiffnessMatrixShearThisBlock[Init_R:Fin_R,Init_S:Fin_S], StiffnessMatrixNormalThisBlock[Init_R:Fin_R,Init_S:Fin_S] = 
+                StiffnessMatrix_ByParts_Calculation_Tri(P1_S[Init_S:Fin_S,:], P2_S[Init_S:Fin_S,:], P3_S[Init_S:Fin_S,:], FaultRakeAngle_S[Init_S:Fin_S,:],
+                                                        FaultCenter_R[Init_R:Fin_R,:], ShearModulus, lambda,  
+                                                        UnitVector_Normal_R[Init_R:Fin_R,:], UnitVector_Slip_R[Init_R:Fin_R,:])   
+            end
+        end                        
+
+            ######################################################################
+            ############################# Compress ###############################
+        if Admissible[BlockIndex] > 0
+            ApproxMatrixS = pqrfact(StiffnessMatrixShearThisBlock, atol = Tolerance)
+            push!(ShearStiffness_H,ApproxMatrixS)
+            Ranks_Shear[BlockIndex] = size(ApproxMatrixS[:Q],2)
+            
+            ApproxMatrixN = pqrfact(StiffnessMatrixNormalThisBlock, atol = Tolerance)
+            push!(NormalStiffness_H,ApproxMatrixN)
+            Ranks_Normal[BlockIndex] = size(ApproxMatrixN[:Q],2)
+        else 
+            push!(ShearStiffness_H,StiffnessMatrixShearThisBlock)
+            push!(NormalStiffness_H,StiffnessMatrixNormalThisBlock)
+        end
+    end
+    ShearStiffness_H = ShearStiffness_H[2:end]
+    NormalStiffness_H = NormalStiffness_H[2:end]
+
+    return ShearStiffness_H, NormalStiffness_H, Ranks_Shear, Ranks_Normal
+end
+
+
+function HmatBuild_R(ShearModulus, PoissonRatio, ElementRange_SR,Input_Segment)
+
+
+    ################################  Discritize ##############################
+    ElementPartRoughCount = 2000
+    BlockCount = length(ElementRange_SR[:,1])
+    ShearStiffness_H = Any[0]
+    NormalStiffness_H = Any[0]
+    Ranks_Shear = zeros(Int, BlockCount)
+    Ranks_Normal = zeros(Int, BlockCount)
+
+    TotalElments = FaultCount * FaultCount 
+    println("Building Hmatrix Block by Block")
+    println("Full Matrix Will not be saved")
+    println("Preparing for discretization")
+    BlockSize = 0.0
+
+
+
+    for BlockIndex = 1: BlockCount
+
+        Input_SegmentS = Input_Segment[ElementRange_SR[BlockIndex,1]:ElementRange_SR[BlockIndex,2],:]
+        Input_SegmentR = Input_Segment[ElementRange_SR[BlockIndex,3]:ElementRange_SR[BlockIndex,4],:]
+
+        SourceCount = ElementRange_SR[BlockIndex,2] - ElementRange_SR[BlockIndex,1] + 1
+        ReceiverCount = ElementRange_SR[BlockIndex,4] - ElementRange_SR[BlockIndex,3] + 1
+        StiffnessMatrixShearThisBlock=zeros(ReceiverCount,SourceCount)
+        StiffnessMatrixNormalThisBlock=zeros(ReceiverCount,SourceCount)
+        DivisionCountS = round(Int,SourceCount / ElementPartRoughCount)
+        DivisionCountR = round(Int,ReceiverCount / ElementPartRoughCount)
+        if DivisionCountS == 0; DivisionCountS =1; end
+        if DivisionCountR == 0; DivisionCountR =1; end
+        PartedElementCountS = SourceCount ÷ DivisionCountS
+        PartedElementCountR = ReceiverCount ÷ DivisionCountR
+        TotalParts = DivisionCountS * DivisionCountR
+        CurrentPart = 0
+        for i=1:DivisionCountS
+            for j=1:DivisionCountR
+                CurrentPart =  CurrentPart +1
+                Init_S = (i-1)*PartedElementCountS + 1
+                Fin_S = i*PartedElementCountS
+                Init_R =  (j-1)*PartedElementCountR + 1
+                Fin_R = j*PartedElementCountR
+                if i == DivisionCountS; Fin_S = SourceCount; end
+                if j == DivisionCountR; Fin_R = ReceiverCount; end
+                BlockSize = BlockSize + (Fin_S - Init_S) * (Fin_R - Init_R)
+                println("Part: ", CurrentPart,"/",DivisionCountS*DivisionCountR, " BlockIndex: ",BlockIndex, "/",BlockCount," Progress:",BlockSize/TotalElments)
+                if RorT == "R"
+                    StiffnessMatrixShearThisBlock[Init_R:Fin_R,Init_S:Fin_S], StiffnessMatrixNormalThisBlock[Init_R:Fin_R,Init_S:Fin_S] = 
+                    StiffnessMatrix_ByParts_Calculation_Rec(Input_SegmentS[Init_S:Fin_S,:], Input_SegmentR[Init_R:Fin_R,:], ShearModulus, PoissonRatio,
+                                                        CurrentPart, TotalParts)
+                else 
+                    StiffnessMatrixShearThisBlock[Init_R:Fin_R,Init_S:Fin_S], StiffnessMatrixNormalThisBlock[Init_R:Fin_R,Init_S:Fin_S] = 
+                    StiffnessMatrix_ByParts_Calculation_Tri(P1_S[Init_S:Fin_S,:], P2_S[Init_S:Fin_S,:], P3_S[Init_S:Fin_S,:], FaultRakeAngle_S[Init_S:Fin_S,:],
+                                                            FaultCenter_R[Init_R:Fin_R,:], ShearModulus, lambda,  
+                                                            UnitVector_Normal_R[Init_R:Fin_R,:], UnitVector_Slip_R[Init_R:Fin_R,:])   
+                end                                               
+            
+            end
+        end                        
+
+            ######################################################################
+            ############################# Compress ###############################
+        if Admissible[BlockIndex] > 0
+            ApproxMatrixS = pqrfact(StiffnessMatrixShearThisBlock, atol = Tolerance)
+            push!(ShearStiffness_H,ApproxMatrixS)
+            Ranks_Shear[BlockIndex] = size(ApproxMatrixS[:Q],2)
+            
+            ApproxMatrixN = pqrfact(StiffnessMatrixNormalThisBlock, atol = Tolerance)
+            push!(NormalStiffness_H,ApproxMatrixN)
+            Ranks_Normal[BlockIndex] = size(ApproxMatrixN[:Q],2)
+        else 
+            push!(ShearStiffness_H,StiffnessMatrixShearThisBlock)
+            push!(NormalStiffness_H,StiffnessMatrixNormalThisBlock)
+        end
+    # ApproxMatrixS*ones(200)
+    end
+                ShearStiffness_H = ShearStiffness_H[2:end]
+                NormalStiffness_H = NormalStiffness_H[2:end]
+
+
+    return  ShearStiffness_H, NormalStiffness_H, Ranks_Shear, Ranks_Normal
 end

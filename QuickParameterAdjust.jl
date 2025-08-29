@@ -95,13 +95,13 @@ function ParameterAdj(LoadingFaultCount, FaultMass, Fault_a, Fault_b, Fault_Dc,
     # end
     
     # for i=1:FaultCount
-    #     if 5000 > FaultCenter[i,3] || FaultCenter[i,3] > 7000
+    #     if -800 > FaultCenter[i,3] || FaultCenter[i,3] > -100
     #         Fault_a[i] = 0.01
     #     end
     # end
 
     # Fault_Theta_i .= 0.9e10
-    # Fault_Dc .= 3e-4
+    # Fault_Dc .= 1e-6
     # Fault_a .= 0.05
     # Fault_b .= 0.003
     # Fault_NormalStress .= 10e6

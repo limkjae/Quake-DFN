@@ -20,7 +20,7 @@ ResultV[ResultV.<=0] .= 1e-100
 ############################### Figure Configuration ##################################
 
 # figure(10); clf(); PyPlot.plot(log10.(ResultV[:,1:1:end])); xlabel("Record Step")
-PlotStep = 900
+PlotStep = 200
 
 PlotRotation = [40,-50]
 Transparent = 0 # 1 for transparent fault plot. 0 for no-transparency
