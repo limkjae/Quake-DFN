@@ -948,7 +948,7 @@ end
 
 
 function HmatBuild_T(ShearModulus, PoissonRatio, ElementRange_SR, FaultRakeAngle, FaultCenter,
-                        UnitVector_Normal, UnitVector_Slip)
+                        UnitVector_Normal, UnitVector_Slip, Admissible, Tolerance, P1, P2, P3)
 
     ################################  Discritize ##############################
     ElementPartRoughCount = 2000
@@ -1028,9 +1028,9 @@ function HmatBuild_T(ShearModulus, PoissonRatio, ElementRange_SR, FaultRakeAngle
 end
 
 
-function HmatBuild_R(ShearModulus, PoissonRatio, ElementRange_SR,Input_Segment)
+function HmatBuild_R(ShearModulus, PoissonRatio, ElementRange_SR,Input_Segment, Admissible, Tolerance)
 
-
+    FaultCount = size(Input_Segment)[1]
     ################################  Discritize ##############################
     ElementPartRoughCount = 2000
     BlockCount = length(ElementRange_SR[:,1])
@@ -1075,16 +1075,12 @@ function HmatBuild_R(ShearModulus, PoissonRatio, ElementRange_SR,Input_Segment)
                 if j == DivisionCountR; Fin_R = ReceiverCount; end
                 BlockSize = BlockSize + (Fin_S - Init_S) * (Fin_R - Init_R)
                 println("Part: ", CurrentPart,"/",DivisionCountS*DivisionCountR, " BlockIndex: ",BlockIndex, "/",BlockCount," Progress:",BlockSize/TotalElments)
-                if RorT == "R"
-                    StiffnessMatrixShearThisBlock[Init_R:Fin_R,Init_S:Fin_S], StiffnessMatrixNormalThisBlock[Init_R:Fin_R,Init_S:Fin_S] = 
-                    StiffnessMatrix_ByParts_Calculation_Rec(Input_SegmentS[Init_S:Fin_S,:], Input_SegmentR[Init_R:Fin_R,:], ShearModulus, PoissonRatio,
-                                                        CurrentPart, TotalParts)
-                else 
-                    StiffnessMatrixShearThisBlock[Init_R:Fin_R,Init_S:Fin_S], StiffnessMatrixNormalThisBlock[Init_R:Fin_R,Init_S:Fin_S] = 
-                    StiffnessMatrix_ByParts_Calculation_Tri(P1_S[Init_S:Fin_S,:], P2_S[Init_S:Fin_S,:], P3_S[Init_S:Fin_S,:], FaultRakeAngle_S[Init_S:Fin_S,:],
-                                                            FaultCenter_R[Init_R:Fin_R,:], ShearModulus, lambda,  
-                                                            UnitVector_Normal_R[Init_R:Fin_R,:], UnitVector_Slip_R[Init_R:Fin_R,:])   
-                end                                               
+
+                StiffnessMatrixShearThisBlock[Init_R:Fin_R,Init_S:Fin_S], StiffnessMatrixNormalThisBlock[Init_R:Fin_R,Init_S:Fin_S] = 
+                StiffnessMatrix_ByParts_Calculation_Rec(Input_SegmentS[Init_S:Fin_S,:], Input_SegmentR[Init_R:Fin_R,:], ShearModulus, PoissonRatio,
+                                                    CurrentPart, TotalParts)
+
+                                          
             
             end
         end                        

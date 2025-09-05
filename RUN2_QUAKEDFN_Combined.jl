@@ -21,7 +21,6 @@ include("Functions_RSFDFN3DMain_D.jl")
 
 SaveResultFileName="Results/Result.jld2"
 SaveInputInfoFileName="Results/Result_Input.jld2" 
-
 LoadingInputFileName="Input_Discretized.jld2" 
 
 
@@ -31,7 +30,7 @@ function RunRSFDFN3D()
     
 
     ########################## Simulation Time Set ################################
-    TotalStep = 3000 # Total simulation step
+    TotalStep = 5000 # Total simulation step
     SaveStep = 1000 # Automatically saved every this step
     RecordStep = 10 # Simulation sampling rate !! should be a factor of SaveStep !!
 
