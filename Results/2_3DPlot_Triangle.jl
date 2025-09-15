@@ -20,7 +20,7 @@ ResultV[ResultV.<=0] .= 1e-100
 ############################### Figure Configuration ##################################
 
 # figure(10); clf(); PyPlot.plot(log10.(ResultV[:,1:1:end])); xlabel("Record Step")
-PlotStep = 400
+PlotStep = 500
 
 PlotRotation = [40,-50]
 Transparent = 0 # 1 for transparent fault plot. 0 for no-transparency
@@ -33,9 +33,9 @@ ShowDay = 0 # If 1, day is shown in the location
 DayLocation = [0,0,1000]
 # MaxVLog = log10(maximum(ResultV[:,:]))
 ################## What to Plot ? ###################
-PlotInput=log10.(ResultV[PlotStep,:]); ColorMinMax=[-12, 0] 
+# PlotInput=log10.(ResultV[PlotStep,:]); ColorMinMax=[-12, 0] 
 # PlotInput=log10.(ResultV[PlotStep,:]); ColorMinMax=[MaxVLog-3,MaxVLog] 
-# PlotInput= Result_NormalStress[PlotStep,:] ; ColorMinMax=0
+PlotInput= Result_NormalStress[PlotStep,1:end-4] ; ColorMinMax=0
 # PlotInput=log10.(ResultPressure[PlotStep,:]); ColorMinMax=[3,6]
 # PlotInput= Result_NormalStress[PlotStep,:] -  Fault_NormalStress; ColorMinMax=[-1e6,1e6]
 # PlotInput=ResultDisp[PlotStep,:]; ColorMinMax= [0.03, 0.08] 

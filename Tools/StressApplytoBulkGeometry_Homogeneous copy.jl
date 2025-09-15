@@ -18,7 +18,7 @@ function ChangeBulk()
     ###### build Principal Stress. Compression Positive. Only Ratio Matters! 
     PrincipalStressRatioX = 0.3
     PrincipalStressRatioY = 1.0
-    PrincipalStressRatioZ = 0.6
+    PrincipalStressRatioZ = 0.5
     StressRotationStrike = -5 # degree
     StressRotationDip = 0 # degree
 
@@ -134,7 +134,7 @@ function ChangeBulk()
     StressRatioXYZ = RotationMat * PrincipalStressRatio * RotationMat'  
     ########^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^########
 
-
+println(StressRatioXYZ)
 
 
     ############## Calcuate Stress and Frictions in Each Fault ###############

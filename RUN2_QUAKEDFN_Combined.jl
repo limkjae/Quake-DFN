@@ -6,7 +6,7 @@ using JLD2
 using LinearAlgebra
 using Printf
 using SpecialFunctions
-using StaticArrays
+# using StaticArrays
 using LowRankApprox
 using Distributed
 using Statistics
@@ -30,8 +30,8 @@ function RunRSFDFN3D()
     
 
     ########################## Simulation Time Set ################################
-    TotalStep = 5000 # Total simulation step
-    SaveStep = 1000 # Automatically saved every this step
+    TotalStep = 10000 # Total simulation step
+    SaveStep = 5000 # Automatically saved every this step
     RecordStep = 10 # Simulation sampling rate !! should be a factor of SaveStep !!
 
     ThreadCount = 8 # if zero, it uses current thread count opened in REPL (Only for Hmatrix)
@@ -59,24 +59,30 @@ function RunRSFDFN3D()
     DtPlot = 0 # 1 will plot dt vs maxV
     GeometryPlot = 0 # 1 will plot a-b
 
-    if ThreadCount > Threads.nthreads()
-        println("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
-        println("Theread Count is larger than Threads used in Julia")
-        println("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
+    Hmatrix = load(LoadingInputFileName, "Hmatrix")
+    if Hmatrix == ThreadCount
+        println(" --- H Matrix used --- ")
+        println("!!!!!!! Make sure this code is being run in fresh Julia session (New REPL) !!!!!!!")
+        println("!!!!!!! The simulation can be unstable otherwize                           !!!!!!!")
+        if ThreadCount > Threads.nthreads()
+            println("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
+            println("Theread Count is larger than Threads used in Julia")
+            println("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
+        end
+
+
+        if Threads.nthreads() == 1
+            println("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
+            println("          Only 1 thread is being used             ")
+            println("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
+        end
+    else
+        println("Full Matrix will be used")
     end
-
-
-    if Threads.nthreads() == 1
-        println("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
-        println("          Only 1 thread is being used             ")
-        println("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
-    end
-
 
     ################################################################################
     ############################### Load Input Files ###############################
 
-    Hmatrix = load(LoadingInputFileName, "Hmatrix")
     RorT = load(LoadingInputFileName, "RorT")
     FaultCenter= load(LoadingInputFileName, "FaultCenter")
     ShearModulus= load(LoadingInputFileName, "ShearModulus")
@@ -237,8 +243,7 @@ function RunRSFDFN3D()
         write(file, "ElementRange_SR", ElementRange_SR) 
         close(file)
     end
-        
-    
+            
     if RorT == "T"        
         file = jldopen(SaveInputInfoFileName, "a+")
         write(file, "P1", P1) 
@@ -247,12 +252,8 @@ function RunRSFDFN3D()
         close(file)
 
     end
-
-
-    ############################### Save Input Files ##############################
-    ###############################################################################
-
     
+
     ###############################################################################
     ################################ Run Simulation ###############################
     if Hmatrix == true

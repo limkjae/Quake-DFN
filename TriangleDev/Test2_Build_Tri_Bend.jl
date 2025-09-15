@@ -17,8 +17,8 @@ OutputFileName="Input_BulkFaultGeometry.txt"
 Length = 1000
 Depth = 1000
 Amplitude = 200
-XElemCount = 30
-ZElemCount = 30
+XElemCount = 20
+ZElemCount = 20
 TotalElemCount = XElemCount * ZElemCount * 2 + ZElemCount
 TotalElementInRow = XElemCount * 2 + 1
 ArrowLength = 50
@@ -181,10 +181,10 @@ for ElemIdx = 1:TotalElemCount
         
         
     ### Slip Vector Plot
-    ax.quiver(FaultCenter[ElemIdx,1], FaultCenter[ElemIdx,2], FaultCenter[ElemIdx,3], 
-        UnitVector_RakeSlip[ElemIdx,1] * ArrowLength, UnitVector_RakeSlip[ElemIdx,2] * ArrowLength,
-        UnitVector_RakeSlip[ElemIdx,3] * ArrowLength,
-        color="g",arrow_length_ratio=0.2)
+    # ax.quiver(FaultCenter[ElemIdx,1], FaultCenter[ElemIdx,2], FaultCenter[ElemIdx,3], 
+    #     UnitVector_RakeSlip[ElemIdx,1] * ArrowLength, UnitVector_RakeSlip[ElemIdx,2] * ArrowLength,
+    #     UnitVector_RakeSlip[ElemIdx,3] * ArrowLength,
+    #     color="g",arrow_length_ratio=0.2)
 end
 xlabel("x")
 ylabel("y")

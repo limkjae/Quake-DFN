@@ -17,7 +17,6 @@ function lltokm(latlon1,latlon2)
 end
 
 
-
 function FaultPlot_3D(FaultCenter,FaultLengthStrike, FaultLengthDip, FaultStrikeAngle, FaultDipAngle, FaultLLRR)
     
     cm = get_cmap(:jet)
@@ -180,330 +179,6 @@ function BulkToSegment(Input_Bulk)
 end
 
 
-###################################################################
-############### Check Orientation with Loading Faults #############
-################## This is Currently Not being Used ###############
-###################################################################
-   
-function Function_CheckOrientation(Input_Segment, ShearModulus, PoissonRatio)
-    ## InputFile Order 
-    ##  1.Ctr_X     2.Ctr_Y 3.Ctr_Z 4.St_L	    5.Dip_L	    6.StAng	    7.DipAng	8.LR/RN
-    ##  9.a         10.b	11.Dc	12.Theta_i	13. V_i     14. Friction_i 15.NormalStress  
-    ##  16. V_Const 17. Bulk Number     18. Bulk Strike Length      19. Bulk Dip Length
-    
-    FaultCount=size(Input_Segment,1)
-    Fault_V_Const=Input_Segment[:,16]
-    LoadingFaultCount=length(Fault_V_Const[Fault_V_Const.>0])
-    ReceiverOrientation=zeros(FaultCount,LoadingFaultCount)
-    StiffnessMatrixNormal=zeros(FaultCount,FaultCount)
-    StiffnessMatrixShear=zeros(FaultCount,FaultCount)
-
-    FaultCenter=Input_Segment[:,1:3]
-    FaultLengthStrike=Input_Segment[:,4]
-    FaultLengthDip=Input_Segment[:,5]
-    FaultStrikeAngle=Input_Segment[:,6] 
-    FaultDipAngle=Input_Segment[:,7]
-    FaultLLRR=Input_Segment[:,8]
-
-    println("Checking Fault Orientations")
-
-    for ReceiverIndex=1:FaultCount;
-    
-        SourceNumber=0
-        for SourceIndex=FaultCount-LoadingFaultCount+1:FaultCount;
-            SourceNumber=SourceNumber+1;
-            
-            
-            SourceCenter=FaultCenter[SourceIndex,:];
-            SourceLengthStrike=FaultLengthStrike[SourceIndex];
-            SourceLengthDip=FaultLengthDip[SourceIndex];
-            SourceStrikeAngle=FaultStrikeAngle[SourceIndex];
-            SourceDipAngle=FaultDipAngle[SourceIndex];
-            SourceLLRR=FaultLLRR[SourceIndex];
-                    
-            ReceiverCenter=FaultCenter[ReceiverIndex,:];
-            ReceiverLengthStrike=FaultLengthStrike[ReceiverIndex];
-            ReceiverLengthDip=FaultLengthDip[ReceiverIndex];
-            ReceiverStrikeAngle=FaultStrikeAngle[ReceiverIndex];
-            ReceiverDipAngle=FaultDipAngle[ReceiverIndex];
-            ReceiverLLRR=FaultLLRR[ReceiverIndex];
-            DISL1=-SourceLLRR;
-            DISL2=0;
-            DISL3=0;
-                    
-            Z=-ReceiverCenter[3]; # Observation Depth
-            DEPTH=SourceCenter[3];
-            AL1=SourceLengthStrike/2;
-            AL2=SourceLengthStrike/2;
-            AW1=SourceLengthDip/2;
-            AW2=SourceLengthDip/2;
-            
-            LameFirstParam=2*ShearModulus*PoissonRatio/(1-2*PoissonRatio);
-            ALPHA=(LameFirstParam+ShearModulus)/(LameFirstParam+2*ShearModulus);
-            
-            # Rotation Matrix Source
-            RotMat_Source_Strike=[cosd(SourceStrikeAngle) -sind(SourceStrikeAngle) 0
-                sind(SourceStrikeAngle) cosd(SourceStrikeAngle) 0
-                0  0  1];
-            RotMat_Source_Dip=[1  0  0
-                0  cosd(SourceDipAngle) -sind(SourceDipAngle)
-                0  sind(SourceDipAngle) cosd(SourceDipAngle)];
-            
-            # Rotation Matrix Receiver
-            RotationMat_FromReceiver_Strike=
-            [cosd(-ReceiverStrikeAngle) -sind(-ReceiverStrikeAngle)  0
-            sind(-ReceiverStrikeAngle) cosd(-ReceiverStrikeAngle) 0
-            0  0  1];
-            RotationMat_FromReceiver_Dip=
-            [1 0 0
-            0 cosd(-ReceiverDipAngle) -sind(-ReceiverDipAngle)
-            0 sind(-ReceiverDipAngle) cosd(-ReceiverDipAngle)]
-            RotationMat_FromReceiver_All=RotationMat_FromReceiver_Dip*RotationMat_FromReceiver_Strike;
-            
-            
-            # Point Calculation
-            
-            X_Receiver=ReceiverCenter[1];
-            Y_Receiver=ReceiverCenter[2];
-            X_Dist=X_Receiver-SourceCenter[1];
-            Y_Dist=Y_Receiver-SourceCenter[2];
-            
-            X=X_Dist*cosd(-SourceStrikeAngle)-Y_Dist*sind(-SourceStrikeAngle);
-            Y=X_Dist*sind(-SourceStrikeAngle)+Y_Dist*cosd(-SourceStrikeAngle);
-            Z=-ReceiverCenter[3];
-            
-            UX,UY,UZ,UXX,UYX,UZX,UXY,UYY,UZY,UXZ,UYZ,UZZ,IRET = Okada_DC3D(ALPHA,
-                X,Y,Z,DEPTH,SourceDipAngle,
-                AL1,AL2,AW1,AW2,DISL1,DISL2,DISL3);
-            
-            UnRotatedGradMat=
-            [UXX  UYX  UZX
-            UXY  UYY  UZY
-            UXZ  UYZ  UZZ];
-            #DispRefAxisRotatd=RotMat_Source_Strike*[UX;UY;UZ];
-            GradientRefAxisOrigin=RotMat_Source_Strike*UnRotatedGradMat*RotMat_Source_Strike';
-            
-            #Result_UX=DispRefAxisRotatd[1];
-            #Result_UY=DispRefAxisRotatd[2];
-            #Result_UZ=DispRefAxisRotatd[3];
-            Result_UXX=GradientRefAxisOrigin[1,1];
-            Result_UYX=GradientRefAxisOrigin[2,1];
-            Result_UZX=GradientRefAxisOrigin[3,1];
-            Result_UXY=GradientRefAxisOrigin[1,2];
-            Result_UYY=GradientRefAxisOrigin[2,2];
-            Result_UZY=GradientRefAxisOrigin[3,2];
-            Result_UXZ=GradientRefAxisOrigin[1,3];
-            Result_UYZ=GradientRefAxisOrigin[2,3];
-            Result_UZZ=GradientRefAxisOrigin[3,3];
-            #Result_XLoc=X_Receiver;
-            #Result_YLoc=Y_Receiver;
-            #Result_ZLoc=Z;
-            
-            
-            StressXX_SourceFrame=(LameFirstParam*(UXX+UYY+UZZ) + 2*ShearModulus*UXX)
-            StressYY_SourceFrame=(LameFirstParam*(UXX+UYY+UZZ) + 2*ShearModulus*UYY)
-            StressZZ_SourceFrame=(LameFirstParam*(UXX+UYY+UZZ) + 2*ShearModulus*UZZ)
-            StressXY_SourceFrame=(Result_UXY + Result_UYX)*ShearModulus;
-            StressXZ_SourceFrame=(Result_UXZ + Result_UZX)*ShearModulus;
-            StressYZ_SourceFrame=(Result_UYZ + Result_UZY)*ShearModulus;
-            
-            Stress_SourceFrame=[StressXX_SourceFrame StressXY_SourceFrame StressXZ_SourceFrame
-                StressXY_SourceFrame StressYY_SourceFrame StressYZ_SourceFrame
-                StressXZ_SourceFrame StressYZ_SourceFrame StressZZ_SourceFrame];
-            
-            Stress_Receiver=RotationMat_FromReceiver_All*Stress_SourceFrame*RotationMat_FromReceiver_All';
-            StiffnessMatrixNormal[ReceiverIndex,SourceIndex] = -Stress_Receiver[3,3];
-            StiffnessMatrixShear[ReceiverIndex,SourceIndex] = ReceiverLLRR * Stress_Receiver[1,3];
-            
-            ReceiverOrientation[ReceiverIndex, SourceNumber]=StiffnessMatrixShear[ReceiverIndex,SourceIndex]/abs(StiffnessMatrixShear[ReceiverIndex,SourceIndex])
-        end
-        
-    end
-
-    return ReceiverOrientation
-
-end
-
-
-
-
-###################################################################
-########### Remove Faults If too strongly interacting #############
-###################################################################
-
-function CheckTooClose(StiffnessMatrixShearOriginal, StiffnessMatrixNormalOriginal, Input_Segment, Input_Bulk, DropCrit, DropCritNormalStressMultiplier)
-
-
-    ReturnStiffnessMatrixShear=StiffnessMatrixShearOriginal
-    ReturnStiffnessMatrixNormal=StiffnessMatrixNormalOriginal
-    ReturnInput_Segment=Input_Segment
-    FaultCount1=size(Input_Segment,1)
-    LoadingFaultCount=sum(Input_Segment[:,16].>0)
-    StableFaultcount=sum(Input_Segment[:,9] - Input_Segment[:,10]  .>0)
-    #StableFaultcount=0;#sum(Input_Segment[:,9] - Input_Segment[:,10]  .>0)
-    StableFaultcount=sum(Input_Segment[:,9] - Input_Segment[:,10]  .>0)
-    #println(StableFaultcount)
-    # println(StableFaultcount)
-    FaultLengthStrike=Input_Bulk[:,4]
-    FaultSegmentToBulk=round.(Int,Input_Segment[:,17])
-    DropijPair=zeros(Int,2,1)
-    DropFault=0
-    DropCount=0
-    for i=1:FaultCount1-LoadingFaultCount - StableFaultcount
-          for j=1:FaultCount1-LoadingFaultCount - StableFaultcount
-            #if StiffnessMatrixShearOriginal[i,j]*StiffnessMatrixShearOriginal[j,i]/
-            #        StiffnessMatrixShearOriginal[i,i]/StiffnessMatrixShearOriginal[j,j] > DropCrit
-            #if StiffnessMatrixShearOriginal[i,j]/ StiffnessMatrixShearOriginal[i,i] > DropCrit
-
-
-            InterAction=(StiffnessMatrixShearOriginal[i,j] - DropCritNormalStressMultiplier * StiffnessMatrixNormalOriginal[i,j] ) / StiffnessMatrixShearOriginal[i,i] *
-                (StiffnessMatrixShearOriginal[j,i] - DropCritNormalStressMultiplier * StiffnessMatrixNormalOriginal[j,i] ) / StiffnessMatrixShearOriginal[j,j]
-
-            #InterAction=zeros(4)
-            #InterAction[1]=(StiffnessMatrixShearOriginal[i,j]+StiffnessMatrixShearOriginal[j,i] ) / StiffnessMatrixShearOriginal[i,i]
-            #InterAction[2]=(StiffnessMatrixShearOriginal[j,i]+StiffnessMatrixShearOriginal[i,j] ) / StiffnessMatrixShearOriginal[j,j]
-
-            #InterAction[3]=(DropCritNormalStressMultiplier * StiffnessMatrixNormalOriginal[i,j] + DropCritNormalStressMultiplier * StiffnessMatrixNormalOriginal[j,i]) / StiffnessMatrixShearOriginal[i,i]
-            #InterAction[4]=(DropCritNormalStressMultiplier * StiffnessMatrixNormalOriginal[j,i] + DropCritNormalStressMultiplier * StiffnessMatrixNormalOriginal[i,j] ) / StiffnessMatrixShearOriginal[j,j]
-
-
-            if InterAction > DropCrit
-                
-                println(i," ", j, " ", InterAction)
-                DropCount=DropCount+1
-                IandJ=[i,j]
-                DropijPair=[DropijPair;IandJ]
-                
-                if FaultLengthStrike[FaultSegmentToBulk[i]]<FaultLengthStrike[FaultSegmentToBulk[j]]
-                    DropFault=[DropFault;i]
-                else
-                    DropFault=[DropFault;j]
-                end            
-            end
-            
-            #if StiffnessMatrixNormalOriginal[i,j]*StiffnessMatrixNormalOriginal[j,i]/
-            #        StiffnessMatrixShearOriginal[i,i]/StiffnessMatrixShearOriginal[j,j] > DropCritNormal
-            #if StiffnessMatrixNormalOriginal[i,j]/ StiffnessMatrixShearOriginal[i,i]> DropCritNormal
-            #    DropCount=DropCount+1
-            #    if FaultLengthStrike[FaultSegmentToBulk[i]]<FaultLengthStrike[FaultSegmentToBulk[j]]
-            #        DropFault=[DropFault;i]
-            #    else
-            #        DropFault=[DropFault;j]
-            #    end            
-            #end
-    
-    
-        end
-    end
-
-    if DropCount>0
-    DropijPair=DropijPair[2:end,:]
-    DropFault=DropFault[2:end,:]
-    DropFault=unique(DropFault)
-    DropFault=sort(DropFault, rev=true)
-    end
-    
-    println("Drop Faults : ", DropFault)
-    
-    for i in eachindex(DropFault)
-        DropIndex=DropFault[i]
-    
-        ReturnStiffnessMatrixShear=ReturnStiffnessMatrixShear[1:end .!=DropIndex,:]
-        ReturnStiffnessMatrixNormal=ReturnStiffnessMatrixNormal[1:end .!=DropIndex,:]
-        ReturnInput_Segment=ReturnInput_Segment[1:end .!=DropIndex,:]
-
-    end
-    
-    for i in eachindex(DropFault)
-        DropIndex=DropFault[i]
-    
-        ReturnStiffnessMatrixShear=ReturnStiffnessMatrixShear[:, 1:end .!=DropIndex]
-        ReturnStiffnessMatrixNormal=ReturnStiffnessMatrixNormal[:,1:end .!=DropIndex]
-    end
-    
-    ReturnFaultCount=size(ReturnInput_Segment,1)
-    if length(DropFault) > 0 & maximum(DropFault) > 0
-        println("Final Drop Count: ", length(DropFault))
-    else 
-        println("Final Drop Count: 0")
-    end
-    println("Return Fault Count: ", ReturnFaultCount)
-
-    return ReturnStiffnessMatrixShear, ReturnStiffnessMatrixNormal, ReturnInput_Segment
-end
-
-
-
-
-function SaveResults(StiffnessMatrixShearOriginal, StiffnessMatrixNormalOriginal, ReducedInput_Segment, NormalStiffnessZero, 
-    OutputFileName, ShearModulus, PoissonRatio, RockDensity, Switch_StrikeSlip_or_ReverseNormal, MinimumNS);
-
-
-
-    FaultCenter=ReducedInput_Segment[:,1:3]
-    FaultLengthStrike=ReducedInput_Segment[:,4]
-    FaultLengthDip=ReducedInput_Segment[:,5]
-    FaultStrikeAngle=ReducedInput_Segment[:,6]
-    FaultDipAngle=ReducedInput_Segment[:,7]
-    FaultLLRR=ReducedInput_Segment[:,8]
-    Fault_a=ReducedInput_Segment[:,9]
-    Fault_b=ReducedInput_Segment[:,10]
-    Fault_Dc=ReducedInput_Segment[:,11]
-    Fault_Theta_i=ReducedInput_Segment[:,12]
-    Fault_V_i=ReducedInput_Segment[:,13]
-    Fault_Friction_i=ReducedInput_Segment[:,14]
-    Fault_NormalStress=ReducedInput_Segment[:,15]
-    Fault_V_Const=ReducedInput_Segment[:,16]
-    Fault_BulkIndex=ReducedInput_Segment[:,17]
-    FaultLengthStrike_Bulk=ReducedInput_Segment[:,18]
-    FaultLengthDip_Bulk=ReducedInput_Segment[:,19]
-
-    FaultCount=size(ReducedInput_Segment,1)
-    LoadingFaultCount=length(Fault_V_Const[Fault_V_Const.>0])
-    FaultMass=RockDensity*(FaultLengthStrike_Bulk+FaultLengthDip_Bulk)/2/(1-PoissonRatio)/pi/pi;
-    figure(3)
-    clf()
-    FaultPlot_3D(ReducedInput_Segment[:,1:3],ReducedInput_Segment[:,4], ReducedInput_Segment[:,5], 
-        ReducedInput_Segment[:,6], ReducedInput_Segment[:,7], ReducedInput_Segment[:,8])
-    
-        xlabel("x")
-        ylabel("y")
-
-    figure(3).canvas.draw()
-
-    
-    ############################### Save Input File ################################
-    ######++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++######
-
-    save(OutputFileName, 
-    "StiffnessMatrixShear", StiffnessMatrixShearOriginal, "StiffnessMatrixNormal", StiffnessMatrixNormalOriginal, "FaultCenter", FaultCenter,
-    "ShearModulus", ShearModulus, "RockDensity", RockDensity, "PoissonRatio", PoissonRatio,
-    "FaultLengthStrike", FaultLengthStrike, "FaultLengthDip", FaultLengthDip, "FaultStrikeAngle", FaultStrikeAngle, 
-    "FaultDipAngle", FaultDipAngle, "FaultLLRR", FaultLLRR, "Fault_a", Fault_a, "Fault_b", Fault_b, "Fault_Dc", Fault_Dc, 
-    "Fault_Theta_i", Fault_Theta_i, "Fault_V_i", Fault_V_i, "Fault_Friction_i", Fault_Friction_i, "Fault_NormalStress", Fault_NormalStress, 
-    "Fault_V_Const", Fault_V_Const, "Fault_BulkIndex", Fault_BulkIndex, "FaultLengthStrike_Bulk", FaultLengthStrike_Bulk, 
-    "FaultLengthDip_Bulk", FaultLengthDip_Bulk, "FaultCount", FaultCount, "LoadingFaultCount", LoadingFaultCount, "FaultMass", FaultMass,
-    "Switch_StrikeSlip_or_ReverseNormal", Switch_StrikeSlip_or_ReverseNormal, "MinimumNormalStress", MinimumNS,
-    "NormalStiffnessZero", NormalStiffnessZero)
-    println("Saved File Name: ",OutputFileName)
-
-
-
-
-    # open(SegmentedOutputFileName_List, "w") do io
-    #     write(io, "Ctr_X\tCtr_Y\tCtr_Z\tSt_L\tDip_L\tStAng\tDipAng\tLR\ta\tb\tDc\tTheta_i\tV_i\tFric_i\tNormSt\tV_Const\tBulkNo\tBulkSL\tBulkDL\n")
-    #     writedlm(io, ReducedInput_Segment)
-    # end;
-
-    # println("Saved File Name: ",SegmentedOutputFileName_List)
-
-    ########^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^########
-    ################################################################################
-
-end    
-
-
-
 function LRtoRake(Switch_StrikeSlip_or_ReverseNormal, Input_Bulk)
     BulkFaultcount = size(Input_Bulk, 1)
 
@@ -664,6 +339,7 @@ function RotVerts_UnitVectors(Input_Segment, FaultCount, Rake)
     UnitVector_DipSlip = zeros(FaultCount,3)
     UnitVector_Slip = zeros(FaultCount,3)
 
+        VertsReversed = 0
     for ElemIdx = 1:FaultCount
         P1_i = P1[ElemIdx,:] 
         P2_i = P2[ElemIdx,:] 
@@ -671,10 +347,10 @@ function RotVerts_UnitVectors(Input_Segment, FaultCount, Rake)
 
         UnitVector_Normal_i = cross(P2_i-P1_i, P3_i-P1_i) / norm(cross(P2_i-P1_i, P3_i-P1_i))
         if angle(UnitVector_Normal_i[1] + UnitVector_Normal_i[2]*im) <= 0 
+            VertsReversed = VertsReversed +1 
             P_temp = P1_i
             P1_i = P2_i
             P2_i = P_temp        
-            println("Verts order reversed")
         end
         P1[ElemIdx,:] = P1_i
         P2[ElemIdx,:] = P2_i
@@ -690,6 +366,7 @@ function RotVerts_UnitVectors(Input_Segment, FaultCount, Rake)
 
     end
 
+            println("Verts order reversed: ", VertsReversed)
     return P1, P2, P3, UnitVector_Normal, UnitVector_StrikeSlip, UnitVector_DipSlip, UnitVector_Slip
 end
 
@@ -816,6 +493,11 @@ function StiffnessMatrix_ByParts_Calculation_Rec(Input_SegmentSource, Input_Segm
                 # println(SourceDipAngle,"  ",Z,"  ",DEPTH, " ", StressZZ_SourceFrame, "  ",Stress_Receiver[3,3])
             end
         
+        if FaultCountSource > 500
+            if SourceIndex % 50 == 0
+                println("Completed Source Element: ", SourceIndex, "/", FaultCountSource)
+            end
+        end
         end
         print("\033c")                  
 
@@ -893,6 +575,11 @@ function StiffnessMatrix_ByParts_Calculation_Tri(P1, P2, P3, Rake, FaultCenter, 
             StiffnessMatrix_Shear_Part[ElemIdx2, ElemIdx] = Stress_Shear
         end
 
+        if FaultCountSource > 500
+            if ElemIdx % 50 == 0
+                println("Completed Source Element: ", ElemIdx, "/", FaultCountSource)
+            end
+        end
     end
     # println("Fault Count Source: ", FaultCountSource, " Fault Count Receiver: ", FaultCountReceiver)
         print("\033c")                  
@@ -959,7 +646,7 @@ function HmatBuild_T(ShearModulus, PoissonRatio, ElementRange_SR, FaultRakeAngle
     NormalStiffness_H = Any[0]
     Ranks_Shear = zeros(Int, BlockCount)
     Ranks_Normal = zeros(Int, BlockCount)
-
+    FaultCount = size(FaultCenter,1)
     TotalElments = FaultCount * FaultCount 
     println("Building Hmatrix Block by Block")
     println("Full Matrix Will not be saved")

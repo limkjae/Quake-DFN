@@ -16,9 +16,9 @@ OutputFileName="Input_BulkFaultGeometry.txt"
 
 Length = 1000
 Depth = 1000
-Amplitude = 200
-XElemCount = 20
-ZElemCount = 20
+Amplitude = 50
+XElemCount = 25
+ZElemCount = 25
 TotalElemCount = XElemCount * ZElemCount * 2 + ZElemCount
 TotalElementInRow = XElemCount * 2 + 1
 ArrowLength = 50
@@ -32,15 +32,15 @@ TooCloseNormal_Multiplier = 0.6
 MinNormalStress = 2e6
 
 
-Rake = 20
+Rake = 0
 a = 0.003
 b = 0.006
 Dc = 3e-4
 Thata_i = 1e5
-V_i = 1e-11
+V_i = 1e-15
 Friction_i = 0.6
 NormalStressAtSurface = 10e6
-NormalStressGradient = 10000
+NormalStressGradient = 0
 V_Const = 0.0
 MinimumSegmentLength = 100000.0
 
@@ -78,13 +78,13 @@ for ElemIdx = 1 : TotalElemCount
     OrderInRow = ElemIdx - (ElemRow-1) *TotalElementInRow
 
     println("ElemIdx: ", ElemIdx, " ElemRow: ", ElemRow, " OrderInRow: ", OrderInRow)
-    Xvert2 = (OrderInRow - 1) * XElemLength/2
+    Xvert2 = (OrderInRow - 1) * XElemLength/2 - Length /2
     Xvert1 = Xvert2 - XElemLength/2
     Xvert3 = Xvert2 + XElemLength/2
     Zvert1 = -(ElemRow -1) * ZElemLength
     Zvert2 = - ElemRow * ZElemLength 
-    if OrderInRow ==1;  Xvert1 = 0.0 ;   end
-    if OrderInRow == TotalElementInRow; Xvert3 = Length;  end
+    if OrderInRow ==1;  Xvert1 = - Length /2 ;   end
+    if OrderInRow == TotalElementInRow; Xvert3 =  Length /2;  end
     if mod(ElemRow,2) == 1
         if mod(OrderInRow,2) == 1
             x = [Xvert1 Xvert2 Xvert3]
@@ -106,17 +106,17 @@ for ElemIdx = 1 : TotalElemCount
     end
 
     
-    # y = x *0  #
-    y = - sind.(x / Length * 180) * Amplitude
+    y = x *0  #
+    y = - sind.(x / Length * 720) * Amplitude .*  sind.(z / Length * 720)
     P1_i = [x[1], y[1], z[1]]
     P2_i = [x[2], y[2], z[2]]
     P3_i = [x[3], y[3], z[3]]
-    UnitVector_Normal_i = cross(P2_i-P1_i, P3_i-P1_i) / norm(cross(P2_i-P1_i, P3_i-P1_i))
-    if angle(UnitVector_Normal_i[1] + UnitVector_Normal_i[2]*im) <= 0 
-        P_temp = P1_i
-        P1_i = P2_i
-        P2_i = P_temp        
-    end
+    # UnitVector_Normal_i = cross(P2_i-P1_i, P3_i-P1_i) / norm(cross(P2_i-P1_i, P3_i-P1_i))
+    # if angle(UnitVector_Normal_i[1] + UnitVector_Normal_i[2]*im) <= 0 
+    #     P_temp = P1_i
+    #     P1_i = P2_i
+    #     P2_i = P_temp        
+    # end
 
     P1[ElemIdx,:] = P1_i
     P2[ElemIdx,:] = P2_i
@@ -181,10 +181,10 @@ for ElemIdx = 1:TotalElemCount
         
         
     ### Slip Vector Plot
-    ax.quiver(FaultCenter[ElemIdx,1], FaultCenter[ElemIdx,2], FaultCenter[ElemIdx,3], 
-        UnitVector_RakeSlip[ElemIdx,1] * ArrowLength, UnitVector_RakeSlip[ElemIdx,2] * ArrowLength,
-        UnitVector_RakeSlip[ElemIdx,3] * ArrowLength,
-        color="g",arrow_length_ratio=0.2)
+    # ax.quiver(FaultCenter[ElemIdx,1], FaultCenter[ElemIdx,2], FaultCenter[ElemIdx,3], 
+    #     UnitVector_RakeSlip[ElemIdx,1] * ArrowLength, UnitVector_RakeSlip[ElemIdx,2] * ArrowLength,
+    #     UnitVector_RakeSlip[ElemIdx,3] * ArrowLength,
+    #     color="g",arrow_length_ratio=0.2)
 end
 xlabel("x")
 ylabel("y")
@@ -215,6 +215,19 @@ ax.set_aspect("equal")
     NormalStressGradient_all = ones(TotalElemCount) * NormalStressGradient
     V_Const_all = ones(TotalElemCount) * V_Const
      
+
+    InputFile = [P1  P2  P3 Rake_all a_all b_all Dc_all Thata_i_all V_i_all Friction_i_all NormalStressAtSurface_all NormalStressGradient_all V_Const_all MinimumSegmentLength_all]
+    FourVerts = [-10000 -1000 0; -10000 -1000 -10000; 10000 -1000 -10000; 10000 -1000 0]
+    LoadingV = 1e-9
+    LPInput1 = [FourVerts[1,:]; FourVerts[2,:]; FourVerts[3,:]; Rake+180;  a; b; Dc; Thata_i;  V_i;  Friction_i;  NormalStressAtSurface;  NormalStressGradient;  LoadingV; MinimumSegmentLength]
+    LPInput2 = [FourVerts[1,:]; FourVerts[3,:]; FourVerts[4,:]; Rake+180;  a; b; Dc; Thata_i;  V_i;  Friction_i;  NormalStressAtSurface;  NormalStressGradient;  LoadingV; MinimumSegmentLength]
+    InputFile = [InputFile ; LPInput1'; LPInput2']
+
+    FourVerts = [-10000 1000 0; -10000 1000 -10000; 10000 1000 -10000; 10000 1000 0]
+    LoadingV = 1e-9
+    LPInput1 = [FourVerts[1,:]; FourVerts[2,:]; FourVerts[3,:]; Rake+180;  a; b; Dc; Thata_i;  V_i;  Friction_i;  NormalStressAtSurface;  NormalStressGradient;  LoadingV; MinimumSegmentLength]
+    LPInput2 = [FourVerts[1,:]; FourVerts[3,:]; FourVerts[4,:]; Rake+180;  a; b; Dc; Thata_i;  V_i;  Friction_i;  NormalStressAtSurface;  NormalStressGradient;  LoadingV; MinimumSegmentLength]
+    InputFile = [InputFile ; LPInput1'; LPInput2']
 
 
 

@@ -10,10 +10,10 @@ using Distributed
 @pyimport matplotlib.patches as patches
 pygui(true)
 
-AAA = @isdefined FunctionRead
-if AAA == false
+TriAlreadyCompiled = @isdefined FunctionRead
+if TriAlreadyCompiled == false
     include("TriangleDev/Functions_TDstressHS.jl")
-    FunctionRead = 1
+    TriAlreadyCompiled = 1
 end
 
 include("Functions_BuildInputFile.jl")
@@ -31,15 +31,15 @@ function Discritize()
 
 
 
-    ##########################################################################
-    ##########################       Input       #############################
+    ############################################################################
+    ##########################       Hmatrix       #############################
     Hmatrix = false # true: build Hmatrix structure from Input_HmatrixStructure.jld2, false: build full matrix without compression
     Tolerance = 1e3 #  Hmatrix compression Tolerance. pascal for 1m slip (More approximaion for higher Tolerance). 
 
-    #####---------   Plots?  --------#####
-    Plot_HMatStructure = 1 # HMatrix structure plot
-    Plot3D_HMatrixBlock = 0 # Blocks in 3D plot
-    Plot3D_DiscretizedBlock = 0 # 3D discritized block
+    # #####---------   Plots?  --------#####
+    # Plot_HMatStructure = 1 # HMatrix structure plot
+    # Plot3D_HMatrixBlock = 0 # Blocks in 3D plot
+    # Plot3D_DiscretizedBlock = 0 # 3D discritized block
 
     ##########################################################################
     ##########################################################################
