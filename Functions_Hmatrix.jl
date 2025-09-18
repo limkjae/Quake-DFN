@@ -85,7 +85,7 @@ LevelBeign = 0
 LevelEnd = 0
 LoadingFaultExist = 0
 NonLoadingFaultRange = [minimum(findall(x->x==0, Input_Segment[:,VconstIdx])), maximum(findall(x->x==0, Input_Segment[:,VconstIdx]))]
-if maximum(Input_Segment[:,16])>0
+if maximum(Input_Segment[:,1VconstIdx])>0
     LoadingFaultExist= 1
     LoadingFaultRange = [minimum(findall(x->x>0, Input_Segment[:,VconstIdx])), maximum(findall(x->x>0, Input_Segment[:,VconstIdx]))]
     Block_Range_Level[1:2] = LoadingFaultRange # Loading fault range level

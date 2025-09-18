@@ -58,6 +58,7 @@ function CalculateFrictionStress_T(FaultCount, Input_Bulk, MinFrictionAllowed,St
         FaultRakeAngle = Input_Bulk[:,10]
         P1, P2, P3, UnitVector_Normal, UnitVector_StrikeSlip, UnitVector_DipSlip, UnitVector_Slip = 
             RotVerts_UnitVectors(Input_Bulk, FaultCount, FaultRakeAngle) 
+     
         FaultCenter = (P1+P2+P3)/3
         TractionVector = transpose(StressRatioXYZ * UnitVector_Normal')
         DotProduct = sum(UnitVector_Normal .* TractionVector, dims=2)
@@ -66,6 +67,7 @@ function CalculateFrictionStress_T(FaultCount, Input_Bulk, MinFrictionAllowed,St
         UnitVector_Horizontal = zeros(FaultCount,3)
         for ElemIdx = 1:FaultCount
             UnitVector_Horizontal[ElemIdx,:] = cross(UnitVector_Normal[ElemIdx,:], [0, 0, 1])
+
         end
         RakeAngle = acosd.(sum(Traction_Shear .* UnitVector_Horizontal, dims=2) ./ (norm.(eachrow(Traction_Shear)) .* norm.(eachrow(UnitVector_Horizontal)))) .+ 180
         Friction = norm.(eachrow(Traction_Shear)) ./ norm.(eachrow(Traction_Normal)) 
@@ -76,6 +78,16 @@ function CalculateFrictionStress_T(FaultCount, Input_Bulk, MinFrictionAllowed,St
 
         for i in eachindex(Traction_Shear[:,3]); if Traction_Shear[i,3] < 0; RakeAngle[i] = 360 - RakeAngle[i] ; end; end
         for i in eachindex(RakeAngle); if RakeAngle[i] > 360; RakeAngle[i] -= 180; end; end
+        
+        for ElemIdx = 1:FaultCount
+            # recalculate unitvectors with updated rake angle
+            UnitVector_StrikeSlip[ElemIdx,:] = cross(UnitVector_Normal[ElemIdx,:], [0, 0, 1]) / 
+                                                norm(cross(UnitVector_Normal[ElemIdx,:], [0, 0, 1]) )
+            UnitVector_DipSlip[ElemIdx,:] = cross(UnitVector_StrikeSlip[ElemIdx,:], UnitVector_Normal[ElemIdx,:]) /
+                                                norm(cross(UnitVector_StrikeSlip[ElemIdx,:], UnitVector_Normal[ElemIdx,:]))
+            UnitVector_Slip[ElemIdx,:] = UnitVector_StrikeSlip[ElemIdx,:] * cosd(RakeAngle[ElemIdx]) + 
+                                        UnitVector_DipSlip[ElemIdx,:] * sind(RakeAngle[ElemIdx])
+        end
         Input_Bulk[:, 10] =  RakeAngle
         Input_Bulk[:, 16] =  Friction
 
@@ -85,7 +97,7 @@ function CalculateFrictionStress_T(FaultCount, Input_Bulk, MinFrictionAllowed,St
         Input_Bulk[TooSmallIdx,17] .= 1e7
 
 
-    return Input_Bulk
+    return Input_Bulk, UnitVector_Normal, UnitVector_Slip
 end
 
 function FindMu0_AdjV_R(Input_Bulk, MaximumTargetVelocity, V_p, V_r, ConstantMu0)

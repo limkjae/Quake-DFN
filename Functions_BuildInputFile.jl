@@ -365,7 +365,6 @@ function RotVerts_UnitVectors(Input_Segment, FaultCount, Rake)
                                         UnitVector_DipSlip[ElemIdx,:] * sind(Rake[ElemIdx])
 
     end
-
             println("Verts order reversed: ", VertsReversed)
     return P1, P2, P3, UnitVector_Normal, UnitVector_StrikeSlip, UnitVector_DipSlip, UnitVector_Slip
 end

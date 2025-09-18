@@ -17,8 +17,8 @@ OutputFileName="Input_BulkFaultGeometry.txt"
 Length = 1000
 Depth = 1000
 Amplitude = 0
-XElemCount = 20
-ZElemCount = 20
+XElemCount = 3
+ZElemCount = 3
 TotalElemCount = XElemCount * ZElemCount * 2 + ZElemCount 
 TotalElementInRow = XElemCount * 2 + 1
 ArrowLength = 10
@@ -111,8 +111,8 @@ for ElemIdx = 1 : TotalElemCount
 
     
     # y = x *0  #
-    y = - sind.(x / Length * 180) * Amplitude
-    # y =  z * 0.3
+    # y = - sind.(x / Length * 180) * Amplitude
+    y =  z * -0.3
     P1_i = [x[1], y[1], z[1]]
     P2_i = [x[2], y[2], z[2]]
     P3_i = [x[3], y[3], z[3]]

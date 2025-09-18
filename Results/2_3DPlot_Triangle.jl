@@ -19,10 +19,10 @@ ResultV[ResultV.<=0] .= 1e-100
 #######################################################################################
 ############################### Figure Configuration ##################################
 
-# figure(10); clf(); PyPlot.plot(log10.(ResultV[:,1:1:end])); xlabel("Record Step")
-PlotStep = 500
+# figure(10); clf(); PyPlot.plot(log10.(ResultV[:,1:50:end])); xlabel("Record Step")
+PlotStep = 450
 
-PlotRotation = [40,-50]
+PlotRotation = [43,-44]
 Transparent = 0 # 1 for transparent fault plot. 0 for no-transparency
 Edge = 0 # 0 for no element boudary. 1 for plotting element boundary
 MinMax_Axis = 0 # 0 for automatically selected axis minimim and maximum 
@@ -33,9 +33,9 @@ ShowDay = 0 # If 1, day is shown in the location
 DayLocation = [0,0,1000]
 # MaxVLog = log10(maximum(ResultV[:,:]))
 ################## What to Plot ? ###################
-# PlotInput=log10.(ResultV[PlotStep,:]); ColorMinMax=[-12, 0] 
+PlotInput=log10.(ResultV[PlotStep,:]); ColorMinMax=[-12, 0] 
 # PlotInput=log10.(ResultV[PlotStep,:]); ColorMinMax=[MaxVLog-3,MaxVLog] 
-PlotInput= Result_NormalStress[PlotStep,1:end-4] ; ColorMinMax=0
+# PlotInput= Result_NormalStress[PlotStep,1:end-4] ; ColorMinMax=0
 # PlotInput=log10.(ResultPressure[PlotStep,:]); ColorMinMax=[3,6]
 # PlotInput= Result_NormalStress[PlotStep,:] -  Fault_NormalStress; ColorMinMax=[-1e6,1e6]
 # PlotInput=ResultDisp[PlotStep,:]; ColorMinMax= [0.03, 0.08] 
@@ -95,7 +95,7 @@ for ElemIdx = 1:TotalElemCount- LoadingFaultCount
 
     pycall(p3c.set_facecolor, PyAny, face_color)
     pycall(p3c.set_edgecolor, PyAny, edge_color)
-    ax.view_init(17, -70)
+    ax.view_init(PlotRotation[1], PlotRotation[2])
 end
 
 ax.set_aspect("equal")

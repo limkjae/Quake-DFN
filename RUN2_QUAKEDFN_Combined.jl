@@ -46,13 +46,13 @@ function RunRSFDFN3D()
 
 
     ########## Strong Interaction Supression for Numerical Stability ##############
-    StrongInteractionCriteriaMultiple = 0.5 # only applied when larger than 0. The higher, the more tolerance of strong interaction. 
+    StrongInteractionCriteriaMultiple = 0.1 # only applied when larger than 0. The higher, the more tolerance of strong interaction. 
 
 
     ########################## Ax=b solver ############################
     JacobiOrGS = 2 # 1: Jacobi, 2: Gauss-Seidel (Ax=b solver that is required for initializing)
     # Jacobi is faster in general but Gauss-Seidel is stabler.
-    w_factor = 1.0 # only used for Gauss-Seidel. should be 0 < w < 2. 
+    w_factor = 0.3 # only used for Gauss-Seidel. should be 0 < w < 2. 
     # faster convergence when large but unstable.
 
     ############################# Plots before run? ################################
@@ -60,7 +60,7 @@ function RunRSFDFN3D()
     GeometryPlot = 0 # 1 will plot a-b
 
     Hmatrix = load(LoadingInputFileName, "Hmatrix")
-    if Hmatrix == ThreadCount
+    if Hmatrix == true
         println(" --- H Matrix used --- ")
         println("!!!!!!! Make sure this code is being run in fresh Julia session (New REPL) !!!!!!!")
         println("!!!!!!! The simulation can be unstable otherwize                           !!!!!!!")
