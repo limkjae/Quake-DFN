@@ -72,7 +72,8 @@ function main(StiffnessMatrixShear, StiffnessMatrixNormal, NormalStiffnessZero,
     end
     
 
-    Far_Load_Disp_Initial=-(StiffnessMatrixShear\InitialShearStress); # initial load point
+    # Far_Load_Disp_Initial=-(StiffnessMatrixShear\InitialShearStress); # initial load point
+    Far_Load_Disp_Initial= zeros(FaultCount)
     Friction0=FrictionI-a.*log.(Vini./V0)-b.*log.(ThetaI.*V0./Dc); # Initial friction
     Friction=copy(FrictionI);
 
@@ -221,7 +222,7 @@ function main(StiffnessMatrixShear, StiffnessMatrixNormal, NormalStiffnessZero,
                 Mass,ShearModulus, 
                 EffNormalStress_i,Total_Loading_Disp, SolverSwitch,
                 V,Friction,Disp,Theta,EffNormalStress,Dt_All,Instability,
-                LoadingRate, LoadingFaultCount, FaultCount, RockDensity, D_EffStress_Shear, SwitchV, Alpha_Evo, EffNormalStress_Old, EvolutionDR)
+                LoadingRate, LoadingFaultCount, FaultCount, RockDensity, D_EffStress_Shear, SwitchV, Alpha_Evo, EffNormalStress_Old, EvolutionDR, InitialShearStress) 
 
                 ############ End of One Step Solver ############
 

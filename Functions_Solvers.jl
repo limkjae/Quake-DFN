@@ -26,7 +26,7 @@ end
 function Solver_HighV_D(FaultIdx, ConvergenceCrit,DispOld,FrictionOld,ThetaOld,VOld,
     Friction0,a,b,Dc,V0,K_Self, Dt,Omega,
     Mass,ShearModulus,
-    EffNormalStress,Total_Loading_Disp,RockDensity, D_EffStress_Shear, SwitchV, Alpha_Evo, EffNormalStress_Old, EvolutionDR)
+    EffNormalStress,Total_Loading_Disp,RockDensity, D_EffStress_Shear, SwitchV, Alpha_Evo, EffNormalStress_Old, EvolutionDR,InitialShearStress)
 
 FLAG_GoodToGo=1
 Iteration=0;
@@ -61,7 +61,7 @@ while maxDiff>ConvergenceCrit_Iter
 
 
     Friction_RadDamp=Friction0+a*log(V/V0)+b*log(Theta*V0./Dc) + ShearModulus/2/sqrt(ShearModulus/RockDensity)/EffNormalStress*V  - D_EffStress_Shear/EffNormalStress; # Initial friction
-    F=Total_Loading_Disp-Friction_RadDamp*EffNormalStress/K_Self;
+F=Total_Loading_Disp + (InitialShearStress -Friction_RadDamp*EffNormalStress)/K_Self;
     Disp=(DispOld-F)*cos(Omega*Dt)+(VOld/Omega)*sin(Omega*Dt)+F; 
     V=(Disp-DispOld)/Dt*2-VOld;
     FOriginal=VTest-V;     
@@ -76,7 +76,7 @@ while maxDiff>ConvergenceCrit_Iter
         break 
     end
     Friction_RadDamp=Friction0+a*log(V/V0)+b*log(Theta*V0./Dc)+ShearModulus/2/sqrt(ShearModulus/RockDensity)/EffNormalStress*V  - D_EffStress_Shear/EffNormalStress; # Initial friction
-    F=Total_Loading_Disp-Friction_RadDamp*EffNormalStress/K_Self;
+    F=Total_Loading_Disp + (InitialShearStress -Friction_RadDamp*EffNormalStress)/K_Self;
     Disp=(DispOld-F)*cos(Omega*Dt)+(VOld/Omega)*sin(Omega*Dt)+F; 
     V=(Disp-DispOld)/Dt*2-VOld;
 
@@ -185,7 +185,7 @@ end
 function Solver_LowV_D(FaultIdx, ConvergenceCrit,DispOld,FrictionOld,ThetaOld,VOld,
     Friction0,a,b,Dc,V0,K_Self, Dt,Omega,
     Mass,ShearModulus,
-    EffNormalStress,Total_Loading_Disp,RockDensity, D_EffStress_Shear, SwitchV, Alpha_Evo, EffNormalStress_Old, EvolutionDR)
+    EffNormalStress,Total_Loading_Disp,RockDensity, D_EffStress_Shear, SwitchV, Alpha_Evo, EffNormalStress_Old, EvolutionDR,InitialShearStress)
 
 
     FLAG_GoodToGo=1
@@ -223,7 +223,7 @@ function Solver_LowV_D(FaultIdx, ConvergenceCrit,DispOld,FrictionOld,ThetaOld,VO
         end
         
         Disp=DispOld+(VOld+V)/2*Dt
-        Friction= 1/EffNormalStress * (K_Self*(Total_Loading_Disp - Disp)  - ShearModulus/2/sqrt(ShearModulus/RockDensity) * V  + D_EffStress_Shear - Mass*Accel);
+        Friction= 1/EffNormalStress * (K_Self*(Total_Loading_Disp - Disp) +InitialShearStress - ShearModulus/2/sqrt(ShearModulus/RockDensity) * V  + D_EffStress_Shear - Mass*Accel);
         Vel = V0 * exp((Friction-Friction0-b*log(V0*Theta/Dc))/a);
         
         FV = VTest - Vel
@@ -248,7 +248,7 @@ function Solver_LowV_D(FaultIdx, ConvergenceCrit,DispOld,FrictionOld,ThetaOld,VO
             break 
         end
         Disp=DispOld+(VOld+V)/2*Dt
-        Friction= 1/EffNormalStress * (K_Self*(Total_Loading_Disp - Disp)  - ShearModulus/2/sqrt(ShearModulus/RockDensity) * V  + D_EffStress_Shear - Mass*Accel);
+        Friction= 1/EffNormalStress * (K_Self*(Total_Loading_Disp - Disp) +InitialShearStress  - ShearModulus/2/sqrt(ShearModulus/RockDensity) * V  + D_EffStress_Shear - Mass*Accel);
         Vel = V0 * exp((Friction-Friction0-b*log(V0*Theta/Dc))/a);
         
         FV_DeV = VTest2 - Vel
@@ -336,7 +336,7 @@ function SolveOneTimeStep(ConvergenceCrit,DispOld,FrictionOld,
     Mass,ShearModulus, 
     EffNormalStress_i,Total_Loading_Disp, SolverSwitch,
     V,Friction,Disp,Theta,EffNormalStress,Dt_All,InstabilityThistime, 
-    LoadingRate, LoadingFaultCount, FaultCount,RockDensity, D_EffStress_Shear, SwitchV, Alpha_Evo, EffNormalStress_Old, EvolutionDR)
+    LoadingRate, LoadingFaultCount, FaultCount,RockDensity, D_EffStress_Shear, SwitchV, Alpha_Evo, EffNormalStress_Old, EvolutionDR,InitialShearStress)
 
     FLAG_GoodToGo=zeros(FaultCount)
 
@@ -351,7 +351,7 @@ function SolveOneTimeStep(ConvergenceCrit,DispOld,FrictionOld,
             ThetaOld[FaultIdx],VOld[FaultIdx], Friction0[FaultIdx],a[FaultIdx],b[FaultIdx],
             Dc[FaultIdx],V0,K_Self[FaultIdx], DtOld, Omega[FaultIdx],
             Mass[FaultIdx],ShearModulus,
-            EffNormalStress_i[FaultIdx],Total_Loading_Disp[FaultIdx],RockDensity, D_EffStress_Shear[FaultIdx], SwitchV, Alpha_Evo, EffNormalStress_Old[FaultIdx],EvolutionDR)
+            EffNormalStress_i[FaultIdx],Total_Loading_Disp[FaultIdx],RockDensity, D_EffStress_Shear[FaultIdx], SwitchV, Alpha_Evo, EffNormalStress_Old[FaultIdx],EvolutionDR,InitialShearStress[FaultIdx])
 
         else
             
@@ -361,7 +361,7 @@ function SolveOneTimeStep(ConvergenceCrit,DispOld,FrictionOld,
             ThetaOld[FaultIdx],VOld[FaultIdx], Friction0[FaultIdx],a[FaultIdx],b[FaultIdx],
             Dc[FaultIdx],V0,K_Self[FaultIdx], DtOld, Omega[FaultIdx],
             Mass[FaultIdx],ShearModulus, 
-            EffNormalStress_i[FaultIdx],Total_Loading_Disp[FaultIdx],RockDensity, D_EffStress_Shear[FaultIdx], SwitchV, Alpha_Evo, EffNormalStress_Old[FaultIdx],EvolutionDR)
+            EffNormalStress_i[FaultIdx],Total_Loading_Disp[FaultIdx],RockDensity, D_EffStress_Shear[FaultIdx], SwitchV, Alpha_Evo, EffNormalStress_Old[FaultIdx],EvolutionDR,InitialShearStress[FaultIdx])
             
             
         end

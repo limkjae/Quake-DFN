@@ -30,8 +30,8 @@ function RunRSFDFN3D()
     
 
     ########################## Simulation Time Set ################################
-    TotalStep = 10000 # Total simulation step
-    SaveStep = 5000 # Automatically saved every this step
+    TotalStep = 5000 # Total simulation step
+    SaveStep = 2500 # Automatically saved every this step
     RecordStep = 10 # Simulation sampling rate !! should be a factor of SaveStep !!
 
     ThreadCount = 8 # if zero, it uses current thread count opened in REPL (Only for Hmatrix)
@@ -46,7 +46,7 @@ function RunRSFDFN3D()
 
 
     ########## Strong Interaction Supression for Numerical Stability ##############
-    StrongInteractionCriteriaMultiple = 0.1 # only applied when larger than 0. The higher, the more tolerance of strong interaction. 
+    StrongInteractionCriteriaMultiple = 0.9 # only applied when larger than 0. The higher, the more tolerance of strong interaction. 
 
 
     ########################## Ax=b solver ############################

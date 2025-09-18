@@ -20,10 +20,10 @@ ResultV[ResultV.<=0] .= 1e-100
 ############################### Figure Configuration ##################################
 
 # figure(10); clf(); PyPlot.plot(log10.(ResultV[:,1:50:end])); xlabel("Record Step")
-PlotStep = 450
+PlotStep = 950
 
 PlotRotation = [43,-44]
-Transparent = 0 # 1 for transparent fault plot. 0 for no-transparency
+Transparent = 1 # 1 for transparent fault plot. 0 for no-transparency
 Edge = 0 # 0 for no element boudary. 1 for plotting element boundary
 MinMax_Axis = 0 # 0 for automatically selected axis minimim and maximum 
 # MinMax_Axis=[-2000 2000; -2000 2000; -4000 0]
@@ -84,7 +84,7 @@ for ElemIdx = 1:TotalElemCount- LoadingFaultCount
     cm = get_cmap(:jet)
     PlotValue=(PlotInput[ElemIdx]-MinValue)/(MaxValue-MinValue)
 
-    face_color = [cm(PlotValue)[1], cm(PlotValue)[2],cm(PlotValue)[3],1.0]
+    face_color = [cm(PlotValue)[1], cm(PlotValue)[2],cm(PlotValue)[3],0.5]
 
     verts = ((P1[ElemIdx,:],P2[ElemIdx,:],P3[ElemIdx,:]), )
     p3c = PyObject(art3d.Poly3DCollection(verts))
