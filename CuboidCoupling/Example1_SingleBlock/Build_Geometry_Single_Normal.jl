@@ -35,7 +35,7 @@ function BuildBulk()
     TooCloseNormal_Multiplier = 0.6
     
     MinNormalStress = 2e6
-    NormalStressSurface = 0.0   #18e6
+    NormalStressSurface = 20e6   #18e6
     NormalStressGrad = 0.0       # 7000.0 #Pascal per meter
 
     UnstableFaultcount = 1
