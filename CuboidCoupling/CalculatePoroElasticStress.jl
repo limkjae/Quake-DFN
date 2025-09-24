@@ -1,3 +1,17 @@
+##########################################################################################
+#####                                                                               ######
+#####   One-way cuboid coupling module with Quake-DFN.                              ######
+#####                                                                               ######
+#####   Three input file required                                                   ######
+#####   1. Input_Cuboids.txt        : Define cuboids' geometry                      ######
+#####   2. Input_PorePressure.txt   : Time series of Pressure for each cuboid       ######
+#####   3. Input_Temperature.txt    : Time series of Temperature for each cuboid    ######
+#####   Run CalculatePoroElasticStress.jl after building input file in quake-DFN    ######
+#####                                                                               ######
+#####   Written by Qian Shi (qshi2@caltech.edu)                                     ######
+#####                                                                               ######
+##########################################################################################
+
 using DelimitedFiles
 using JLD2
 using LinearAlgebra
