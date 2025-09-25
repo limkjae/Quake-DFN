@@ -9,7 +9,7 @@ using JLD2
 pygui(true)
 
 
-InputOBJFileName="TriangleDev/MultipleFaults.obj"
+InputOBJFileName="TriangleMesh/MultipleFaults.obj"
 InputBulkFileName="Input_BulkFaultGeometry.txt"
 
 
@@ -130,3 +130,12 @@ Input_BulkHeader = [SwitchSSRN ShearMod PoissonRatio R_Density Crit_TooClose Too
         write(io, "Ctr_X\tCtr_Y\tCtr_Z\tSt_L\tDip_L\tStAng\tDipAng\tRake\ta\tb\tDc\tTheta_i\tV_i\tFric_i\tSig0\tSigGrad\tV_Const\tMaxLeng\n")
         writedlm(io, Input_Bulk)
     end
+
+area = norm.(cross.(eachrow(Input_Bulk[:,1:3] - Input_Bulk[:,4:6]), eachrow(Input_Bulk[:,1:3] - Input_Bulk[:,7:9])))/2
+AverageArea = mean(area)
+TooSmall = findall(area .< AverageArea /100)
+if length(TooSmall)>1
+    println(TooSmall)
+    println("The area of above elements seems to be too small, please check mesh")
+    
+end

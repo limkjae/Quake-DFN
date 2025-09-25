@@ -34,7 +34,7 @@ function BuildHMatStructure()
 
     #####---------   HMatrix Plots?  --------#####
     PlotHMat = 1 # HMatrix structure plot
-    PlotBlock3D = 0
+    PlotBlock3D =0
     ##########################################################################
 
 

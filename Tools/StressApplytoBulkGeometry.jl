@@ -18,10 +18,10 @@ function ChangeBulk()
     ##############################################################################################
     ######################################## Inputs ##############################################
     ###### build Principal Stress. Compression Positive. Only Ratio Matters! ########
-    PrincipalStressRatioX = 0.5
+    PrincipalStressRatioX = 0.3
     PrincipalStressRatioY = 1.0
     PrincipalStressRatioZ = 0.3
-    StressRotationStrike = -60 # degree
+    StressRotationStrike = 30 # degree
     StressRotationDip = 0  # degree
 
     MaximumTargetVelocity = 1e-11 # if this has value, the maximum velocity is set to this value. And Mu0 will be adjusted accordingly.
@@ -47,14 +47,16 @@ function ChangeBulk()
 
     ############################  FigureConfiguration  ##############################
     PlotProperty = 1 # 1: plot traction, normal, shear vector, 0: no
-    PlotSenseofSlip = 0 # 1: plot loading fault, normal, shear vector, 0: no
+    PlotSenseofSlip = 1 # 1: plot loading fault, normal, shear vector, 0: no
+    PlotSenseofSlipArrow = 0 # 1: plot arrow for sense of slip, 0: no
     PlotLoadingFault = 0
+
 
     ##### Which Property? 
     ##### 1: Rake	2:a	3:b	4:Dc 5:	Theta_i	6:V_i	7: Fric_i	8: Sig0	9:SigGrad	10:V_Const	########
-    WhattoPlot = 6
+    WhattoPlot = 7
 
-    PlotRotation=[25,-109]
+    PlotRotation=[63,-120]
     Transparent = 1 # 1 for transparent fault plot
     Edge = 1 # 0 for no element boudary 
     MinMax_Axis=0
@@ -303,7 +305,7 @@ function ChangeBulk()
 
         ##################################### Principal Stresses #######################################
             Linewidth = 2
-            Arrow_length_ratio = 0.2
+            Arrow_length_ratio = 0.01
 
             UnlotatedVectorX =[PrincipalStressRatioX, 0.0, 0.0]
             UnlotatedVectorY =[0.0, PrincipalStressRatioY, 0.0]
@@ -359,7 +361,7 @@ function ChangeBulk()
             figure(2)
             clf()
 
-            ax = PlotBulk_SenseOfSlip(0.0, Input_BulktoAdjust[1:end-LoadingFaultCountPlot,:], PlotRotation, Transparent, Edge, MinMax_Axis)
+            ax = PlotBulk_SenseOfSlip(0.0, Input_Bulk[1:end-LoadingFaultCountPlot,:], PlotRotation, Transparent, Edge, MinMax_Axis)
 
 
         elseif RorT == "T"
@@ -404,7 +406,7 @@ function ChangeBulk()
 
             ##################################### Principal Stresses #######################################
             Linewidth = 2
-            Arrow_length_ratio = 0.2
+            Arrow_length_ratio = 0.01
 
             UnlotatedVectorX =[PrincipalStressRatioX, 0.0, 0.0]
             UnlotatedVectorY =[0.0, PrincipalStressRatioY, 0.0]
@@ -455,9 +457,9 @@ function ChangeBulk()
             ################# Draw Sense of Slip ################
             RakeAngle = copy(Input_Bulk[1:end-LoadingFaultCountPlot,10])
             FaultCenter = (Input_Bulk[:,1:3] + Input_Bulk[:,4:6] + Input_Bulk[:,7:9])/3
-            FaultSize = mean(abs.([mean(Input_Bulk[:,1:3] - Input_Bulk[:,4:6], dims=2)  mean(Input_Bulk[:,5:7] - Input_Bulk[:,4:6], dims=2)  mean(Input_Bulk[:,1:3] - Input_Bulk[:,5:7], dims=2)]), dims = 2)
+            FaultSize = mean([norm.(eachrow(Input_Bulk[:,1:3] - Input_Bulk[:,4:6]))  norm.(eachrow(Input_Bulk[:,1:3] - Input_Bulk[:,7:9]))  norm.(eachrow(Input_Bulk[:,7:9] - Input_Bulk[:,4:6]))], dims = 2)
 
-            LineLength =FaultSize * 0.5
+            LineLength = FaultSize /4
             UnrotatedSlipUnitVec = [cosd.(RakeAngle) sind.(RakeAngle) zeros(BulkFaultCount-LoadingFaultCountPlot)]
             UnrotatedGapVector = [0 0 1]
             RotatedSlipUnitVec = UnrotatedSlipUnitVec .* 0.0 
@@ -466,26 +468,26 @@ function ChangeBulk()
             
 
             
+            if PlotSenseofSlipArrow == 1 
+                for BulkIndex = 1: BulkFaultCount - LoadingFaultCountPlot
 
-            for BulkIndex = 1: BulkFaultCount - LoadingFaultCountPlot
+                
+                RotatedGap = UnitVector_Normal[BulkIndex,:] .* FaultSize[BulkIndex ] * 0.1
 
-            
-            RotatedGap = UnitVector_Normal[BulkIndex,:] .* FaultSize[BulkIndex ] * 0.1
+                VecStart[BulkIndex,:] = -UnitVector_Slip[BulkIndex,:] /2 .* LineLength[BulkIndex] .+ FaultCenter[BulkIndex,1:3] - RotatedGap
+                VecEnd[BulkIndex,:] = UnitVector_Slip[BulkIndex,:]/2 .* LineLength[BulkIndex] .+ FaultCenter[BulkIndex,1:3] + RotatedGap
+                end
 
-            VecStart[BulkIndex,:] = -UnitVector_Slip[BulkIndex,:] /2 .* LineLength[BulkIndex] .+ FaultCenter[BulkIndex,1:3] - RotatedGap
-            VecEnd[BulkIndex,:] = UnitVector_Slip[BulkIndex,:]/2 .* LineLength[BulkIndex] .+ FaultCenter[BulkIndex,1:3] + RotatedGap
+                for i =1:BulkFaultCount - LoadingFaultCountPlot
+                    ax.quiver(VecStart[i,1], VecStart[i,2], VecStart[i,3], 
+                        UnitVector_Slip[i,1] * LineLength[i], UnitVector_Slip[i,2] * LineLength[i], UnitVector_Slip[i,3] * LineLength[i],
+                        color="k",arrow_length_ratio=0.2)
+                    ax.quiver(VecEnd[i,1], VecEnd[i,2], VecEnd[i,3], 
+                        -UnitVector_Slip[i,1] * LineLength[i], -UnitVector_Slip[i,2] * LineLength[i], -UnitVector_Slip[i,3] * LineLength[i],
+                        color="k",arrow_length_ratio=0.2)
+
+                end
             end
-
-            for i =1:BulkFaultCount - LoadingFaultCountPlot
-                ax.quiver(VecStart[i,1], VecStart[i,2], VecStart[i,3], 
-                    UnitVector_Slip[i,1] * LineLength[i], UnitVector_Slip[i,2] * LineLength[i], UnitVector_Slip[i,3] * LineLength[i],
-                    color="k",arrow_length_ratio=0.2)
-                ax.quiver(VecEnd[i,1], VecEnd[i,2], VecEnd[i,3], 
-                    -UnitVector_Slip[i,1] * LineLength[i], -UnitVector_Slip[i,2] * LineLength[i], -UnitVector_Slip[i,3] * LineLength[i],
-                    color="k",arrow_length_ratio=0.2)
-
-            end
-
 
 
 

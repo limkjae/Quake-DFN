@@ -64,22 +64,22 @@ function ParameterAdj(LoadingFaultCount, FaultMass, Fault_a, Fault_b, Fault_Dc,
     ######################################################################################################
     ##########################  Calculation of initial state from stress orientation #####################
     
-    MaxStressOrientation = 85. # between 0-180 degree
-    StressRatioMaxOverMin = 0.5
-    MinFrictionAllowed = 0.1 # smaller than this friction is not allowed
+    # MaxStressOrientation = 85. # between 0-180 degree
+    # StressRatioMaxOverMin = 0.5
+    # MinFrictionAllowed = 0.1 # smaller than this friction is not allowed
 
-    StressGradAtMaxOrientation = 6000.0
-    SurfaceStressAtMaxOrientation = 2e6
-    Fault_Theta_i .= 1e10
-    Fault_V_i .= 0.0
-    Friction_0 = ones(FaultCount) * 0.30
-    V0=1e-9;
+    # StressGradAtMaxOrientation = 6000.0
+    # SurfaceStressAtMaxOrientation = 2e6
+    # Fault_Theta_i .= 1e10
+    # Fault_V_i .= 0.0
+    # Friction_0 = ones(FaultCount) * 0.30
+    # V0=1e-9;
 
-    Fault_Friction_i, Fault_NormalStress, Fault_V_i, Fault_Theta_i = 
-                StressDependentFrictionParametersStrikeSlip(MaxStressOrientation, StressRatioMaxOverMin, MinFrictionAllowed,
-                StressGradAtMaxOrientation, SurfaceStressAtMaxOrientation,
-                FaultStrikeAngle, FaultDipAngle, Fault_V_i, Fault_Theta_i, Fault_Friction_i, 
-                Fault_a, Fault_b, Fault_Dc, Fault_NormalStress, Friction_0, FaultCenter)
+    # Fault_Friction_i, Fault_NormalStress, Fault_V_i, Fault_Theta_i = 
+    #             StressDependentFrictionParametersStrikeSlip(MaxStressOrientation, StressRatioMaxOverMin, MinFrictionAllowed,
+    #             StressGradAtMaxOrientation, SurfaceStressAtMaxOrientation,
+    #             FaultStrikeAngle, FaultDipAngle, Fault_V_i, Fault_Theta_i, Fault_Friction_i, 
+    #             Fault_a, Fault_b, Fault_Dc, Fault_NormalStress, Friction_0, FaultCenter)
 
     ##########^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^#############
     ######################################################################################################
@@ -94,14 +94,14 @@ function ParameterAdj(LoadingFaultCount, FaultMass, Fault_a, Fault_b, Fault_Dc,
     #     end
     # end
     
-    # for i=1:FaultCount
-    #     if -800 > FaultCenter[i,3] || FaultCenter[i,3] > -100
-    #         Fault_a[i] = 0.01
-    #     end
-    # end
+    for i=1:FaultCount
+        if -1500 > FaultCenter[i,3] || FaultCenter[i,3] > -100
+            Fault_a[i] = 0.01
+        end
+    end
 
     # Fault_Theta_i .= 0.9e10
-    # Fault_Dc .= 0.5e-3
+    # Fault_Dc .= 0.4e-3
     # Fault_a .= 0.05
     # Fault_b .= 0.003
     # Fault_NormalStress .= 10e6

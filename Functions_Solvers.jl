@@ -61,7 +61,7 @@ while maxDiff>ConvergenceCrit_Iter
 
 
     Friction_RadDamp=Friction0+a*log(V/V0)+b*log(Theta*V0./Dc) + ShearModulus/2/sqrt(ShearModulus/RockDensity)/EffNormalStress*V  - D_EffStress_Shear/EffNormalStress; # Initial friction
-F=Total_Loading_Disp + (InitialShearStress -Friction_RadDamp*EffNormalStress)/K_Self;
+    F=Total_Loading_Disp + (InitialShearStress -Friction_RadDamp*EffNormalStress)/K_Self;
     Disp=(DispOld-F)*cos(Omega*Dt)+(VOld/Omega)*sin(Omega*Dt)+F; 
     V=(Disp-DispOld)/Dt*2-VOld;
     FOriginal=VTest-V;     
@@ -289,7 +289,7 @@ function Solver_LowV_D(FaultIdx, ConvergenceCrit,DispOld,FrictionOld,ThetaOld,VO
             end 
             break 
         end
-        Friction= 1/EffNormalStress * (K_Self*(Total_Loading_Disp - Disp)  - ShearModulus/2/sqrt(ShearModulus/RockDensity) * V - Mass*Accel);
+        Friction= 1/EffNormalStress * (K_Self*(Total_Loading_Disp - Disp) +InitialShearStress  - ShearModulus/2/sqrt(ShearModulus/RockDensity) * V  + D_EffStress_Shear - Mass*Accel);
         # InstabilityThistime=0;
         maxDiff=abs(VTest/V-1);
 

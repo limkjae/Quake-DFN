@@ -12,8 +12,8 @@ pygui(true)
 
 TriAlreadyCompiled = @isdefined FunctionRead
 if TriAlreadyCompiled == false
-    include("TriangleDev/Functions_TDstressHS.jl")
-    TriAlreadyCompiled = 1
+    include("TriangleMesh/Functions_TDstressHS.jl")
+    FunctionRead = 1
 end
 
 include("Functions_BuildInputFile.jl")

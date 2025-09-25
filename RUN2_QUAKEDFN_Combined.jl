@@ -11,7 +11,7 @@ using LowRankApprox
 using Distributed
 using Statistics
 pygui(true)
-
+GC.gc()
 include("Functions_Solvers.jl")
 include("Results/Functions_Plot.jl")
 include("QuickParameterAdjust.jl")
@@ -27,17 +27,16 @@ LoadingInputFileName="Input_Discretized.jld2"
 
 
 function RunRSFDFN3D()
-    
 
     ########################## Simulation Time Set ################################
     TotalStep = 5000 # Total simulation step
-    SaveStep = 2500 # Automatically saved every this step
+    SaveStep = 5000 # Automatically saved every this step
     RecordStep = 10 # Simulation sampling rate !! should be a factor of SaveStep !!
 
     ThreadCount = 8 # if zero, it uses current thread count opened in REPL (Only for Hmatrix)
 
     ########################## Time Stepping Setup ################################
-    DtCut = 5 
+    DtCut = 5
     SwitchV = 1e-2
     RuptureTimeStepMultiple = 3
     MaximumDt = 1e7
@@ -46,7 +45,7 @@ function RunRSFDFN3D()
 
 
     ########## Strong Interaction Supression for Numerical Stability ##############
-    StrongInteractionCriteriaMultiple = 0.9 # only applied when larger than 0. The higher, the more tolerance of strong interaction. 
+    StrongInteractionCriteriaMultiple = 0 # only applied when larger than 0. The higher, the more tolerance of strong interaction. 
 
 
     ########################## Ax=b solver ############################
@@ -61,9 +60,15 @@ function RunRSFDFN3D()
 
     Hmatrix = load(LoadingInputFileName, "Hmatrix")
     if Hmatrix == true
+        
+
         println(" --- H Matrix used --- ")
-        println("!!!!!!! Make sure this code is being run in fresh Julia session (New REPL) !!!!!!!")
-        println("!!!!!!! The simulation can be unstable otherwize                           !!!!!!!")
+        if Base.gc_live_bytes() > 1e8
+            println("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
+            println("!!!!!!! Make sure this code is being run in new Julia session when running Hmatrix !!!!!!!")
+            println("!!!!!!! The simulation can be unstable otherwize                                   !!!!!!!")
+            println("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
+        end
         if ThreadCount > Threads.nthreads()
             println("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
             println("Theread Count is larger than Threads used in Julia")
@@ -231,7 +236,7 @@ function RunRSFDFN3D()
     "FaultDipAngle", FaultDipAngle, "FaultRakeAngle", FaultRakeAngle, "Fault_a", Fault_a, "Fault_b", Fault_b, "Fault_Dc", Fault_Dc, 
     "Fault_Theta_i", Fault_Theta_i, "Fault_V_i", Fault_V_i, "Fault_Friction_i", Fault_Friction_i, "Fault_NormalStress", Fault_NormalStress, 
     "Fault_V_Const", Fault_V_Const, "Fault_BulkIndex", Fault_BulkIndex, "FaultLengthStrike_Bulk", FaultLengthStrike_Bulk, 
-    "FaultLengthDip_Bulk", FaultLengthDip_Bulk, "FaultCount", FaultCount, "LoadingFaultCount", LoadingFaultCount, "FaultMass", FaultMass, "MinimumNormalStress", MinimumNormalStress)
+    "FaultLengthDip_Bulk", FaultLengthDip_Bulk, "FaultCount", FaultCount, "LoadingFaultCount", LoadingFaultCount, "FaultMass", FaultMass, "MinimumNormalStress", MinimumNormalStress,"RorT",RorT, "Hmatrix", Hmatrix)
     
     if Hmatrix == true
         file = jldopen(SaveInputInfoFileName, "a+")

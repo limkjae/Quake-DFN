@@ -26,6 +26,7 @@ function RunPlotInput(LoadingInputFileName)
     ############################### Load Input Files ###############################
     # StiffnessMatrixShear= load(LoadingInputFileName, "StiffnessMatrixShear")
     # StiffnessMatrixNormal= load(LoadingInputFileName, "StiffnessMatrixNormal")
+    RorT= load(LoadingInputFileName, "RorT")
     FaultCenter= load(LoadingInputFileName, "FaultCenter")
     FaultLengthStrike= load(LoadingInputFileName, "FaultLengthStrike")
     FaultLengthDip= load(LoadingInputFileName, "FaultLengthDip")
@@ -108,9 +109,9 @@ function RunPlotInput(LoadingInputFileName)
         # PlotInput = log10.(Fault_Theta_i); ColorMinMax = 0 
         # PlotInput = log10.(Fault_V_i); ColorMinMax = 0  
         # PlotInput =Fault_NormalStress; ColorMinMax = 0    
-        PlotInput =KoverKC ;ColorMinMax=[0,5]
+        # PlotInput =KoverKC ;ColorMinMax=[0,5]
         # PlotInput =UnderResolved ;ColorMinMax=[0,1]
-        # PlotInput = Fault_a - Fault_b; ColorMinMax = 0  
+        PlotInput = Fault_a - Fault_b; ColorMinMax = 0  
         # PlotInput =  Fault_BulkIndex; ColorMinMax = 0  
         # PlotInput = Fault_Dc; ColorMinMax = 0  
         # PlotInput = FaultRakeAngle; ColorMinMax = 0  
@@ -133,18 +134,63 @@ function RunPlotInput(LoadingInputFileName)
 
     ################################################################################
     ####################################### Plot ###################################
-    figure(1)
-    clf()
-    MaxVaule, MinValue = FaultPlot_3D_Color_General(FaultCenter,FaultLengthStrike, FaultLengthDip,
-        FaultStrikeAngle, FaultDipAngle, FaultRakeAngle, PlotInput, 
-        PlotRotation, MinMax_Axis, ColorMinMax, Transparent, Edge, LoadingFaultCount)
-    
-    # figure(1)
-    plotforcbar=  scatter([1,1],[1,1],0.1, [MinValue,MaxVaule], cmap="jet")
-    colorbar(plotforcbar, pad=0.15)
-    figure(1).canvas.draw()
-    xlabel("x")
-    ylabel("y")
+    if RorT == "R"
+        figure(1)
+        clf()
+        MaxVaule, MinValue = FaultPlot_3D_Color_General(FaultCenter,FaultLengthStrike, FaultLengthDip,
+            FaultStrikeAngle, FaultDipAngle, FaultRakeAngle, PlotInput, 
+            PlotRotation, MinMax_Axis, ColorMinMax, Transparent, Edge, LoadingFaultCount)
+        
+        # figure(1)
+        plotforcbar=  scatter([1,1],[1,1],0.1, [MinValue,MaxVaule], cmap="jet")
+        colorbar(plotforcbar, pad=0.15)
+        figure(1).canvas.draw()
+        xlabel("x")
+        ylabel("y")
+    else
+        
+        if ColorMinMax == 0 
+        MaxValue=maximum(PlotInput)
+        MinValue=minimum(PlotInput)
+        else
+        MaxValue=ColorMinMax[2]
+        MinValue=ColorMinMax[1]
+        end
+
+        figure(1)
+        clf()
+        art3d = PyObject(PyPlot.art3D)
+        ax = subplot(projection="3d")
+        if Edge == 0 
+            edge_color = [0.2, 0.2, 0.2, 0.0]
+        else
+            edge_color = [0.2, 0.2, 0.2, 0.2]
+        end
+
+        for ElemIdx = 1:FaultCount- LoadingFaultCount
+            cm = get_cmap(:jet)
+            PlotValue=(PlotInput[ElemIdx]-MinValue)/(MaxValue-MinValue)
+
+            if Transparent ==0
+                face_color = [cm(PlotValue)[1], cm(PlotValue)[2],cm(PlotValue)[3],1.0]
+            else
+                face_color = [cm(PlotValue)[1], cm(PlotValue)[2],cm(PlotValue)[3],0.5]
+            end
+
+            verts = ((P1[ElemIdx,:],P2[ElemIdx,:],P3[ElemIdx,:]), )
+            p3c = PyObject(art3d.Poly3DCollection(verts))
+            pycall(ax.add_collection3d, PyAny, p3c)
+            pycall(p3c.set_facecolor, PyAny, face_color)
+            pycall(p3c.set_edgecolor, PyAny, edge_color)
+            ax.view_init(PlotRotation[1], PlotRotation[2])
+        end
+
+        plotforcbar=  scatter([1,1],[1,1],0.1, [MinValue,MaxValue], cmap="jet")
+        colorbar(plotforcbar, pad=0.15)
+        figure(1).canvas.draw()
+        ax.set_aspect("equal")
+
+    end
     ########^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^########
     ################################################################################
 
