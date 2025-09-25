@@ -22,7 +22,7 @@ ResultV[ResultV.<=0] .= 1e-100
 
 
 # figure(10); clf(); PyPlot.plot(log10.(ResultV[:,1:1:end])); xlabel("Record Step")
-PlotStep = 100
+PlotStep = 350
 
 PlotRotation = [70,-72]
 Transparent = 1 # 1 for transparent fault plot. 0 for no-transparency
@@ -46,7 +46,7 @@ PlotInput=log10.(ResultV[PlotStep,:]); ColorMinMax=[-12, 0]
 
 
 ############# Saving Multiple Figures ###############
-Animation_Save = 1 # 1 for save
+Animation_Save = 0 # 1 for save
 StepBegin = 5 # first record step
 StepEnd = 400
 StepInterval = 5

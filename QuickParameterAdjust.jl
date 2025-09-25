@@ -94,11 +94,11 @@ function ParameterAdj(LoadingFaultCount, FaultMass, Fault_a, Fault_b, Fault_Dc,
     #     end
     # end
     
-    for i=1:FaultCount
-        if -1500 > FaultCenter[i,3] || FaultCenter[i,3] > -100
-            Fault_a[i] = 0.01
-        end
-    end
+    # for i=1:FaultCount
+    #     if -1500 > FaultCenter[i,3] || FaultCenter[i,3] > -100
+    #         Fault_a[i] = 0.01
+    #     end
+    # end
 
     # Fault_Theta_i .= 0.9e10
     # Fault_Dc .= 0.4e-3

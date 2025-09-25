@@ -9,7 +9,7 @@ using JLD2
 pygui(true)
 
 
-InputOBJFileName="TriangleMesh/MultipleFaults.obj"
+InputOBJFileName="TriangleMeshReader/TriangleMesh.obj"
 InputBulkFileName="Input_BulkFaultGeometry.txt"
 
 

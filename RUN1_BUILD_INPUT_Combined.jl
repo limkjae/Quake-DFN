@@ -12,7 +12,7 @@ pygui(true)
 
 TriAlreadyCompiled = @isdefined FunctionRead
 if TriAlreadyCompiled == false
-    include("TriangleMesh/Functions_TDstressHS.jl")
+    include("Functions_TDstressHS.jl")
     FunctionRead = 1
 end
 
@@ -33,7 +33,7 @@ function Discritize()
 
     ############################################################################
     ##########################       Hmatrix       #############################
-    Hmatrix = true # true: build Hmatrix structure from Input_HmatrixStructure.jld2, false: build full matrix without compression
+    Hmatrix = false # true: build Hmatrix structure from Input_HmatrixStructure.jld2, false: build full matrix without compression
     Tolerance = 1e3 #  Hmatrix compression Tolerance. pascal for 1m slip (More approximaion for higher Tolerance). 
 
     # #####---------   Plots?  --------#####
