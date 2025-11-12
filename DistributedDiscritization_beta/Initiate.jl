@@ -1,5 +1,5 @@
 
-
+using FileWatching
 using DelimitedFiles
 using Base
 using PyPlot
@@ -21,8 +21,8 @@ include("../Functions_Hmatrix.jl")
 
 HowManyDivision =3
 
-InputBulkFileName="../Input_BulkFaultGeometry.txt"
-HMatrixStructureFile = "../Input_HmatrixStructure.jld2"
+InputBulkFileName="Input_BulkFaultGeometry.txt"
+HMatrixStructureFile = "Input_HmatrixStructure.jld2"
 
 # InputBulkFileName="../Input_BulkFaultGeometry.txt"
 # OutputFileName="Input_Discretized.jld2"
@@ -91,9 +91,9 @@ for DistributeIndex = 1 : HowManyDivision
         BlockI = $(DivisionBlockItoF[DistributeIndex,1])
         BlockF = $(DivisionBlockItoF[DistributeIndex,2])
                     
-        InputBulkFileName="../Input_BulkFaultGeometry.txt"
-        OutputFileName="HMatPart_$(DistributeIndex).jld2"
-        HMatrixStructureFile = "../Input_HmatrixStructure.jld2"
+        InputBulkFileName="Input_BulkFaultGeometry.txt"
+        OutputFileName="DistributedDiscritization_beta/HMatPart_$(DistributeIndex).jld2"
+        HMatrixStructureFile = "Input_HmatrixStructure.jld2"
 
 
 
@@ -243,7 +243,7 @@ for DistributeIndex = 1 : HowManyDivision
 
     """
 
-    fname = "Part$(DistributeIndex).jl"
+    fname = "DistributedDiscritization_beta/Part$(DistributeIndex).jl"
     open(fname, "w") do file
         write(file, CodeScript )
     end
@@ -275,8 +275,8 @@ include("../Results/Functions_Plot.jl")
 include("../Functions_Hmatrix.jl")
 
 OutputFileName="Input_Discretized.jld2"
-InputBulkFileName="../Input_BulkFaultGeometry.txt"
-HMatrixStructureFile = "../Input_HmatrixStructure.jld2"
+InputBulkFileName="Input_BulkFaultGeometry.txt"
+HMatrixStructureFile = "Input_HmatrixStructure.jld2"
 
 
 
@@ -289,7 +289,7 @@ Ranks_Normal = zeros($(TotalBlock))
 
 for Partindex=1:$(HowManyDivision)
 
-LoadFileName = "HMatPart_\$(Partindex).jld2"
+LoadFileName = "DistributedDiscritization_beta/HMatPart_\$(Partindex).jld2"
 
 BlockI, BlockF, ShearStiffness_H_Part, NormalStiffness_H_Part, Ranks_Shear_Part, Ranks_Normal_Part = 
     load(LoadFileName, "BlockI", "BlockF", "ShearStiffness_H", "NormalStiffness_H",
@@ -356,13 +356,68 @@ println("Saved File Name: ",OutputFileName)
 """
 
 
-fname = "Combine.jl"
+fname = "DistributedDiscritization_beta/Combine.jl"
 open(fname, "w") do file
     write(file, ScriptCombine )
 end
 
 
+######################## Paritial Discretization ##############################
+for DistributeIndex = 1 : HowManyDivision    
+    if isfile("DistributedDiscritization_beta/HMatPart_$DistributeIndex.jld2")
+        rm("DistributedDiscritization_beta/HMatPart_$DistributeIndex.jld2")
+    end
+    # touch("DistributedDiscritization_beta/HMatPart_$DistributeIndex.jld2")
+end
+# touch("Input_Discretized.jld2")
 
+println("waiting for partial discretization")
+println("Progress can be monitored in separated windows")
+
+for DistributeIndex = 1 : HowManyDivision
+    run(`cmd /c start julia DistributedDiscritization_beta/Part$DistributeIndex.jl`)
+end
+
+for DistributeIndex = 1 : HowManyDivision
+    while !isfile("DistributedDiscritization_beta/HMatPart_$DistributeIndex.jld2")
+        sleep(1)
+    end
+end
+
+###############################################################################
+
+
+
+
+######################## Combine Files ##############################
+if isfile("Input_Discretized.jld2")
+    rm("Input_Discretized.jld2")
+end
+
+run(`cmd /c start julia DistributedDiscritization_beta/Combine.jl`)
+
+for DistributeIndex = 1 : HowManyDivision
+    while !isfile("Input_Discretized.jld2")
+        sleep(1)
+    end
+end
+
+println("Discretization is over")
+
+
+
+for DistributeIndex = 1 : HowManyDivision
+    rm("DistributedDiscritization_beta/Part$DistributeIndex.jl")
+    rm("DistributedDiscritization_beta/HMatPart_$DistributeIndex.jld2")
+end
+    rm("DistributedDiscritization_beta/Combine.jl")
+
+
+
+
+
+
+#     run(`cmd /c start julia DistributedDiscritization_beta/Part1.jl`)
 #=
 
 

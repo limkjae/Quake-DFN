@@ -1,0 +1,12 @@
+using Pkg
+Pkg.add("DelimitedFiles")
+Pkg.add("PyPlot")
+Pkg.add("PyCall")
+Pkg.add("JLD2")
+Pkg.add("LowRankApprox")
+Pkg.add("Clustering")
+Pkg.add("LinearAlgebra")
+Pkg.add("Printf")
+Pkg.add("SpecialFunctions")
+Pkg.add("StaticArrays")
+Pkg.add("FileWatching")
