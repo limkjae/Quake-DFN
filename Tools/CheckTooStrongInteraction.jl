@@ -13,11 +13,11 @@ using Statistics
 @pyimport matplotlib.patches as patches
 pygui(true)
 
-include("../Functions_Solvers.jl")
-include("../Functions_RSFDFN3DMain_H.jl")
+include("../scripts/Functions_Solvers.jl")
+include("../scripts/Functions_RSFDFN3DMain_H.jl")
 include("../Results/Functions_Plot.jl")
 include("../QuickParameterAdjust.jl")
-include("../Functions_Hmatrix.jl")
+include("../scripts/Functions_Hmatrix.jl")
 LoadingInputFileName="Input_Discretized.jld2" 
 
 

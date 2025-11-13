@@ -6,7 +6,7 @@ pygui(true)
 
 ResultName="Result"
 
-include("Functions_Plot.jl")
+include("../scripts/Functions_Plot.jl")
 #include("Results")
 FileName="Results/" * ResultName * ".jld2"
 FileNameInput="Results/" * ResultName * "_Input.jld2"

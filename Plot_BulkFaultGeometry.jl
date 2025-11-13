@@ -4,7 +4,7 @@ using PyPlot
 using PyCall
 
 pygui(true)
-include("Functions_BuildInputFile.jl")
+include("scripts/Functions_BuildInputFile.jl")
 include("Results/Functions_Plot.jl")
 InputBulkFileName="Input_BulkFaultGeometry.txt"
 

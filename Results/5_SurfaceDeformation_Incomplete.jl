@@ -5,8 +5,8 @@ using JLD2
 using LinearAlgebra
 using Statistics
 pygui(true)
-include("Functions_Plot.jl")
-include("../Functions_OKADA3D.jl")
+include("../scripts/Functions_Plot.jl")
+include("../scripts/Functions_OKADA3D.jl")
 
 ResultName="Result"
 FileName="Results/" * ResultName * ".jld2"

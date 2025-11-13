@@ -5,7 +5,7 @@ using LinearAlgebra
 using Statistics
 
 pygui(true)
-include("Functions_Plot.jl")
+include("../scripts/Functions_Plot.jl")
 
 PlotBulkIndex = 1
 TimeIndex = 100
