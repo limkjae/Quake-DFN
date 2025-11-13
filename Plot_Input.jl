@@ -13,7 +13,7 @@ pygui(true)
 
 include("scripts/Functions_Solvers.jl")
 include("scripts/Functions_RSFDFN3DMain_D.jl")
-include("Results/Functions_Plot.jl")
+include("scripts/Functions_Plot.jl")
 include("QuickParameterAdjust.jl")
 include("scripts/Functions_Hmatrix.jl")
 
