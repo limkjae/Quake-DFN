@@ -35,7 +35,7 @@ function BuildBulk()
     Theta_i = 1e3
     V_i = 1e-9
 
-    MaxDiscritLength=200.0
+    MaxDiscritLength = 100.0
     
 
     ############################# Write Bulk Input #################################

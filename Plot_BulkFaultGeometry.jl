@@ -37,7 +37,7 @@ function PlotBulk()
     ####  17.NormalStress at surface [Pa]  18. NoarmalStress Gradient [Pa] 
     ####  19. V_Const     20. Minimum Segment Length
 
-    PlotInput = Input_Bulk[:,14]; ColorMinMax=0    
+    PlotInput = Input_Bulk[:,15]; ColorMinMax=0    
     # PlotInput = log10.(Input_Bulk[:,15]); ColorMinMax=[-20,0]    
 
     ############################### Figure Configuration ##################################
@@ -45,12 +45,17 @@ function PlotBulk()
     Transparent = 1 # 1 for transparent fault plot
     Edge = 1 # 0 for no element boudary 
     MinMax_Axis=0
-    LoadingFaultPlot = 1 # 1 to plot constant velocity faults. 
+    LoadingFaultPlot = 0 # 1 to plot constant velocity faults. 
     #######################################################################################
 
     if LoadingFaultPlot == 0
-        LoadingFaultCount = sum(x->x>0, Input_Bulk[:,17]) 
+        if RorT == "R"   
+            LoadingFaultCount = sum(x->x>0, Input_Bulk[:,17]) 
+        else
+            LoadingFaultCount = sum(x->x>0, Input_Bulk[:,19]) 
+        end
         Input_Bulk = Input_Bulk[1:end-LoadingFaultCount,:]
+        PlotInput = PlotInput[1:end-LoadingFaultCount]
     end
     FaultCount = length(Input_Bulk[:,1])
 
