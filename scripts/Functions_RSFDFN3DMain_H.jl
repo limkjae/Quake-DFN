@@ -4,8 +4,8 @@ function main_H(ShearModulus, FaultCount, LoadingFaultCount, Mass, NormalStiffne
     InitialNormalStress, LoadingRate, 
     TotalStep, RecordStep, SwitchV, DtCut, RuptureDt, MaximumDt, SaveResultFileName,RockDensity,
     FaultCenter,FaultLengthStrike, FaultLengthDip, FaultStrikeAngle, FaultDipAngle, FaultRakeAngle, SaveStep,
-    TimeStepOnlyBasedOnUnstablePatch, MinimumNormalStress, Alpha_Evo,
-    Ranks_Shear, Ranks_Normal, ElementRange_SR, NormalStiffness_H, ShearStiffness_H, ThreadCount, JacobiOrGS, w_factor, EvolutionDR)  
+    MinimumNormalStress, Alpha_Evo,
+    Ranks_Shear, Ranks_Normal, ElementRange_SR, NormalStiffness_H, ShearStiffness_H, ThreadCount, EvolutionDR)  
     
     ExternalStressExist=0;
 
@@ -32,37 +32,6 @@ function main_H(ShearModulus, FaultCount, LoadingFaultCount, Mass, NormalStiffne
     InitialShearStress = InitialNormalStress .* FrictionI
     Far_Load_Disp_Initial=zeros(FaultCount)
 
-    # Far_Load_Disp_Initial = zeros(FaultCount)
-    # if LoadingFaultCount > 0
-    #     Par_ElementDivision_ShearNoLoading = copy(Par_ElementDivision_Shear)
-    #     Par_ElementDivision_ShearNoLoading[end] = Par_ElementDivision_ShearNoLoading[end]-1
-        
-    #     for i=1:ThreadCount -1 
-    #         if Par_ElementDivision_ShearNoLoading[end-i] > Par_ElementDivision_ShearNoLoading[end-i+1] 
-    #             Par_ElementDivision_ShearNoLoading[end-i] = Par_ElementDivision_ShearNoLoading[end-i+1] 
-    #         end
-    #     end
-    #     if JacobiOrGS ==1
-    #         Far_Load_Disp_Initial[1:end-LoadingFaultCount] = 
-    #                 SolveAx_b_Jacobi(LoadingStiffnessH[2:end], K_Self[1:end-LoadingFaultCount], InitialShearStress[1:end-LoadingFaultCount],
-    #                         ElementRange_SR[2:end,:], FaultCount - LoadingFaultCount, Par_ElementDivision_ShearNoLoading, ThreadCount, Epsilon_MaxDiffRatio)
-    #     else
-    #         Far_Load_Disp_Initial[1:end-LoadingFaultCount] = 
-    #             SolveAx_b_GaussSeidel(LoadingStiffnessH[2:end], K_Self[1:end-LoadingFaultCount], InitialShearStress[1:end-LoadingFaultCount],
-    #                 ElementRange_SR[2:end,:], FaultCount - LoadingFaultCount, Par_ElementDivision_ShearNoLoading, ThreadCount, Epsilon_MaxDiffRatio, Ranks_Shear[2:end], w_factor)
-    #     end
-    # else
-    #     if JacobiOrGS ==1
-    #         Far_Load_Disp_Initial = SolveAx_b_Jacobi(LoadingStiffnessH, K_Self, InitialShearStress, ElementRange_SR, FaultCount, 
-    #                                 Par_ElementDivision_Shear, ThreadCount, Epsilon_MaxDiffRatio)
-    #     else
-    #         Far_Load_Disp_Initial = SolveAx_b_GaussSeidel(LoadingStiffnessH, K_Self, InitialShearStress, ElementRange_SR, FaultCount, 
-    #                                 Par_ElementDivision_Shear, ThreadCount, Epsilon_MaxDiffRatio, Ranks_Shear, w_factor)
-    #     end
-    # end
-
-    # Far_Load_Disp_Initial=-(StiffnessMatrixShear\InitialShearStress); # initial load point
-    
     ##############################################################
     
     if  isfile("Input_ExternalStressChange.jld2")
@@ -119,7 +88,7 @@ function main_H(ShearModulus, FaultCount, LoadingFaultCount, Mass, NormalStiffne
             UnstablePatch = [UnstablePatch;i]
         end
     end
-
+    TimeStepOnlyBasedOnUnstablePatch = 1
     if length(UnstablePatch) == 1
         println("No Unstable Patch")
         TimeStepOnlyBasedOnUnstablePatch = 0
@@ -346,17 +315,11 @@ function main_H(ShearModulus, FaultCount, LoadingFaultCount, Mass, NormalStiffne
                 History_Dt[Step,1]=Dt;
                 History_V[Step,:]=V;
                 History_Disp[Step,:]=Disp;
-                #History_Dt[Step,1]=Dt;
-                #History_Friction[Step,:]=Friction;
                 History_Theta[Step,:]=Theta;
                 History_NormalStress[Step,:]=EffNormalStress;
                 History_Pressure[Step,:] = D_Pressure
                 History_External_Shear[Step,:] = D_EffStress_Shear;
                 History_External_Normal[Step,:] = D_EffStress_Normal;
-                #    History_Pressure(Step,:)=Pressure;
-                #History_Accel(Step,:)=Accel;
-                #History_Far_Load_Disp(Step,:)=Far_Load_Disp;
-                #History_ShearStress(Step,:)=StiffnessMatrixShear*(Far_Load_Disp-Disp);
 
                 @printf("%.5f %.5f   %.3e   %.3e    %i \n", i/TotalStep, T/60/60/24, maximum(V[1:FaultCount-LoadingFaultCount]), Dt ,SlowOrFast )
 
@@ -368,9 +331,11 @@ function main_H(ShearModulus, FaultCount, LoadingFaultCount, Mass, NormalStiffne
                     # "History_External_Shear", History_External_Shear, "History_External_Normal", History_External_Normal,"History_Pressure", History_Pressure,
                     ) 
                     println("Saved Upto Here")
-                    #writedlm("geek.txt", History_V')
                 end
                 
+                if rem(i,RecordStep*1000)==0
+                            print("\033c")   
+                end
             end
             
             # if maximum(V[1:end-2])>SwitchV

@@ -6,7 +6,7 @@ using LinearAlgebra
 using Statistics
 pygui(true)
 include("../scripts/Functions_BuildInputFile.jl")
-include("../Results/Functions_Plot.jl")
+include("../scripts/Functions_Plot.jl")
 include("ToolsFunctions.jl")
 
 
@@ -18,26 +18,26 @@ function ChangeBulk()
     ##############################################################################################
     ######################################## Inputs ##############################################
     ###### build Principal Stress. Compression Positive. Only Ratio Matters! ########
-    PrincipalStressRatioX = 0.4
+    PrincipalStressRatioX = 0.3
     PrincipalStressRatioY = 1.0
-    PrincipalStressRatioZ = 0.3
-    StressRotationStrike = 70 # degree
+    PrincipalStressRatioZ = 0.4
+    StressRotationStrike = 43 # degree
     StressRotationDip =  10  # degree
 
     MaximumTargetVelocity = 1e-11 # if this has value, the maximum velocity is set to this value. And Mu0 will be adjusted accordingly.
     ConstantMu0 = 0.0
     ConstantTheta = 1e10 # if not zero, initial theta will be revised to this uniformly
-    Fault_a = 0.0 # if not zero, RSF "a" value will be revised to this uniformly
-    Fault_b = 0.0 # if not zero, RSF "b" value will be revised to this uniformly
-    Fault_Dc = 0.5e-3 # if not zero, RSF "Dc" value will be revised to this uniformly
+    Fault_a = 0.003 # if not zero, RSF "a" value will be revised to this uniformly
+    Fault_b = 0.01 # if not zero, RSF "b" value will be revised to this uniformly
+    Fault_Dc = 1e-3 # if not zero, RSF "Dc" value will be revised to this uniformly
 
     MinFrictionAllowed = 0.05
     ShearModulus = 30e9
     PoissonRatio = 0.25
     Rock_Density = 2700.0
     MinimumNormalStressAllowed = 1e6
-    StressOnSurface_Sig1Orientation = 3e6 # pascal
-    StressGredient_Sig1Orientation = 5000 # pascal/m
+    StressOnSurface_Sig1Orientation = 20e6 # pascal
+    StressGredient_Sig1Orientation = 0 # pascal/m
 
     FaultSegmentLength = 0 # if 0, segment length will be unchanged (Only For Rectangular Grid)   
     LoadingFaultAdjust = 0 # if 0, Loading fault sense of slip will not be changed

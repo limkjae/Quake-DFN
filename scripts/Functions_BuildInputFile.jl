@@ -650,6 +650,7 @@ function HmatBuild_T(ShearModulus, PoissonRatio, ElementRange_SR, FaultRakeAngle
     println("Building Hmatrix Block by Block")
     println("Full Matrix Will not be saved")
     println("Preparing for discretization")
+    println("Initiation of first part discretization may take a few minutes due to compliation")
     BlockSize = 0.0
 
     for BlockIndex = 1: BlockCount

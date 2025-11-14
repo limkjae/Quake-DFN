@@ -9,7 +9,7 @@ using JLD2
 pygui(true)
 
 
-InputOBJFileName="TriangleMeshReader/NormalFaults.obj"
+InputOBJFileName="TriangleMeshReader/tripleJunction.obj"
 InputBulkFileName="Input_BulkFaultGeometry.txt"
 
 
@@ -123,11 +123,18 @@ Input_Bulk[:,20] .= MinimumSegmentLength
 
 Input_BulkHeader = [SwitchSSRN ShearMod PoissonRatio R_Density Crit_TooClose TooCloseNormal_Multiplier MinNormalStress]
 
+    ############################# Write Bulk Input #################################
+    ######++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++######
+    #### Bulk File Order 
+    ####  123. P1   456. P2     789. P3     10.Rake
+    ####  11.a      12.b	13.Dc	14.Theta_i	15. V_i     16. Friction_i 17.NormalStress at surface [Pa]  
+    ####  18. NoarmalStress Gradient [Pa] 19. V_Const     20. Minimum Segment Length
+    ######++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++######
 
     open(InputBulkFileName, "w") do io
         write(io,"SwitchSS/RN\tShearMod\tPoissonRatio\tR_Density\tCrit_TooClose\tTooCloseNormal_Multiplier\tMinimum_NS\n")
         writedlm(io, Input_BulkHeader)
-        write(io, "Ctr_X\tCtr_Y\tCtr_Z\tSt_L\tDip_L\tStAng\tDipAng\tRake\ta\tb\tDc\tTheta_i\tV_i\tFric_i\tSig0\tSigGrad\tV_Const\tMaxLeng\n")
+        write(io, "P1_x\tP1_y\tP1_z\tP2_x\tP2_y\tP2_z\tP3_x\tP3_y\tP3_z\tRake\ta\tb\tDc\tTheta_i\tV_i\tFric_i\tSig0\tSigGrad\tV_Const\tMaxLeng\n")
         writedlm(io, Input_Bulk)
     end
 

@@ -41,7 +41,7 @@ FaultMass= load(FileNameInput, "FaultMass")
 
 
 # figure(10); clf(); PyPlot.plot(log10.(ResultV[:,1:1:end])); xlabel("Record Step")
-PlotStep = 60
+PlotStep = 200
 
 PlotRotation = [29,-39]
 Transparent = 0 # 1 for transparent fault plot. 0 for no-transparency
@@ -59,7 +59,7 @@ PlotInput=log10.(ResultV[PlotStep,:]); ColorMinMax=[-12, 0]
 # PlotInput= Result_NormalStress[PlotStep,:] ; ColorMinMax=0
 # PlotInput=log10.(ResultPressure[PlotStep,:]); ColorMinMax=[3,6]
 # PlotInput= Result_NormalStress[PlotStep,:] -  Fault_NormalStress; ColorMinMax=[-1e6,1e6]
-# PlotInput=ResultDisp[PlotStep,:]; ColorMinMax= [0, 0.07]
+# PlotInput=ResultDisp[PlotStep,:]; ColorMinMax= 0
 
 #############---------------------------#############
 

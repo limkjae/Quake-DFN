@@ -9,6 +9,13 @@ using LinearAlgebra
 @pyimport matplotlib.patches as patches
 pygui(true)
 
+############################################################################
+############## Hmatrix with Distributed discretization #####################
+Hmatrix = false
+HowManyDistribution = 3
+############################################################################
+
+
 TriAlreadyCompiled = @isdefined FunctionRead
 if TriAlreadyCompiled == false
     include("scripts/Functions_TDstressHS.jl")
@@ -22,7 +29,8 @@ include("scripts/Functions_Hmatrix.jl")
 
 
 
-function Discritize()
+
+function DiscritizeFullMatrix()
 
     InputBulkFileName="Input_BulkFaultGeometry.txt"
     OutputFileName="Input_Discretized.jld2"
@@ -30,41 +38,9 @@ function Discritize()
 
 
 
-    ############################################################################
-    ##########################       Hmatrix       #############################
-    Hmatrix = true # true: build Hmatrix structure from Input_HmatrixStructure.jld2, false: build full matrix without compression
-    Tolerance = 1e3 #  Hmatrix compression Tolerance. pascal for 1m slip (More approximaion for higher Tolerance). 
-    
-    # #####---------   Plots?  --------#####
-    # Plot_HMatStructure = 1 # HMatrix structure plot
-    # Plot3D_HMatrixBlock = 0 # Blocks in 3D plot
-    # Plot3D_DiscretizedBlock = 0 # 3D discritized block
-
-    ##########################################################################
-    ##########################################################################
-
-
-
-    ######################## Read Bulk Input File ############################
-    if Hmatrix == false
-
-        Input_Segment, LoadingFaultCount, ShearModulus, PoissonRatio, RockDensity, 
-        Switch_StrikeSlip_or_ReverseNormal, DropCrit, DropCritNormalStressMultiplier, MinimumNS, RorT, FaultCount =
-            ReadBulkInput(InputBulkFileName)
-
-    elseif Hmatrix == true
-        println("H Matrix will be built")
-        Block_Ctr_Diam, Block_Range_Level, Input_Segment, LoadingFaultExist, LoadingFaultCount,
-        MinimumElementsToCut, ArrangePoint, Admissible, ElementRange_SR, Switch_StrikeSlip_or_ReverseNormal, 
-        ShearModulus, PoissonRatio, RockDensity, DropCrit, DropCritNormalStressMultiplier, MinimumNS, RorT =
-            load(HMatrixStructureFile, "Block_Ctr_Diam", "Block_Range_Level", "Input_Segment", "LoadingFaultExist", "LoadingFaultCount",
-                "MinimumElementsToCut", "ArrangePoint", "Admissible", "ElementRange_SR", "Switch_StrikeSlip_or_ReverseNormal", 
-                "ShearModulus", "PoissonRatio", "RockDensity", "DropCrit", "DropCritNormalStressMultiplier", "MinimumNS", "RorT")
-
-        FaultCount = length(Input_Segment[:,1])
-
-    end
-
+    Input_Segment, LoadingFaultCount, ShearModulus, PoissonRatio, RockDensity, 
+    Switch_StrikeSlip_or_ReverseNormal, DropCrit, DropCritNormalStressMultiplier, MinimumNS, RorT, FaultCount =
+        ReadBulkInput(InputBulkFileName)
 
 
     ######################## Read Segmented Input File #######################
@@ -81,24 +57,13 @@ function Discritize()
     end
 
 
-    if Hmatrix == true
-        if RorT == "R"
-            ShearStiffness_H, NormalStiffness_H, Ranks_Shear, Ranks_Normal = 
-                HmatBuild_R(ShearModulus, PoissonRatio, ElementRange_SR,Input_Segment, Admissible, Tolerance)  
-        elseif RorT == "T"
-            ShearStiffness_H, NormalStiffness_H, Ranks_Shear, Ranks_Normal = 
-                HmatBuild_T(ShearModulus, PoissonRatio, ElementRange_SR, FaultRakeAngle, FaultCenter, UnitVector_Normal, 
-                            UnitVector_Slip, Admissible, Tolerance, P1, P2, P3)   
-        end
-    elseif Hmatrix == false
-        if RorT == "R"
-            StiffnessMatrixShear, StiffnessMatrixNormal = 
-                BuildMatrixByParts_Even_Rec(FaultCount, Input_Segment,  ShearModulus, PoissonRatio)
-        elseif RorT == "T"
-            StiffnessMatrixShear, StiffnessMatrixNormal = 
-                BuildMatrixByParts_Even_Tri(P1, P2, P3, FaultRakeAngle, FaultCenter, UnitVector_Normal, UnitVector_Slip,
-                                    FaultCount, ShearModulus, PoissonRatio)                            
-        end
+    if RorT == "R"
+        StiffnessMatrixShear, StiffnessMatrixNormal = 
+            BuildMatrixByParts_Even_Rec(FaultCount, Input_Segment,  ShearModulus, PoissonRatio)
+    elseif RorT == "T"
+        StiffnessMatrixShear, StiffnessMatrixNormal = 
+            BuildMatrixByParts_Even_Tri(P1, P2, P3, FaultRakeAngle, FaultCenter, UnitVector_Normal, UnitVector_Slip,
+                                FaultCount, ShearModulus, PoissonRatio)                            
     end
 
 
@@ -115,18 +80,8 @@ function Discritize()
     println("Saved File Name: ",OutputFileName)
 
     file = jldopen(OutputFileName, "a+")
-    if Hmatrix == true
-        write(file, "ShearStiffness_H", ShearStiffness_H) 
-        write(file, "NormalStiffness_H", NormalStiffness_H) 
-        write(file, "Admissible", Admissible) 
-        write(file, "Ranks_Shear", Ranks_Shear) 
-        write(file, "Ranks_Normal", Ranks_Normal) 
-        write(file, "ElementRange_SR", ElementRange_SR) 
-    else
         write(file, "StiffnessMatrixShear", StiffnessMatrixShear) 
         write(file, "StiffnessMatrixNormal", StiffnessMatrixNormal) 
-
-    end
     close(file)
 
     ######################## Save Vertices for Triangles ##############################
@@ -141,7 +96,13 @@ function Discritize()
 
 end
 
-Discritize()
+
+if Hmatrix == true
+    include("scripts/DistributedDiscretization.jl")
+
+elseif Hmatrix == false
+    DiscritizeFullMatrix()
+end
 
 
 

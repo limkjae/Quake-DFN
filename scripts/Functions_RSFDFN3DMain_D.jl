@@ -5,7 +5,7 @@ function main(StiffnessMatrixShear, StiffnessMatrixNormal, NormalStiffnessZero,
     InitialNormalStress, LoadingRate, 
     TotalStep, RecordStep, SwitchV, DtCut, RuptureDt, MaximumDt, SaveResultFileName,RockDensity,
     FaultCenter,FaultLengthStrike, FaultLengthDip, FaultStrikeAngle, FaultDipAngle, FaultRakeAngle, SaveStep,
-    TimeStepOnlyBasedOnUnstablePatch, MinimumNormalStress, Alpha_Evo, EvolutionDR)
+    MinimumNormalStress, Alpha_Evo, EvolutionDR)
     
 
 
@@ -56,6 +56,7 @@ function main(StiffnessMatrixShear, StiffnessMatrixNormal, NormalStiffnessZero,
             UnstablePatch = [UnstablePatch;i]
         end
     end
+    TimeStepOnlyBasedOnUnstablePatch = 1
     if length(UnstablePatch) == 1
         println("No Unstable Patch")
         TimeStepOnlyBasedOnUnstablePatch = 0
@@ -280,6 +281,10 @@ function main(StiffnessMatrixShear, StiffnessMatrixNormal, NormalStiffnessZero,
                     println("Saved Upto Here")
                 end
                 
+                if rem(i,RecordStep*1000)==0
+                    print("\033c")   
+                end
+
             end
             
             if maximum(SolverSwitch[1:FaultCount-LoadingFaultCount]) > 0
