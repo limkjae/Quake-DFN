@@ -12,11 +12,11 @@ using Distributed
 using Statistics
 pygui(true)
 
-include("../Functions_Solvers.jl")
-include("../Functions_RSFDFN3DMain_H.jl")
-include("../Results/Functions_Plot.jl")
-include("../QuickParameterAdjust.jl")
-include("../Functions_Hmatrix.jl")
+include("../../scripts/Functions_Solvers.jl")
+include("../../scripts/Functions_RSFDFN3DMain_H.jl")
+include("../../scripts/Functions_Plot.jl")
+include("../../QuickParameterAdjust.jl")
+include("../../scripts/Functions_Hmatrix.jl")
 LoadingInputFileName="Input_Discretized.jld2" 
 
 Repeats = 5
@@ -29,19 +29,12 @@ ShearStiffness_H = load(LoadingInputFileName, "ShearStiffness_H")
 NormalStiffness_H = load(LoadingInputFileName, "NormalStiffness_H")
 NormalStiffnessZero = load(LoadingInputFileName, "NormalStiffnessZero")
 
-SaveOriginalMatrix = load(LoadingInputFileName, "SaveOriginalMatrix")
-
-if SaveOriginalMatrix == 1
-    StiffnessMatrixShear= load(LoadingInputFileName, "StiffnessMatrixShear")
-    StiffnessMatrixNormal= load(LoadingInputFileName, "StiffnessMatrixNormal")
-end
-
 
 
 
 ################ Optimizing and Initializing Hmatrix ################
 ThreadREPL = Threads.nthreads()
-ThreadCountAll = collect(1:5:25)
+ThreadCountAll = collect(1:3:10)
 Epsilon_MaxDiffRatio = 1e-7
 MaxRatioAllowed = 1.5
 MaxIteration = 50
@@ -60,16 +53,7 @@ function hmat_speed_test()
 
     GC.gc(false)
     TestVector = rand(FaultCount)
-    if SaveOriginalMatrix == 1
-        ElapseTime_OriginalMatShear = @elapsed for i=1:Repeats
-            SoluationOrignialShear = StiffnessMatrixShear * TestVector
-        end
-        ElapseTime_OrigianlMatNormal = @elapsed for i=1:Repeats
-            SoluationOrignialNormal = StiffnessMatrixNormal * TestVector
-        end
-        ElapseTime_OriginalMatShear  = ElapseTime_OriginalMatShear/Repeats
-        ElapseTime_OrigianlMatNormal  = ElapseTime_OrigianlMatNormal/Repeats
-    end
+
     GC.gc(true)
 
     for Tindex in eachindex(ThreadCountAll)

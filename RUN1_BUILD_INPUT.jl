@@ -11,8 +11,8 @@ pygui(true)
 
 ############################################################################
 ############## Hmatrix with Distributed discretization #####################
-Hmatrix = false
-HowManyDistribution = 3
+Hmatrix = true
+HowManyDistribution = 5
 ############################################################################
 
 

@@ -7,7 +7,7 @@ using Statistics
 pygui(true)
 include("../scripts/Functions_BuildInputFile.jl")
 include("../scripts/Functions_Plot.jl")
-include("ToolsFunctions.jl")
+include("../scripts/Functions_StressApplication.jl")
 
 
 
@@ -21,14 +21,14 @@ function ChangeBulk()
     PrincipalStressRatioX = 0.3
     PrincipalStressRatioY = 1.0
     PrincipalStressRatioZ = 0.4
-    StressRotationStrike = 43 # degree
-    StressRotationDip =  10  # degree
+    StressRotationStrike = -7 # degree
+    StressRotationDip =  0  # degree
 
     MaximumTargetVelocity = 1e-11 # if this has value, the maximum velocity is set to this value. And Mu0 will be adjusted accordingly.
     ConstantMu0 = 0.0
     ConstantTheta = 1e10 # if not zero, initial theta will be revised to this uniformly
-    Fault_a = 0.003 # if not zero, RSF "a" value will be revised to this uniformly
-    Fault_b = 0.01 # if not zero, RSF "b" value will be revised to this uniformly
+    Fault_a = 0 # if not zero, RSF "a" value will be revised to this uniformly
+    Fault_b = 0 # if not zero, RSF "b" value will be revised to this uniformly
     Fault_Dc = 1e-3 # if not zero, RSF "Dc" value will be revised to this uniformly
 
     MinFrictionAllowed = 0.05
@@ -40,7 +40,6 @@ function ChangeBulk()
     StressGredient_Sig1Orientation = 0 # pascal/m
 
     FaultSegmentLength = 0 # if 0, segment length will be unchanged (Only For Rectangular Grid)   
-    LoadingFaultAdjust = 0 # if 0, Loading fault sense of slip will not be changed
     LoadingFaultInvert = 1 # if 1, loading fault sense of slip become inverted
 
 
@@ -48,7 +47,7 @@ function ChangeBulk()
     ############################  FigureConfiguration  ##############################
     PlotProperty = 1 # 1: plot traction, normal, shear vector, 0: no
     PlotSenseofSlip = 1 # 1: plot loading fault, normal, shear vector, 0: no
-    PlotSenseofSlipArrow = 0 # 1: plot arrow for sense of slip, 0: no
+    # PlotSenseofSlipArrow = 1 # 1: plot arrow for sense of slip, 0: no
     PlotLoadingFault = 0
 
 
@@ -356,7 +355,6 @@ function ChangeBulk()
 
         ##################################### Sense of Slip #######################################
 
-
         if RorT == "R"
             figure(2)
             clf()
@@ -403,7 +401,7 @@ function ChangeBulk()
             xlabel("x")
             ylabel("y")
             ax.set_aspect("equal")
-
+        end
             ##################################### Principal Stresses #######################################
             Linewidth = 2
             Arrow_length_ratio = 0.01
@@ -467,31 +465,27 @@ function ChangeBulk()
             VecEnd = UnrotatedSlipUnitVec .* 0.0 
             
 
+        
+        # if PlotSenseofSlipArrow == 1 
+        #     for BulkIndex = 1: BulkFaultCount - LoadingFaultCountPlot
+
             
-            if PlotSenseofSlipArrow == 1 
-                for BulkIndex = 1: BulkFaultCount - LoadingFaultCountPlot
+        #     RotatedGap = UnitVector_Normal[BulkIndex,:] .* FaultSize[BulkIndex ] * 0.1
 
-                
-                RotatedGap = UnitVector_Normal[BulkIndex,:] .* FaultSize[BulkIndex ] * 0.1
+        #     VecStart[BulkIndex,:] = -UnitVector_Slip[BulkIndex,:] /2 .* LineLength[BulkIndex] .+ FaultCenter[BulkIndex,1:3] - RotatedGap
+        #     VecEnd[BulkIndex,:] = UnitVector_Slip[BulkIndex,:]/2 .* LineLength[BulkIndex] .+ FaultCenter[BulkIndex,1:3] + RotatedGap
+        #     end
 
-                VecStart[BulkIndex,:] = -UnitVector_Slip[BulkIndex,:] /2 .* LineLength[BulkIndex] .+ FaultCenter[BulkIndex,1:3] - RotatedGap
-                VecEnd[BulkIndex,:] = UnitVector_Slip[BulkIndex,:]/2 .* LineLength[BulkIndex] .+ FaultCenter[BulkIndex,1:3] + RotatedGap
-                end
+        #     for i =1:BulkFaultCount - LoadingFaultCountPlot
+        #         ax.quiver(VecStart[i,1], VecStart[i,2], VecStart[i,3], 
+        #             UnitVector_Slip[i,1] * LineLength[i], UnitVector_Slip[i,2] * LineLength[i], UnitVector_Slip[i,3] * LineLength[i],
+        #             color="k",arrow_length_ratio=0.2)
+        #         ax.quiver(VecEnd[i,1], VecEnd[i,2], VecEnd[i,3], 
+        #             -UnitVector_Slip[i,1] * LineLength[i], -UnitVector_Slip[i,2] * LineLength[i], -UnitVector_Slip[i,3] * LineLength[i],
+        #             color="k",arrow_length_ratio=0.2)
 
-                for i =1:BulkFaultCount - LoadingFaultCountPlot
-                    ax.quiver(VecStart[i,1], VecStart[i,2], VecStart[i,3], 
-                        UnitVector_Slip[i,1] * LineLength[i], UnitVector_Slip[i,2] * LineLength[i], UnitVector_Slip[i,3] * LineLength[i],
-                        color="k",arrow_length_ratio=0.2)
-                    ax.quiver(VecEnd[i,1], VecEnd[i,2], VecEnd[i,3], 
-                        -UnitVector_Slip[i,1] * LineLength[i], -UnitVector_Slip[i,2] * LineLength[i], -UnitVector_Slip[i,3] * LineLength[i],
-                        color="k",arrow_length_ratio=0.2)
-
-                end
-            end
-
-
-
-        end
+        #     end
+        # end
     end
 
 end

@@ -37,7 +37,7 @@ function PlotBulk()
     ####  17.NormalStress at surface [Pa]  18. NoarmalStress Gradient [Pa] 
     ####  19. V_Const     20. Minimum Segment Length
 
-    PlotInput = Input_Bulk[:,16]; ColorMinMax=0    
+    PlotInput = Input_Bulk[:,14]; ColorMinMax=0    
     # PlotInput = log10.(Input_Bulk[:,15]); ColorMinMax=[-20,0]    
 
     ############################### Figure Configuration ##################################
@@ -58,8 +58,8 @@ function PlotBulk()
     clf()
 
     if RorT == "R"     
-        MaxVaule, MinValue = FaultPlot_3D_Color_General(FaultCenter,FaultLengthStrike, FaultLengthDip,
-            FaultStrikeAngle, FaultDipAngle, FaultRakeAngle, PlotInput, 
+        MaxVaule, MinValue = FaultPlot_3D_Color_General(Input_Bulk[:,1:3],
+            Input_Bulk[:,4], Input_Bulk[:,5], Input_Bulk[:,6], Input_Bulk[:,7], Input_Bulk[:,8], PlotInput, 
             PlotRotation, MinMax_Axis, ColorMinMax, Transparent, Edge, 0)
 
             ax = subplot(projection="3d")

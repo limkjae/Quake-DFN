@@ -174,7 +174,7 @@ function FaultPlot_3D_Color_General_hsv(FaultCenter,FaultLengthStrike, FaultLeng
         p3=RotMatStrike*RotMatDip*[-FaultLengthStrike[FaultIdx]/2;+FaultLengthDip[FaultIdx]/2;0]+ [FaultCenter[FaultIdx,1]; FaultCenter[FaultIdx,2]; -FaultCenter[FaultIdx,3]];
         p4=RotMatStrike*RotMatDip*[FaultLengthStrike[FaultIdx]/2;+FaultLengthDip[FaultIdx]/2;0]+ [FaultCenter[FaultIdx,1]; FaultCenter[FaultIdx,2]; -FaultCenter[FaultIdx,3]];
         
-        fig = figure(8)
+        fig = figure(2)
         PlotValue=(InputProperty[FaultIdx]-MinValue)/(MaxValue-MinValue)
         art3d = PyObject(PyPlot.art3D)
 
@@ -750,7 +750,7 @@ function PlotBulk_SenseOfSlip(RakeLRRN, Input_Bulk, PlotRotation, Transparent, E
 
     ################# Draw Fault Surface #################
 
-    figure(8)
+    figure(2)
     clf()
     MaxVaule, MinValue = FaultPlot_3D_Color_General_hsv(Input_Bulk[:,1:3],
         Input_Bulk[:,4], Input_Bulk[:,5], Input_Bulk[:,6], Input_Bulk[:,7], Input_Bulk[:,8], PlotInput, 
@@ -762,7 +762,7 @@ function PlotBulk_SenseOfSlip(RakeLRRN, Input_Bulk, PlotRotation, Transparent, E
     cbar  = colorbar(plotforcbar, pad=0.15)
     cbar.set_ticks([0, 90, 180,270,360])
     cbar.set_ticklabels(["Left Lateral", "Reverse", "Right Lateral", "Normal", "Left Lateral"])
-    figure(8).canvas.draw()
+    figure(2).canvas.draw()
 
     ################# Draw Sense of Slip ################
 

@@ -172,6 +172,8 @@ ScriptCombine = """
     using LinearAlgebra
     @pyimport matplotlib.patches as patches
 
+    println("Merging parts. Do not close this window")
+
     pygui(true)
 
     include("../Functions_BuildInputFile.jl")
@@ -187,7 +189,7 @@ ScriptCombine = """
     NormalStiffness_H = []
     Ranks_Shear = []
     Ranks_Normal = []
-
+    
     for Partindex=1:$(HowManyDistribution)
 
     LoadFileName = "scripts/temp_Discretization/HMatPart_\$(Partindex).jld2"

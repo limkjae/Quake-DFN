@@ -3,11 +3,11 @@
 
 
 ######################### Simulation Time Set #############################
-TotalStep = 2000 # Total simulation step
-SaveStep = 1000 # Automatically saved every this step
+TotalStep = 10000 # Total simulation step
+SaveStep = 5000 # Automatically saved every this step
 RecordStep = 10 # Simulation sampling rate !! should be a factor of SaveStep !!
 
-ThreadCount = 5 # Only used in HMatrix Simulations
+ThreadCount = 5 # Only used for HMatrix Simulations. 5~8 seems to be most efficient in most of the computer
 
 ########################## Time Stepping Setup ############################
 DtCut = 5
