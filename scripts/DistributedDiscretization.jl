@@ -275,8 +275,17 @@ println("Progress can be monitored in separated windows")
 println("Do not close this REPL")
 
 for DistributeIndex = 1 : HowManyDistribution
-    run(`cmd /c start julia scripts/temp_Discretization/Part$DistributeIndex.jl`)
+    if Sys.islinux()
+        run(`gnome-terminal -- bash -c "julia scripts/temp_Discretization/Part$DistributeIndex.jl"`)
+    elseif Sys.iswindows()
+        run(`cmd /c start julia scripts/temp_Discretization/Part$DistributeIndex.jl`)
+    elseif Sys.isapple()
+        run(`open -a Terminal julia scripts/temp_Discretization/Part$DistributeIndex.jl`)
+    end
 end
+
+
+
 
 for DistributeIndex = 1 : HowManyDistribution
     while !isfile("scripts/temp_Discretization/HMatPart_$DistributeIndex.jld2")
@@ -295,7 +304,15 @@ if isfile("Input_Discretized.jld2")
     rm("Input_Discretized.jld2")
 end
 
-run(`cmd /c start julia scripts/temp_Discretization/Combine.jl`)
+
+if Sys.islinux()
+    run(`gnome-terminal -- bash -c "julia scripts/temp_Discretization/Combine.jl"`)
+elseif Sys.iswindows()
+    run(`cmd /c start julia scripts/temp_Discretization/Combine.jl`)
+elseif Sys.isapple()
+    run(`open -a Terminal julia scripts/temp_Discretization/Combine.jl`)
+end
+
 
 for DistributeIndex = 1 : HowManyDistribution
     while !isfile("Input_Discretized.jld2")

@@ -33,9 +33,13 @@ StrongInteractionCriteriaMultiple = 0
 
 
 
-#################### Run simulation in a new terminal #####################
- run(`cmd /c start julia --threads $(ThreadCount) scripts/QUAKEDFN_RunARG.jl 
-    $(TotalStep) $(SaveStep) $(RecordStep) $(ThreadCount) $(DtCut) 
-    $(SwitchV) $(RuptureTimeStepMultiple) $(MaximumDt) $(VerticalLengthScaleforM) $(SaveFileName) $(StrongInteractionCriteriaMultiple)`)
+if Sys.islinux()
+    run(`gnome-terminal -- bash -c "julia --threads $(ThreadCount) scripts/QUAKEDFN_RunARG.jl $(TotalStep) $(SaveStep) $(RecordStep) $(ThreadCount) $(DtCut) $(SwitchV) $(RuptureTimeStepMultiple) $(MaximumDt) $(VerticalLengthScaleforM) $(SaveFileName) $(StrongInteractionCriteriaMultiple)"`)
+elseif Sys.iswindows()
+    run(`cmd /c start julia --threads $(ThreadCount) scripts/QUAKEDFN_RunARG.jl $(TotalStep) $(SaveStep) $(RecordStep) $(ThreadCount) $(DtCut) $(SwitchV) $(RuptureTimeStepMultiple) $(MaximumDt) $(VerticalLengthScaleforM) $(SaveFileName) $(StrongInteractionCriteriaMultiple)`)
+
+elseif Sys.isapple()
+    run(`open -a Terminal julia --threads $(ThreadCount) scripts/QUAKEDFN_RunARG.jl $(TotalStep) $(SaveStep) $(RecordStep) $(ThreadCount) $(DtCut) $(SwitchV) $(RuptureTimeStepMultiple) $(MaximumDt) $(VerticalLengthScaleforM) $(SaveFileName) $(StrongInteractionCriteriaMultiple)`)
+end
 
 println("Simulation starts in a new terminal")
