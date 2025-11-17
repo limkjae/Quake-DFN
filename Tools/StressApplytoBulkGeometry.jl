@@ -21,7 +21,7 @@ function ChangeBulk()
     PrincipalStressRatioX = 0.3
     PrincipalStressRatioY = 1.0
     PrincipalStressRatioZ = 0.4
-    StressRotationStrike = -7 # degree
+    StressRotationStrike = 40 # degree
     StressRotationDip =  0  # degree
 
     MaximumTargetVelocity = 1e-11 # if this has value, the maximum velocity is set to this value. And Mu0 will be adjusted accordingly.

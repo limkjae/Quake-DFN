@@ -12,7 +12,7 @@ pygui(true)
 ############################################################################
 ############## Hmatrix with Distributed discretization #####################
 Hmatrix = true
-HowManyDistribution = 3
+HowManyDistribution = 5
 ############################################################################
 
 

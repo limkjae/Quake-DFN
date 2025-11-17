@@ -8,7 +8,7 @@ using JLD2
 
 pygui(true)
 
-FileName = "tripleJunction.obj"
+FileName = "TripleJunction.obj"
 
 
 InputOBJFileName="Tools/TriangleMeshReader/$(FileName)"
