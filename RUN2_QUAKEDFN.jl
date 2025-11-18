@@ -3,11 +3,11 @@
 
 
 ######################### Simulation Time Set #############################
-TotalStep = 10000 # Total simulation step
+TotalStep = 20000 # Total simulation step
 SaveStep = 5000 # Automatically saved every this step
 RecordStep = 10 # Simulation sampling rate !! should be a factor of SaveStep !!
 
-ThreadCount = 5 # Only used for HMatrix Simulations. 5~8 seems to be most efficient in most of the computer
+ThreadCount = 8 # Only used for HMatrix Simulations. 5~8 seems to be most efficient in most of the computer
 
 ########################## Time Stepping Setup ############################
 DtCut = 5
@@ -39,7 +39,15 @@ elseif Sys.iswindows()
     run(`cmd /c start julia --threads $(ThreadCount) scripts/QUAKEDFN_RunARG.jl $(TotalStep) $(SaveStep) $(RecordStep) $(ThreadCount) $(DtCut) $(SwitchV) $(RuptureTimeStepMultiple) $(MaximumDt) $(VerticalLengthScaleforM) $(SaveFileName) $(StrongInteractionCriteriaMultiple)`)
 
 elseif Sys.isapple()
-    run(`open -a Terminal julia --threads $(ThreadCount) scripts/QUAKEDFN_RunARG.jl $(TotalStep) $(SaveStep) $(RecordStep) $(ThreadCount) $(DtCut) $(SwitchV) $(RuptureTimeStepMultiple) $(MaximumDt) $(VerticalLengthScaleforM) $(SaveFileName) $(StrongInteractionCriteriaMultiple)`)
+        program_to_run = "julia --threads $(ThreadCount) $(@__DIR__)/scripts/QUAKEDFN_RunARG.jl $(TotalStep) $(SaveStep) $(RecordStep) $(ThreadCount) $(DtCut) $(SwitchV) $(RuptureTimeStepMultiple) $(MaximumDt) $(VerticalLengthScaleforM) $(SaveFileName) $(StrongInteractionCriteriaMultiple)"
+        script = """
+            tell application "Terminal"
+            activate
+            do script "$program_to_run"
+            end tell
+            """
+        run(`osascript -e $script`)
+    # run(`open -a Terminal julia --threads $(ThreadCount) scripts/QUAKEDFN_RunARG.jl $(TotalStep) $(SaveStep) $(RecordStep) $(ThreadCount) $(DtCut) $(SwitchV) $(RuptureTimeStepMultiple) $(MaximumDt) $(VerticalLengthScaleforM) $(SaveFileName) $(StrongInteractionCriteriaMultiple)`)
 end
 
 println("Simulation starts in a new terminal")

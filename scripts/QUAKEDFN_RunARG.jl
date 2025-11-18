@@ -20,10 +20,17 @@ include("Functions_Hmatrix.jl")
 include("Functions_RSFDFN3DMain_H.jl")
 include("Functions_RSFDFN3DMain_D.jl")
 
-SaveResultFileName="Results/$(ARGS[10]).jld2"
-SaveInputInfoFileName="Results/$(ARGS[10])_Input.jld2" 
-LoadingInputFileName="Input_Discretized.jld2" 
 
+
+            if Sys.isapple()
+                SaveResultFileName="$(@__DIR__)/../Results/$(ARGS[10]).jld2"
+                SaveInputInfoFileName="$(@__DIR__)/../Results/$(ARGS[10])_Input.jld2" 
+                LoadingInputFileName="$(@__DIR__)/../Input_Discretized.jld2" 
+            else
+                SaveResultFileName="Results/$(ARGS[10]).jld2"
+                SaveInputInfoFileName="Results/$(ARGS[10])_Input.jld2" 
+                LoadingInputFileName="Input_Discretized.jld2" 
+            end
 
 
 function RunRSFDFN3D()

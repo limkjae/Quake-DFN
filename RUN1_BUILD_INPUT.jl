@@ -99,7 +99,7 @@ end
 
 if Hmatrix == true
     include("scripts/DistributedDiscretization.jl")
-
+    DistDisc()
 elseif Hmatrix == false
     DiscritizeFullMatrix()
 end
