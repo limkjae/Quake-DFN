@@ -34,7 +34,7 @@ NormalStiffnessZero = load(LoadingInputFileName, "NormalStiffnessZero")
 
 ################ Optimizing and Initializing Hmatrix ################
 ThreadREPL = Threads.nthreads()
-ThreadCountAll = collect(1:3:10)
+ThreadCountAll = collect(1:1:8)
 Epsilon_MaxDiffRatio = 1e-7
 MaxRatioAllowed = 1.5
 MaxIteration = 50
@@ -109,13 +109,8 @@ function hmat_speed_test()
     clf()
     plot(ThreadCountAll, TotalElapsedTime,"ko",markerfacecolor="none" )
     plot(ThreadCountAll,TotalAverage,"k")
-    if SaveOriginalMatrix == 1
-        TotalOriginal = ElapseTime_OriginalMatShear + ElapseTime_OrigianlMatNormal
-        plot([0,maximum(ThreadCountAll)],[TotalOriginal,TotalOriginal],"b")
-        MaxTimeInPlot = maximum([TotalAverage;TotalOriginal])
-    else 
-        MaxTimeInPlot = maximum(TotalAverage)
-    end
+        
+    MaxTimeInPlot = maximum(TotalAverage)
     plot([ThreadREPL,ThreadREPL],[0,MaxTimeInPlot*1.1],"r")
     ylim([0, MaxTimeInPlot*1.2])
 
