@@ -41,10 +41,14 @@ FaultMass= load(FileNameInput, "FaultMass")
 
 
 # figure(10); clf(); PyPlot.plot(log10.(ResultV[:,1:1:end])); xlabel("Record Step")
-PlotStep = 50
+PlotStep = 1200
 
-PlotRotation = [28,-44]
-Transparent = 1# 1 for transparent fault plot. 0 for no-transparency
+if PlotStep > length(ResultTime)
+    error("Plot step should be smaller than the maximum record ($(length(ResultTime)))")
+end
+
+PlotRotation = [54,-85]
+Transparent = 0 # 1 for transparent fault plot. 0 for no-transparency
 Edge = 0 # 0 for no element boudary. 1 for plotting element boundary
 MinMax_Axis = 0 # 0 for automatically selected axis minimim and maximum 
 # MinMax_Axis=[-2000 2000; -2000 2000; -4000 0]
