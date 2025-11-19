@@ -18,11 +18,11 @@ function ChangeBulk()
     ##############################################################################################
     ######################################## Inputs ##############################################
     ###### build Principal Stress. Compression Positive. Only Ratio Matters! ########
-    PrincipalStressRatioX = 0.3
+    PrincipalStressRatioX = 0.5
     PrincipalStressRatioY = 1.0
-    PrincipalStressRatioZ = 0.4
-    StressRotationStrike = 40 # degree
-    StressRotationDip =  0  # degree
+    PrincipalStressRatioZ = 0.3
+    StressRotationStrike = 150 # degree
+    StressRotationDip = -40   # degree
 
     MaximumTargetVelocity = 1e-11 # if this has value, the maximum velocity is set to this value. And Mu0 will be adjusted accordingly.
     ConstantMu0 = 0.0
@@ -61,7 +61,7 @@ function ChangeBulk()
     MinMax_Axis=0
 
     StressVectorLocation = 0 # Autometically Adjusted when 0 
-    PrinpalStressLength = 0 # Autometically Adjusted when 0 
+    PrinpalStressLength = 100 # Autometically Adjusted when 0 
     V_p = 1e-5 # When target velocity is set this will be used for peak friction plot
     V_r = 1e-2 # When target velocity is set this will be used for residual friction plot
     #################################################################################
@@ -164,7 +164,8 @@ function ChangeBulk()
         if Fault_Dc != 0.0; Input_Bulk[:,11] .= Fault_Dc; end
         if ConstantTheta != 0.0; Input_Bulk[:,12] .= ConstantTheta; end
     elseif RorT == "T"
-        Input_Bulk, UnitVector_Normal, UnitVector_Slip = CalculateFrictionStress_T(BulkFaultCount, Input_Bulk, MinFrictionAllowed,StressRatioXYZ, 
+        Input_Bulk, UnitVector_Normal, UnitVector_Slip, UnitVector_DipSlip, UnitVector_StrikeSlip = 
+                        CalculateFrictionStress_T(BulkFaultCount, Input_Bulk, MinFrictionAllowed,StressRatioXYZ, 
                         StressOnSurface_Sig1Orientation, StressGredient_Sig1Orientation, MinimumNormalStressAllowed, LoadingFaultCount,LoadingFaultInvert) 
 
         if Fault_a != 0.0; Input_Bulk[:,11] .= Fault_a; end
@@ -465,29 +466,43 @@ function ChangeBulk()
             VecEnd = UnrotatedSlipUnitVec .* 0.0 
             
 
-        
-        # if PlotSenseofSlipArrow == 1 
-        #     for BulkIndex = 1: BulkFaultCount - LoadingFaultCountPlot
+        PlotSenseofSlipArrow =0 
+        if PlotSenseofSlipArrow == 1 
+            for BulkIndex = 1: BulkFaultCount - LoadingFaultCountPlot
 
             
-        #     RotatedGap = UnitVector_Normal[BulkIndex,:] .* FaultSize[BulkIndex ] * 0.1
+            RotatedGap = UnitVector_Normal[BulkIndex,:] .* FaultSize[BulkIndex ] * 0.1
 
-        #     VecStart[BulkIndex,:] = -UnitVector_Slip[BulkIndex,:] /2 .* LineLength[BulkIndex] .+ FaultCenter[BulkIndex,1:3] - RotatedGap
-        #     VecEnd[BulkIndex,:] = UnitVector_Slip[BulkIndex,:]/2 .* LineLength[BulkIndex] .+ FaultCenter[BulkIndex,1:3] + RotatedGap
-        #     end
+            VecStart[BulkIndex,:] = -UnitVector_Slip[BulkIndex,:] /2 .* LineLength[BulkIndex] .+ FaultCenter[BulkIndex,1:3] - RotatedGap
+            VecEnd[BulkIndex,:] = UnitVector_Slip[BulkIndex,:]/2 .* LineLength[BulkIndex] .+ FaultCenter[BulkIndex,1:3] + RotatedGap
+            end
 
-        #     for i =1:BulkFaultCount - LoadingFaultCountPlot
-        #         ax.quiver(VecStart[i,1], VecStart[i,2], VecStart[i,3], 
-        #             UnitVector_Slip[i,1] * LineLength[i], UnitVector_Slip[i,2] * LineLength[i], UnitVector_Slip[i,3] * LineLength[i],
-        #             color="k",arrow_length_ratio=0.2)
-        #         ax.quiver(VecEnd[i,1], VecEnd[i,2], VecEnd[i,3], 
-        #             -UnitVector_Slip[i,1] * LineLength[i], -UnitVector_Slip[i,2] * LineLength[i], -UnitVector_Slip[i,3] * LineLength[i],
-        #             color="k",arrow_length_ratio=0.2)
+            for i =1:BulkFaultCount - LoadingFaultCountPlot
+                ax.quiver(VecStart[i,1], VecStart[i,2], VecStart[i,3], 
+                    UnitVector_Slip[i,1] * LineLength[i], UnitVector_Slip[i,2] * LineLength[i], UnitVector_Slip[i,3] * LineLength[i],
+                    color="k",arrow_length_ratio=0.2)
+                ax.quiver(VecEnd[i,1], VecEnd[i,2], VecEnd[i,3], 
+                    -UnitVector_Slip[i,1] * LineLength[i], -UnitVector_Slip[i,2] * LineLength[i], -UnitVector_Slip[i,3] * LineLength[i],
+                    color="k",arrow_length_ratio=0.2)
+           
+                ax.quiver(FaultCenter[i,1], FaultCenter[i,2], FaultCenter[i,3], 
+                    UnitVector_Normal[i,1] * LineLength[i], UnitVector_Normal[i,2] * LineLength[i], UnitVector_Normal[i,3] * LineLength[i],
+                    color="r",arrow_length_ratio=0.2)
 
-        #     end
-        # end
+                ax.quiver(FaultCenter[i,1], FaultCenter[i,2], FaultCenter[i,3], 
+                    UnitVector_DipSlip[i,1] * LineLength[i], UnitVector_DipSlip[i,2] * LineLength[i], UnitVector_DipSlip[i,3] * LineLength[i],
+                    color="b",arrow_length_ratio=0.2)
+                    
+                ax.quiver(FaultCenter[i,1], FaultCenter[i,2], FaultCenter[i,3], 
+                    UnitVector_StrikeSlip[i,1] * LineLength[i], UnitVector_StrikeSlip[i,2] * LineLength[i], UnitVector_StrikeSlip[i,3] * LineLength[i],
+                    color="g",arrow_length_ratio=0.2)
+
+            end
+        end
     end
 
 end
 
 ChangeBulk()
+
+include("../Plot_BulkFaultGeometry.jl")

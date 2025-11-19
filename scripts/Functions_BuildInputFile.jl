@@ -346,7 +346,8 @@ function RotVerts_UnitVectors(Input_Segment, FaultCount, Rake)
         P3_i = P3[ElemIdx,:] 
 
         UnitVector_Normal_i = cross(P2_i-P1_i, P3_i-P1_i) / norm(cross(P2_i-P1_i, P3_i-P1_i))
-        if angle(UnitVector_Normal_i[1] + UnitVector_Normal_i[2]*im) <= 0 
+
+        if UnitVector_Normal_i[2] <= 0
             VertsReversed = VertsReversed +1 
             P_temp = P1_i
             P1_i = P2_i

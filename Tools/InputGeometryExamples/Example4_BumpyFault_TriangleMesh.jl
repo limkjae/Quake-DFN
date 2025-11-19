@@ -16,7 +16,7 @@ OutputFileName="Input_BulkFaultGeometry.txt"
 
 Length = 1000
 Depth = 1000
-Amplitude = 50
+Amplitude = 500
 XElemCount = 25
 ZElemCount = 25
 TotalElemCount = XElemCount * ZElemCount * 2 + ZElemCount

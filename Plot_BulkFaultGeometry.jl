@@ -13,14 +13,15 @@ function PlotBulk()
 
     Input_Bulk=readdlm(InputBulkFileName)
     RakeLRRN = Int(Input_Bulk[2,1])
-    Input_Bulk=Input_Bulk[4:end,:]
-    Input_Bulk = Input_Bulk[sortperm(Input_Bulk[:, 17], rev=false), :] # move the loading faults to the end
+    Input_Bulk=Input_Bulk[4:end,:] 
  
     if size(Input_Bulk, 2) == 18
         println("Rectangle")
+        Input_Bulk = Input_Bulk[sortperm(Input_Bulk[:, 17], rev=false), :] # move 
         RorT = "R"
     elseif  size(Input_Bulk, 2) == 20
         println("Triangle")
+        Input_Bulk = Input_Bulk[sortperm(Input_Bulk[:, 19], rev=false), :] # move 
         RorT = "T"
     else 
         error("Input Bulk Fault Geometry file should have 18 or 20 columns")
@@ -37,8 +38,8 @@ function PlotBulk()
     ####  17.NormalStress at surface [Pa]  18. NoarmalStress Gradient [Pa] 
     ####  19. V_Const     20. Minimum Segment Length
 
-    PlotInput = Input_Bulk[:,15]; ColorMinMax=0    
-    # PlotInput = log10.(Input_Bulk[:,15]); ColorMinMax=[-20,0]    
+    PlotInput = Input_Bulk[:,10]; ColorMinMax=0    
+    ##### PlotInput = log10.(Input_Bulk[:,15]); ColorMinMax=[-20,0]    
 
     ############################### Figure Configuration ##################################
     PlotRotation=[30,-50]
@@ -57,7 +58,7 @@ function PlotBulk()
         Input_Bulk = Input_Bulk[1:end-LoadingFaultCount,:]
         PlotInput = PlotInput[1:end-LoadingFaultCount]
     end
-    FaultCount = length(Input_Bulk[:,1])
+    FaultCount = length(Input_Bulk[:,1]) 
 
     figure(1)
     clf()
@@ -133,3 +134,4 @@ function PlotBulk()
 end
 
 PlotBulk()
+

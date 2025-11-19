@@ -97,7 +97,7 @@ function CalculateFrictionStress_T(FaultCount, Input_Bulk, MinFrictionAllowed,St
         Input_Bulk[TooSmallIdx,17] .= 1e7
 
 
-    return Input_Bulk, UnitVector_Normal, UnitVector_Slip
+    return Input_Bulk, UnitVector_Normal, UnitVector_Slip, UnitVector_DipSlip, UnitVector_StrikeSlip
 end
 
 function FindMu0_AdjV_R(Input_Bulk, MaximumTargetVelocity, V_p, V_r, ConstantMu0)
