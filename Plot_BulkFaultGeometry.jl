@@ -122,11 +122,13 @@ function PlotBulk()
             ax.view_init(PlotRotation[1], PlotRotation[2])
         end
 
-        plotforcbar=  scatter([1,1],[1,1],0.1, [MinValue,MaxValue], cmap="jet")
+        plotforcbar=  scatter([P1[1,1],P1[2,1]],[P1[1,2],P1[2,2]],0.1, [MinValue,MaxValue], cmap="jet")
         colorbar(plotforcbar, pad=0.15)
         figure(1).canvas.draw()
         ax.set_aspect("equal")
-
+        xlabel("x")
+        ylabel("y")
+        zlabel("z")
     end
 
 

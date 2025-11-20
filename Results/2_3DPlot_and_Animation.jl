@@ -41,7 +41,7 @@ FaultMass= load(FileNameInput, "FaultMass")
 
 
 # figure(10); clf(); PyPlot.plot(log10.(ResultV[:,1:1:end])); xlabel("Record Step")
-PlotStep = 70
+PlotStep = 350
 
 if PlotStep > length(ResultTime)
     error("Plot step should be smaller than the maximum record ($(length(ResultTime)))")
@@ -174,8 +174,7 @@ elseif RorT == "T"
         pycall(p3c.set_edgecolor, PyAny, edge_color)
         ax.view_init(PlotRotation[1], PlotRotation[2])
     end
-
-    plotforcbar=  scatter([1,1],[1,1],0.1, [MinValue,MaxValue], cmap="jet")
+    plotforcbar=  scatter([P1[1,1],P1[2,1]],[P1[1,2],P1[2,2]],0.1, [MinValue,MaxValue], cmap="jet") 
     colorbar(plotforcbar, pad=0.15)
     figure(1).canvas.draw()
     ax.set_aspect("equal")
@@ -211,7 +210,7 @@ elseif RorT == "T"
                 ax.view_init(PlotRotation[1], PlotRotation[2])
             end
 
-            plotforcbar=  scatter([1,1],[1,1],0.1, [MinValue,MaxValue], cmap="jet")
+            plotforcbar=  scatter([P1[1,1],P1[2,1]],[P1[1,2],P1[2,2]],0.1, [MinValue,MaxValue], cmap="jet")
             colorbar(plotforcbar, pad=0.15)
             ax.set_aspect("equal")
             figure(1).canvas.draw()

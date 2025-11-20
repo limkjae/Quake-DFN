@@ -21,7 +21,7 @@ function ChangeBulk()
     PrincipalStressRatioX = 0.3
     PrincipalStressRatioY = 1.0
     PrincipalStressRatioZ = 0.5
-    StressRotationStrike = 60 # degree
+    StressRotationStrike = 80 # degree
     StressRotationDip = 0   # degree
 
     MaximumTargetVelocity = 1e-11 # if this has value, the maximum velocity is set to this value. And Mu0 will be adjusted accordingly.
@@ -55,7 +55,7 @@ function ChangeBulk()
     ##### 1: Rake	2:a	3:b	4:Dc 5:	Theta_i	6:V_i	7: Fric_i	8: Sig0	9:SigGrad	10:V_Const	########
     WhattoPlot = 7
 
-    PlotRotation=[63,-120]
+    PlotRotation=[41,-63]
     Transparent = 1 # 1 for transparent fault plot
     Edge = 1 # 0 for no element boudary 
     MinMax_Axis=0
@@ -289,10 +289,10 @@ function ChangeBulk()
 
                 pycall(p3c.set_facecolor, PyAny, face_color)
                 pycall(p3c.set_edgecolor, PyAny, edge_color)
-                ax.view_init(45, -30)
+                ax.view_init(PlotRotation[1], PlotRotation[2])
 
             end
-                plotforcbar=  scatter([1,1],[1,1],0.1, [MinValue,MaxValue], cmap="jet")
+                plotforcbar=  scatter([Input_Bulk[1,1],Input_Bulk[2,1]],[Input_Bulk[1,2],Input_Bulk[2,2]],0.1, [MinValue,MaxValue], cmap="jet")
                 
                 # plotforcbar=  scatter([1,1,1],[1,1,1],[1,1,1],0.1, [MinValue,MaxValue], cmap="jet")
 
@@ -395,7 +395,8 @@ function ChangeBulk()
                 ax.view_init(PlotRotation[1], PlotRotation[2])
 
             end
-            plotforcbar=  scatter([1,1],[1,1],0.1, [MinValue,MaxValue], cmap="hsv")
+                plotforcbar=  scatter([Input_Bulk[1,1],Input_Bulk[2,1]],[Input_Bulk[1,2],Input_Bulk[2,2]],0.1, [MinValue,MaxValue], cmap="hsv")
+            # plotforcbar=  scatter([1,1],[1,1],0.1, [MinValue,MaxValue], cmap="hsv")
             cbar  = colorbar(plotforcbar, pad=0.15)
             cbar.set_ticks([0, 90, 180,270,360])
             cbar.set_ticklabels(["Left Lateral", "Reverse", "Right Lateral", "Normal", "Left Lateral"])
