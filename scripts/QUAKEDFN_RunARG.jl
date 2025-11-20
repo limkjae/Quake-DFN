@@ -269,7 +269,7 @@ end
 
 
 RunRSFDFN3D() 
-println("Simulation finished. Press any key to close this window")
+println("Simulation finished. Press any key")
 readline()
 
 

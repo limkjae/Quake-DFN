@@ -10,6 +10,8 @@ from scipy.sparse import csr_matrix
 from scipy.sparse.csgraph import dijkstra
 
 
+
+
 """
 Input file name should be [Faultimage.jpg]. 
 
@@ -32,7 +34,7 @@ min_length_units = 1.0  # minimum segment length in units    # finecase: 2.9
 max_length_units = 3.0   # maximum segment length in units   # finecase: 3.7
 
 # Change this line to rename the file you want to analyze
-base_name = "ImageReader/Faultimage"
+base_name = "Tools/ImageReader_Rectangular/Faultimage"
 
 # Write the real file names and paths
 drawing_file = f"{base_name}.jpg"

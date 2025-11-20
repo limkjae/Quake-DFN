@@ -62,12 +62,12 @@ function DistDisc()
         using LowRankApprox
         using Clustering
         using LinearAlgebra
+        using TriangularDislocation
 
         include("../Functions_BuildInputFile.jl")
         include("../Functions_OKADA3D.jl")
         include("../Functions_Plot.jl")
         include("../Functions_Hmatrix.jl")
-        include("../Functions_TDstressHS.jl")
         
 
 

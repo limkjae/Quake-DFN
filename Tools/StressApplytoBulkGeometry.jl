@@ -18,11 +18,11 @@ function ChangeBulk()
     ##############################################################################################
     ######################################## Inputs ##############################################
     ###### build Principal Stress. Compression Positive. Only Ratio Matters! ########
-    PrincipalStressRatioX = 0.5
+    PrincipalStressRatioX = 0.3
     PrincipalStressRatioY = 1.0
-    PrincipalStressRatioZ = 0.3
-    StressRotationStrike = 150 # degree
-    StressRotationDip = -40   # degree
+    PrincipalStressRatioZ = 0.5
+    StressRotationStrike = 60 # degree
+    StressRotationDip = 0   # degree
 
     MaximumTargetVelocity = 1e-11 # if this has value, the maximum velocity is set to this value. And Mu0 will be adjusted accordingly.
     ConstantMu0 = 0.0
@@ -61,7 +61,7 @@ function ChangeBulk()
     MinMax_Axis=0
 
     StressVectorLocation = 0 # Autometically Adjusted when 0 
-    PrinpalStressLength = 100 # Autometically Adjusted when 0 
+    PrinpalStressLength = 0 # Autometically Adjusted when 0 
     V_p = 1e-5 # When target velocity is set this will be used for peak friction plot
     V_r = 1e-2 # When target velocity is set this will be used for residual friction plot
     #################################################################################
@@ -505,4 +505,4 @@ end
 
 ChangeBulk()
 
-include("../Plot_BulkFaultGeometry.jl")
+# include("../Plot_BulkFaultGeometry.jl")

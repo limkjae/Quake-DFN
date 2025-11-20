@@ -1,7 +1,7 @@
 using DelimitedFiles
 using LinearAlgebra
 
-data = readdlm("ImageReader/Faultimage_segmented_endpoints.txt", ',', Float64)
+data = readdlm("Tools/ImageReader_Rectangular/Faultimage_segmented_endpoints.txt", ',', Float64)
 
 function calculation(i, j, k, L, line)
     ##### Input parameters Homogeneous ######

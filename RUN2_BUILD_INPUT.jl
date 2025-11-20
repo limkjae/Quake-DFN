@@ -16,11 +16,11 @@ HowManyDistribution = 5
 ############################################################################
 
 
-TriAlreadyCompiled = @isdefined FunctionRead
-if TriAlreadyCompiled == false
-    include("scripts/Functions_TDstressHS.jl")
-    FunctionRead = 1
-end
+# TriAlreadyCompiled = @isdefined FunctionRead
+# if TriAlreadyCompiled == false
+#     include("scripts/Functions_TDstressHS.jl")
+#     FunctionRead = 1
+# end
 
 include("scripts/Functions_BuildInputFile.jl")
 include("scripts/Functions_OKADA3D.jl")
@@ -160,9 +160,19 @@ function DistDisc()
         HMatrixStructureFilePart = "Input_HmatrixStructure.jld2"
     end
 
+    if RorT == "T"
+        ExtraUsing = "using TriangularDislocation"
+    else
+        ExtraUsing = ""
+    end
 
 
     CodeScript = """
+
+
+        println("Distributed Discretization part $(DistributeIndex) / $(HowManyDistribution)")
+        println("Compiling... This may take a few minutes")
+        
 
         using DelimitedFiles
         using Base
@@ -172,16 +182,14 @@ function DistDisc()
         using LowRankApprox
         using Clustering
         using LinearAlgebra
+        $(ExtraUsing)
 
         include("scripts/Functions_BuildInputFile.jl")
         include("scripts/Functions_OKADA3D.jl")
         include("scripts/Functions_Plot.jl")
         include("scripts/Functions_Hmatrix.jl")
-        include("scripts/Functions_TDstressHS.jl")
         
-
-
-
+        
 
         function Discritize()
 
@@ -195,7 +203,6 @@ function DistDisc()
             ##########################       Hmatrix       #############################
             Tolerance = 1e3 #  Hmatrix compression Tolerance. pascal for 1m slip (More approximaion for higher Tolerance). 
 
-            println("Distributed Discretization part $(DistributeIndex) / $(HowManyDistribution)")
             Block_Ctr_Diam, Block_Range_Level, Input_Segment, LoadingFaultExist, LoadingFaultCount,
             MinimumElementsToCut, ArrangePoint, Admissible, ElementRange_SR, Switch_StrikeSlip_or_ReverseNormal, 
             ShearModulus, PoissonRatio, RockDensity, DropCrit, DropCritNormalStressMultiplier, MinimumNS, RorT =
@@ -221,6 +228,7 @@ function DistDisc()
             if RorT == "T"
                 P1, P2, P3, UnitVector_Normal, UnitVector_StrikeSlip, UnitVector_DipSlip, UnitVector_Slip = 
                     RotVerts_UnitVectors(Input_Segment, FaultCount, FaultRakeAngle) 
+                    
             end
 
 
