@@ -174,6 +174,7 @@ function DistDisc()
         println("Compiling... This may take a few minutes")
         
 
+        $(ExtraUsing)
         using DelimitedFiles
         using Base
         using PyPlot
@@ -182,7 +183,6 @@ function DistDisc()
         using LowRankApprox
         using Clustering
         using LinearAlgebra
-        $(ExtraUsing)
 
         include("scripts/Functions_BuildInputFile.jl")
         include("scripts/Functions_OKADA3D.jl")
