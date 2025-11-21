@@ -3,7 +3,7 @@
 
 
 ######################### Simulation Time Set #############################
-TotalStep = 5000 # Total simulation step
+TotalStep = 10000 # Total simulation step
 SaveStep = 5000 # Automatically saved every this step
 RecordStep = 10 # Simulation sampling rate !! should be a factor of SaveStep !!
 

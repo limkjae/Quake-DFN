@@ -10,8 +10,8 @@ ResultName="Result"
 
 
 MarkerSizeAdjustment = -2
-MergeTimeCriteria = 10.0
-MergeDistanceCriteria = 5000.0
+MergeTimeCriteria = 20.0
+MergeDistanceCriteria = 10000.0
 PlotRotation=[25,-30]
 DispRateCrits = 1e-2
 

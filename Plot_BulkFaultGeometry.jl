@@ -12,7 +12,6 @@ InputBulkFileName="Input_BulkFaultGeometry.txt"
 function PlotBulk()
 
     Input_Bulk=readdlm(InputBulkFileName)
-    RakeLRRN = Int(Input_Bulk[2,1])
     Input_Bulk=Input_Bulk[4:end,:] 
  
     if size(Input_Bulk, 2) == 18
@@ -28,7 +27,7 @@ function PlotBulk()
     end
     #######################################################################################
     ################################  Input Rectangle #####################################
-    ##  1.Ctr_X     2.Ctr_Y 3.Ctr_Z 4.St_L	    5.Dip_L	    6.StAng	    7.DipAng	8.LR/RN
+    ##  1.Ctr_X     2.Ctr_Y 3.Ctr_Z 4.St_L	    5.Dip_L	    6.StAng	    7.DipAng	8.LR/RN Rake
     ##  9.a         10.b	11.Dc	12.Theta_i	13. V_i     14. Friction_i 15.NormalStress at surface [Pa]  
     ##  16. NoarmalStress Gradient [Pa] 17. V_Const     18. Minimum Segment Length
 
@@ -38,15 +37,15 @@ function PlotBulk()
     ####  17.NormalStress at surface [Pa]  18. NoarmalStress Gradient [Pa] 
     ####  19. V_Const     20. Minimum Segment Length
 
-    PlotInput = Input_Bulk[:,10]; ColorMinMax=0    
-    ##### PlotInput = log10.(Input_Bulk[:,15]); ColorMinMax=[-20,0]    
+    PlotInput = Input_Bulk[:,11]; ColorMinMax=0    
+    # PlotInput = log10.(Input_Bulk[:,13]); ColorMinMax=[-20,0]    
 
     ############################### Figure Configuration ##################################
     PlotRotation=[30,-50]
     Transparent = 1 # 1 for transparent fault plot
     Edge = 1 # 0 for no element boudary 
     MinMax_Axis=0
-    LoadingFaultPlot = 0 # 1 to plot constant velocity faults. 
+    LoadingFaultPlot = 1 # 1 to plot constant velocity faults. 
     #######################################################################################
 
     if LoadingFaultPlot == 0
@@ -69,11 +68,6 @@ function PlotBulk()
             PlotRotation, MinMax_Axis, ColorMinMax, Transparent, Edge, 0)
 
             ax = subplot(projection="3d")
-            PlotTime=ResultTime[PlotStep]/60/60/24
-            if ShowDay ==1 
-            # ax.text(-5000, 10, 1300, "Day: ",size=10)
-            ax.text(DayLocation[1], DayLocation[2], DayLocation[3], PlotTime,size=10)    
-            end    
             xlabel("x")
             ylabel("y")
         plotforcbar=  scatter([1,1],[1,1],0.1, [MinValue,MaxVaule], cmap="jet")
