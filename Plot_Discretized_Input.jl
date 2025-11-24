@@ -107,11 +107,11 @@ function RunPlotInput(LoadingInputFileName)
     ####################### Which parameter want to plot? ##########################
         ColorMinMax = 0  
         # PlotInput = log10.(Fault_Theta_i); ColorMinMax = 0 
-        PlotInput = log10.(Fault_V_i); ColorMinMax = 0  
+        # PlotInput = log10.(Fault_V_i); ColorMinMax = 0  
         # PlotInput =Fault_NormalStress; ColorMinMax = 0    
         # PlotInput =KoverKC ;ColorMinMax=[0,5]
         # PlotInput =UnderResolved ;ColorMinMax=[0,1]
-        # PlotInput = Fault_a - Fault_b; ColorMinMax = 0  
+        PlotInput = Fault_a - Fault_b; ColorMinMax = 0  
         # PlotInput =  Fault_BulkIndex; ColorMinMax = 0  
         # PlotInput = Fault_Dc; ColorMinMax = 0  
         # PlotInput = FaultRakeAngle; ColorMinMax = 0  
@@ -119,8 +119,8 @@ function RunPlotInput(LoadingInputFileName)
         # PlotInput = Fault_Friction_i; ColorMinMax = 0  
 
         PlotRotation=[45,-30]
-        Edge = 1
-        Transparent = 1
+        Edge = 0
+        Transparent = 0
         MinMax_Axis=0 # automatically detect max and min 
         # MinMax_Axis=[-2000 2000; -2000 2000; -5000 0]
         # LoadingFaultCount=0

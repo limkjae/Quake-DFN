@@ -63,6 +63,10 @@ function PlotBulk()
     clf()
 
     if RorT == "R"     
+            
+        if all(x -> x < 0, Input_Bulk[:,3])
+            Input_Bulk[:,3] = -Input_Bulk[:,3]
+        end
         MaxVaule, MinValue = FaultPlot_3D_Color_General(Input_Bulk[:,1:3],
             Input_Bulk[:,4], Input_Bulk[:,5], Input_Bulk[:,6], Input_Bulk[:,7], Input_Bulk[:,8], PlotInput, 
             PlotRotation, MinMax_Axis, ColorMinMax, Transparent, Edge, 0)

@@ -240,6 +240,11 @@ function ReadBulkInput(InputBulkFileName)
     Input_Bulk=Input_Bulk[4:end,:]
     LoadingFaultCount   = 0
 
+    if all(x -> x < 0, Input_Bulk[:,3])
+        Input_Bulk[:,3] = -Input_Bulk[:,3]
+    end
+
+
     if RorT == "R"
         Input_Bulk=Input_Bulk[sortperm(Input_Bulk[:, 17]), :]  
         Input_Bulk = LRtoRake(Switch_StrikeSlip_or_ReverseNormal, Input_Bulk)# Adjust LRRN to rake angle    

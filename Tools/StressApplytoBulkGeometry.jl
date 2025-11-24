@@ -20,24 +20,24 @@ function ChangeBulk()
     ###### build Principal Stress. Compression Positive. Only Ratio Matters! ########
     PrincipalStressRatioX = 0.3
     PrincipalStressRatioY = 1.0
-    PrincipalStressRatioZ = 0.5
-    StressRotationStrike = 80 # degree
-    StressRotationDip = 90   # degree
+    PrincipalStressRatioZ = 0.4
+    StressRotationStrike = 40 # degree
+    StressRotationDip = 10   # degree
 
     MaximumTargetVelocity = 1e-11 # if this has value, the maximum velocity is set to this value. And Mu0 will be adjusted accordingly.
-    ConstantMu0 = 0.0
+    ConstantMu0 = 0.0 # if this has value, the mu0 will be set to this value. 
     ConstantTheta = 1e10 # if not zero, initial theta will be revised to this uniformly
     Fault_a = 0 # if not zero, RSF "a" value will be revised to this uniformly
     Fault_b = 0 # if not zero, RSF "b" value will be revised to this uniformly
-    Fault_Dc = 1e-3 # if not zero, RSF "Dc" value will be revised to this uniformly
+    Fault_Dc = 0 # if not zero, RSF "Dc" value will be revised to this uniformly
 
     MinFrictionAllowed = 0.05
     ShearModulus = 30e9
     PoissonRatio = 0.25
     Rock_Density = 2700.0
     MinimumNormalStressAllowed = 1e6
-    StressOnSurface_Sig1Orientation = 20e6 # pascal
-    StressGredient_Sig1Orientation = 0 # pascal/m
+    StressOnSurface_Sig1Orientation = 2e6 # pascal
+    StressGredient_Sig1Orientation = 6000 # pascal/m
 
     FaultSegmentLength = 0 # if 0, segment length will be unchanged (Only For Rectangular Grid)   
     LoadingFaultInvert = 1 # if 1, loading fault sense of slip become inverted
@@ -163,6 +163,11 @@ function ChangeBulk()
         if Fault_b != 0.0; Input_Bulk[:,10] .= Fault_b; end
         if Fault_Dc != 0.0; Input_Bulk[:,11] .= Fault_Dc; end
         if ConstantTheta != 0.0; Input_Bulk[:,12] .= ConstantTheta; end
+        if maximum(Input_Bulk[:,14]) > 1
+            println("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
+            println("!!!!!!! Maximum Friction is larger than 1. Check the input parameters. Maximum Friction: ", maximum(Input_Bulk[:,16]))
+            println("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
+        end
     elseif RorT == "T"
         Input_Bulk, UnitVector_Normal, UnitVector_Slip, UnitVector_DipSlip, UnitVector_StrikeSlip = 
                         CalculateFrictionStress_T(BulkFaultCount, Input_Bulk, MinFrictionAllowed,StressRatioXYZ, 
@@ -172,12 +177,13 @@ function ChangeBulk()
         if Fault_b != 0.0; Input_Bulk[:,12] .= Fault_b; end
         if Fault_Dc != 0.0; Input_Bulk[:,13] .= Fault_Dc; end
         if ConstantTheta != 0.0; Input_Bulk[:,14] .= ConstantTheta; end
+        if maximum(Input_Bulk[:,16]) > 1
+            println("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
+            println("!!!!!!! Maximum Friction is larger than 1. Check the input parameters. Maximum Friction: ", maximum(Input_Bulk[:,16]))
+            println("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
+        end
     end
-    if maximum(Input_Bulk[:,16]) > 1
-        println("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
-        println("!!!!!!! Maximum Friction is larger than 1. Check the input parameters. Maximum Friction: ", maximum(Input_Bulk[:,16]))
-        println("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
-    end
+
 
 
 

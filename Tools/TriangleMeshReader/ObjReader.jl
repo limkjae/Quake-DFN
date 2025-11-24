@@ -8,7 +8,7 @@ using JLD2
 
 pygui(true)
 
-FileName = "NormalFaults.obj"
+FileName = "TripleJunction.obj"
 
 
 InputOBJFileName="Tools/TriangleMeshReader/$(FileName)"
@@ -27,7 +27,7 @@ MinNormalStress = 2e6
 Rake = 0
 a = 0.005
 b = 0.01
-Dc = 3e-4
+Dc = 1e-3
 Thata_i = 1e5
 V_i = 1e-15
 Friction_i = 0.6

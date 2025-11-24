@@ -16,7 +16,7 @@ function calculation(i, j, k, L, line)
     SigGrad = 0
     V_Const = 0
     MaxLeng = 1000
-    FaultThickness = 5000
+    FaultThickness = 10000
     #########################################
 
     Ctr_X = (i + k) / 2 * 1000

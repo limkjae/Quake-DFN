@@ -58,7 +58,7 @@ function ParameterAdj(LoadingFaultCount, FaultMass, Fault_a, Fault_b, Fault_Dc,
     # end
     
     # for i=1:FaultCount
-    #     if -1500 > FaultCenter[i,3] || FaultCenter[i,3] > -100
+    #     if 500 > FaultCenter[i,3] || FaultCenter[i,3] > 3000
     #         Fault_a[i] = 0.01
     #     end
     # end

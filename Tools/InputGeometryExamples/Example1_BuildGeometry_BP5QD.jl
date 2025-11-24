@@ -280,7 +280,6 @@ function BuildBulk()
 
     # InputFile=[Unstable_Faults;Stable_Faults;Loading_Faults]
     InputFile=[Unstable_Faults; Transition_Faults; Stable_Faults; Loading_Faults]
-
     # FaultPlot_3D(InputFile[:,1:3],InputFile[:,4], InputFile[:,5], InputFile[:,6], InputFile[:,7], InputFile[:,8], InputFile[:,9]-InputFile[:,10])
 
     # FaultPlot_3D(Unstable_Faults[:,1:3],Unstable_Faults[:,4], Unstable_Faults[:,5], Unstable_Faults[:,6], Unstable_Faults[:,7], Unstable_Faults[:,8])
