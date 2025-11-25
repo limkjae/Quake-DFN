@@ -58,8 +58,10 @@ function ParameterAdj(LoadingFaultCount, FaultMass, Fault_a, Fault_b, Fault_Dc,
     # end
     
     # for i=1:FaultCount
-    #     if 500 > FaultCenter[i,3] || FaultCenter[i,3] > 3000
+    #     if FaultCenter[i,3] > 10000
     #         Fault_a[i] = 0.01
+    #         Fault_V_i[i] = 1e-9
+    #         Fault_Theta_i[i] = Fault_Dc[i] / Fault_V_i[i]
     #     end
     # end
 
