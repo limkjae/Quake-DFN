@@ -8,7 +8,7 @@ New Feature:
 - Time Step Optimization
 - User Interface Change
 
-User guide is in doc foler
+User guide is in the [doc] folder
 
 Installation Guide:  To be updated
 
