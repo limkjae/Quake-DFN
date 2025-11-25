@@ -24,6 +24,7 @@ Repeats = 5
 FaultCount= load(LoadingInputFileName, "FaultCount")
 Ranks_Shear= load(LoadingInputFileName, "Ranks_Shear") # figure(11); plot(Ranks)
 Ranks_Normal= load(LoadingInputFileName, "Ranks_Normal") # figure(11); plot(Ranks)
+Admissible= load(LoadingInputFileName, "Admissible") # figure(11); plot(Ranks)
 ElementRange_SR = load(LoadingInputFileName, "ElementRange_SR")
 ShearStiffness_H = load(LoadingInputFileName, "ShearStiffness_H")
 NormalStiffness_H = load(LoadingInputFileName, "NormalStiffness_H")
@@ -58,14 +59,19 @@ function hmat_speed_test()
 
     for Tindex in eachindex(ThreadCountAll)
         ThreadCount = ThreadCountAll[Tindex]
-        BlockCount = length(Ranks_Shear)
-        println("Shear Stiffness")
-        Par_ElementDivision_Shear = ParallelOptimization(ShearStiffness_H, ElementRange_SR, 
-                                    FaultCount, BlockCount, ThreadCount, MaxRatioAllowed, MaxIteration)
-        println("Normal Stiffness")
-        Par_ElementDivision_Normal = ParallelOptimization(NormalStiffness_H, ElementRange_SR, 
-                                    FaultCount, BlockCount, ThreadCount, MaxRatioAllowed, MaxIteration)
-        
+        # BlockCount = length(Ranks_Shear)
+        # println("Shear Stiffness")
+        # Par_ElementDivision_Shear = ParallelOptimization(ShearStiffness_H, ElementRange_SR, 
+        #                             FaultCount, BlockCount, ThreadCount, MaxRatioAllowed, MaxIteration)
+        # println("Normal Stiffness")
+        # Par_ElementDivision_Normal = ParallelOptimization(NormalStiffness_H, ElementRange_SR, 
+        #                             FaultCount, BlockCount, ThreadCount, MaxRatioAllowed, MaxIteration)
+                
+
+        Par_ElementDivision_Shear = ParallelOptimization2(ShearStiffness_H,  
+                                    BlockCount, ThreadCount, Ranks_Shear, Admissible)
+        Par_ElementDivision_Normal = Par_ElementDivision_Shear
+
         SoluationHMatShear = 0.0
         SoluationHMatNormal = 0.0
         for Repindex = 1: Repeats

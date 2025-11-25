@@ -41,7 +41,7 @@ FaultMass= load(FileNameInput, "FaultMass")
 
 
 # figure(10); clf(); PyPlot.plot(log10.(ResultV[:,1:1:end])); xlabel("Record Step")
-PlotStep = 300
+PlotStep = 600
 
 if PlotStep > length(ResultTime)
     error("Plot step should be smaller than the maximum record ($(length(ResultTime)))")

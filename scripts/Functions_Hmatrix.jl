@@ -423,6 +423,39 @@ function  ParallelOptimization(ShearStiffness_H, ElementRange_SR,
 end
 
 
+function  ParallelOptimization2(Stiffness_H, BlockCount, ThreadCount, Ranks, Admissible)
+    println("Parallel Calculation Optimizing")
+    
+    Complexity = zeros(BlockCount)
+    for BlockIdx=1:BlockCount
+        if Admissible[BlockIdx] > 0
+            if Ranks[BlockIdx] == 0; Ranks[BlockIdx] = 1; end
+            Complexity[BlockIdx] = (size(Stiffness_H[BlockIdx])[1] + size(Stiffness_H[BlockIdx])[2]) * Ranks[BlockIdx]
+        else
+            Complexity[BlockIdx] = (size(Stiffness_H[BlockIdx])[1] * size(Stiffness_H[BlockIdx])[2]) 
+        end        
+    end
+
+    CumSum = cumsum(Complexity) .- 1e5
+    Division = CumSum[end] / ThreadCount
+    Par_ElementDivision = [0]
+    CurrentDiv = 1
+    for BlockIdx=1:BlockCount
+
+        if CumSum[BlockIdx] > Division * CurrentDiv
+            Par_ElementDivision = [Par_ElementDivision; BlockIdx]
+            CurrentDiv += 1
+        end 
+
+    end
+
+    Par_ElementDivision = [Par_ElementDivision; BlockCount]
+
+
+    return Par_ElementDivision
+
+end
+
 function StiffnessTransitionToLoading(ShearStiffness_H, ElementRange_SR, FaultCount)
     TotalBlock = size(ElementRange_SR, 1)
     K_Self = zeros(FaultCount)

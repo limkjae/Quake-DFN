@@ -5,7 +5,7 @@ function main_H(ShearModulus, FaultCount, LoadingFaultCount, Mass, NormalStiffne
     TotalStep, RecordStep, SwitchV, DtCut, RuptureDt, MaximumDt, SaveResultFileName,RockDensity,
     FaultCenter,FaultLengthStrike, FaultLengthDip, FaultStrikeAngle, FaultDipAngle, FaultRakeAngle, SaveStep,
     MinimumNormalStress, Alpha_Evo,
-    Ranks_Shear, Ranks_Normal, ElementRange_SR, NormalStiffness_H, ShearStiffness_H, ThreadCount, EvolutionDR)  
+    Ranks_Shear, Ranks_Normal, ElementRange_SR, NormalStiffness_H, ShearStiffness_H, ThreadCount, EvolutionDR, Admissible)  
     
     ExternalStressExist=0;
 
@@ -19,12 +19,16 @@ function main_H(ShearModulus, FaultCount, LoadingFaultCount, Mass, NormalStiffne
     MaxIteration = 50
 
     BlockCount = length(Ranks_Shear)
-    println("Shear Stiffness")
-    Par_ElementDivision_Shear = ParallelOptimization(ShearStiffness_H, ElementRange_SR, 
-                                FaultCount, BlockCount, ThreadCount, MaxRatioAllowed, MaxIteration)
-    println("Normal Stiffness")
-    Par_ElementDivision_Normal = ParallelOptimization(NormalStiffness_H, ElementRange_SR, 
-                                FaultCount, BlockCount, ThreadCount, MaxRatioAllowed, MaxIteration)
+    # println("Shear Stiffness")
+    # Par_ElementDivision_Shear = ParallelOptimization(ShearStiffness_H, ElementRange_SR, 
+    #                             FaultCount, BlockCount, ThreadCount, MaxRatioAllowed, MaxIteration)
+    # println("Normal Stiffness")
+    # Par_ElementDivision_Normal = ParallelOptimization(NormalStiffness_H, ElementRange_SR, 
+    #                             FaultCount, BlockCount, ThreadCount, MaxRatioAllowed, MaxIteration)
+
+    Par_ElementDivision_Shear = ParallelOptimization2(ShearStiffness_H,  
+                                BlockCount, ThreadCount, Ranks_Shear, Admissible)
+    Par_ElementDivision_Normal = Par_ElementDivision_Shear
 
     LoadingStiffnessH, K_Self= StiffnessTransitionToLoading(ShearStiffness_H, ElementRange_SR, FaultCount)
     

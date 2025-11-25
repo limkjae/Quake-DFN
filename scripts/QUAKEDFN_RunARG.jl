@@ -101,6 +101,7 @@ function RunRSFDFN3D()
     LoadingFaultCount= load(LoadingInputFileName, "LoadingFaultCount")
     MinimumNormalStress = load(LoadingInputFileName, "MinimumNormalStress")
     NormalStiffnessZero = load(LoadingInputFileName, "NormalStiffnessZero")
+
         
     if Hmatrix == true
         Ranks_Shear= load(LoadingInputFileName, "Ranks_Shear") # figure(11); plot(Ranks)
@@ -250,7 +251,7 @@ function RunRSFDFN3D()
         TotalStep, RecordStep, SwitchV, DtCut, RuptureDt, MaximumDt, SaveResultFileName,RockDensity,
         FaultCenter,FaultLengthStrike, FaultLengthDip, FaultStrikeAngle, FaultDipAngle, FaultRakeAngle, SaveStep,
         MinimumNormalStress, Alpha_Evo,
-        Ranks_Shear, Ranks_Normal, ElementRange_SR, NormalStiffness_H, ShearStiffness_H, ThreadCount, EvolutionDR)    
+        Ranks_Shear, Ranks_Normal, ElementRange_SR, NormalStiffness_H, ShearStiffness_H, ThreadCount, EvolutionDR, Admissible)    
     else
         main(StiffnessMatrixShear, StiffnessMatrixNormal, NormalStiffnessZero,
         ShearModulus, FaultCount, LoadingFaultCount, FaultMass,
