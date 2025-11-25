@@ -8,6 +8,8 @@ New Feature:
 - Time Step Optimization
 - User Interface Change
 
+User guide is in doc foler
+
 Installation Guide:  To be updated
 
 Example Simulations: To be updated
