@@ -4,7 +4,7 @@ using JLD2
 using LinearAlgebra
 using Statistics
 pygui(true)
-include("Functions_Plot.jl")
+include("../scripts/Functions_Plot.jl")
 
 ResultName="Result"
 FileName="Results/" * ResultName * ".jld2"
@@ -15,7 +15,7 @@ ResultV[ResultV.<=0] .= 1e-100
 
 
 
-figure(2)
+figure(1)
 clf()
 PyPlot.plot(ResultTime/60/60/24, log10.(ResultV[:,:]), linewidth=1)
 xlabel("Day")

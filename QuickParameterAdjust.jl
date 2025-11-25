@@ -20,46 +20,9 @@ function ParameterAdj(LoadingFaultCount, FaultMass, Fault_a, Fault_b, Fault_Dc,
     FaultIndex_Adjusted=0
 
 
-    ######################################################################################################
-    ############################    Alleviate the fault tip stress change ################################
 
-    # ShearAllow = 1.2
-    # NormalAllow = 1.2
-    # FaultCount=length(FaultMass)
-    # for i=1:FaultCount-LoadingFaultCount
-    #     for j=1:FaultCount-LoadingFaultCount
-    #             if i!=j
-    #             StressTransferRatio = abs((StiffnessMatrixShear[j,i]- 0.6 * StiffnessMatrixNormal[j,i])/StiffnessMatrixShear[i,i])
-    #             StressTransferRatioShear = abs((StiffnessMatrixShear[j,i])/StiffnessMatrixShear[i,i])
-    #             StressTransferRatioNormal = abs((StiffnessMatrixNormal[j,i])/StiffnessMatrixShear[i,i])
 
-    #                 if StressTransferRatioShear>ShearAllow
-    #                     Count=Count+1
-    #                     StiffnessMatrixShear[j,i]=StiffnessMatrixShear[i,i]*ShearAllow
-    #                     FaultIndex_Adjusted=[FaultIndex_Adjusted;i]
-    #                 end
-                    
-    #                 if StressTransferRatioNormal>NormalAllow
-    #                     Count=Count+1
-    #                     StiffnessMatrixNormal[j,i]=StiffnessMatrixShear[i,i]*NormalAllow
-    #                     FaultIndex_Adjusted=[FaultIndex_Adjusted;i]
-    #                 end
-    #         end
-    #     end
-    # end
-    # FaultIndex_Adjusted=FaultIndex_Adjusted[2:end]
-    # FaultIndex_Adjusted=unique(FaultIndex_Adjusted)
-    # println(FaultIndex_Adjusted)
-
-    if FaultIndex_Adjusted == 0
-        println("Adjusted Stiffness Count: 0")
-    else
-        println("Adjusted Stiffness Count: ", length(FaultIndex_Adjusted))
-    end
-
-    ##########^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^#############
-    ######################################################################################################
-
+    
 
     ######################################################################################################
     ##########################  Calculation of initial state from stress orientation #####################
@@ -95,20 +58,21 @@ function ParameterAdj(LoadingFaultCount, FaultMass, Fault_a, Fault_b, Fault_Dc,
     # end
     
     # for i=1:FaultCount
-    #     if 5000 > FaultCenter[i,3] || FaultCenter[i,3] > 7000
+    #     if 500 > FaultCenter[i,3] || FaultCenter[i,3] > 3000
     #         Fault_a[i] = 0.01
     #     end
     # end
 
-    # Fault_Theta_i .= 1.5027018579405773e9
-    # Fault_Dc .= 1e-4
+    # Fault_Theta_i .= 0.9e10
+    # Fault_Dc .= 1e-3
     # Fault_a .= 0.05
     # Fault_b .= 0.003
-    # Fault_NormalStress .= 30e6
-    # Fault_V_i .= 1e-13
+    # Fault_NormalStress .= 10e6
+    # Fault_V_i .= Fault_V_i * 10
     # Fault_Theta_i .= 1e10
     # MinimumNormalStress= 1e6
 
+    # FaultMass .= 1e5
     # FaultMass .= 1e6
     ###^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^###
     #####################################################################################################
