@@ -6,6 +6,8 @@ using Printf
 using SpecialFunctions
 using PyPlot
 using PyCall
+using LowRankApprox
+using Statistics
 pygui(true)
 
 
