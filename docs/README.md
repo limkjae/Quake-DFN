@@ -10,9 +10,9 @@ New Feature:
 
 User guide is in the [docs] folder
 
-Installation Guide:  To be updated
+[Installation Guide](https://youtu.be/oMkgM__4K-4)
 
-Example Simulations: To be updated
+[Example Simulations](https://youtu.be/gi4_OZlszHM) 
 
 Complex geometry with triangular Meshing: To be updated
 
