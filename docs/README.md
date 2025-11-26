@@ -14,7 +14,7 @@ User guide is in the docs folder
 
 [Example Simulations](https://youtu.be/gi4_OZlszHM) 
 
-[Complex geometry with triangular Meshing ](https://www.youtube.com/watch?v=9cPS7aUj0WY) - Video recorded with older version 
+[Earthquake Simulation with triangular Meshing using freeCAD](https://www.youtube.com/watch?v=9cPS7aUj0WY) - Video recorded with older version 
 
 [Cuboid Reservoir Coupling (Qian Shi)](https://youtu.be/Cd3gwvFoBXE?si=bB0jWEquS51M01SJ&t=1288) - Video recorded with older version 
 
