@@ -12,21 +12,30 @@ function main(StiffnessMatrixShear, StiffnessMatrixNormal, NormalStiffnessZero,
 
     ############# if External Stress Exist, Load the external Stress ##############
     ExternalStressExist=0
-    if  isfile("Input_ExternalStressChange.jld2")        
-        ExternalStress_Normal = load("Input_ExternalStressChange.jld2", "ExternalStress_Normal")
-        ExternalStress_Shear = load("Input_ExternalStressChange.jld2", "ExternalStress_Shear")
-        ExternalStress_Pressure = load("Input_ExternalStressChange.jld2", "Pressure")
-        ExternalStress_TimeArray = load("Input_ExternalStressChange.jld2", "ExternalStress_TimeArray")
+    
+    if Sys.isapple()
+        ExtStressFile = "$(@__DIR__)/../Input_ExternalStressChange.jld2"
+    else
+        ExtStressFile="Input_ExternalStressChange.jld2"
+    end
+
+    if  isfile(ExtStressFile)        
+        ExternalStress_Normal = load(ExtStressFile, "ExternalStress_Normal")
+        ExternalStress_Shear = load(ExtStressFile, "ExternalStress_Shear")
+        ExternalStress_Pressure = load(ExtStressFile, "Pressure")
+        ExternalStress_TimeArray = load(ExtStressFile, "ExternalStress_TimeArray")
+        # "ExternalStress_Normal", ExternalStress_Normal, "ExternalStress_Shear", ExternalStress_Shear, 
+        # "ExternalStress_TimeArray", ExternalStress_TimeArray)
         if size(ExternalStress_Normal)[2] == FaultCount
             println("External Stress Change Will be Applied")    
-            ExternalStressExist=1
+            ExternalStressExist=1;
         else
             println("External Stress Change Dosen't match the fault Count. Will not be applied")    
-        end            
+        end
+            
     else
         println("No External Stress Change Detected")
     end
-    ###############################################################################
 
 
     ########################### Initialize ############################
