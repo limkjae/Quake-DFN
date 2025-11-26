@@ -20,9 +20,9 @@ function ChangeBulk()
     ###### build Principal Stress. Compression Positive. Only Ratio Matters! ########
     PrincipalStressRatioX = 0.3
     PrincipalStressRatioY = 1.0
-    PrincipalStressRatioZ = 0.4
-    StressRotationStrike = 40 # degree
-    StressRotationDip = 10   # degree
+    PrincipalStressRatioZ = 0.6
+    StressRotationStrike = -5 # degree
+    StressRotationDip = 0   # degree
 
     MaximumTargetVelocity = 1e-11 # if this has value, the maximum velocity is set to this value. And Mu0 will be adjusted accordingly.
     ConstantMu0 = 0.0 # if this has value, the mu0 will be set to this value. 
@@ -36,8 +36,8 @@ function ChangeBulk()
     PoissonRatio = 0.25
     Rock_Density = 2700.0
     MinimumNormalStressAllowed = 1e6
-    StressOnSurface_Sig1Orientation = 2e6 # pascal
-    StressGredient_Sig1Orientation = 6000 # pascal/m
+    StressOnSurface_Sig1Orientation = 20e6 # pascal
+    StressGredient_Sig1Orientation = 0 # pascal/m
 
     FaultSegmentLength = 0 # if 0, segment length will be unchanged (Only For Rectangular Grid)   
     LoadingFaultInvert = 1 # if 1, loading fault sense of slip become inverted

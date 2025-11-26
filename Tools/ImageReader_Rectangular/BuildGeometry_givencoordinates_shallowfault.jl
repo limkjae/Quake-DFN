@@ -6,9 +6,9 @@ data = readdlm("Tools/ImageReader_Rectangular/Faultimage_segmented_endpoints.txt
 function calculation(i, j, k, L, line)
     ##### Input parameters Homogeneous ######
     DipAng = 90
-    a = 0.002
+    a = 0.003
     b = 0.006
-    Dc = 1e-4
+    Dc = 1e-3
     Theta_i = 1e10
     V_i = 1e-15
     Fric_i = 0.6
