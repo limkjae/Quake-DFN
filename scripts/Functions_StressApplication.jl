@@ -64,12 +64,12 @@ function CalculateFrictionStress_T(FaultCount, Input_Bulk, MinFrictionAllowed,St
         DotProduct = sum(UnitVector_Normal .* TractionVector, dims=2)
         Traction_Normal = DotProduct .* UnitVector_Normal
         Traction_Shear = TractionVector - Traction_Normal
-        UnitVector_Horizontal = zeros(FaultCount,3)
+        Vector_Horizontal = zeros(FaultCount,3)
         for ElemIdx = 1:FaultCount
-            UnitVector_Horizontal[ElemIdx,:] = cross(UnitVector_Normal[ElemIdx,:], [0, 0, 1])
+            Vector_Horizontal[ElemIdx,:] = cross(UnitVector_Normal[ElemIdx,:], [0, 0, 1])
 
         end
-        RakeAngle = acosd.(sum(Traction_Shear .* UnitVector_Horizontal, dims=2) ./ (norm.(eachrow(Traction_Shear)) .* norm.(eachrow(UnitVector_Horizontal)))) .+ 180
+        RakeAngle = acosd.(sum(Traction_Shear .* Vector_Horizontal, dims=2) ./ (norm.(eachrow(Traction_Shear)) .* norm.(eachrow(Vector_Horizontal)))) .+ 180
         Friction = norm.(eachrow(Traction_Shear)) ./ norm.(eachrow(Traction_Normal)) 
 
         if LoadingFaultCount > 0  && LoadingFaultInvert == 1
@@ -94,11 +94,86 @@ function CalculateFrictionStress_T(FaultCount, Input_Bulk, MinFrictionAllowed,St
         Input_Bulk[:,17] = norm.(eachrow(Traction_Normal)) .* StressOnSurface_Sig1Orientation
         Input_Bulk[:,18] = norm.(eachrow(Traction_Normal)) .* StressGredient_Sig1Orientation 
         TooSmallIdx = Input_Bulk[:,17] .< MinimumNormalStressAllowed
-        Input_Bulk[TooSmallIdx,17] .= 1e7
+        Input_Bulk[TooSmallIdx,17] .= MinimumNormalStressAllowed
 
 
     return Input_Bulk, UnitVector_Normal, UnitVector_Slip, UnitVector_DipSlip, UnitVector_StrikeSlip
 end
+
+
+function CalculateFrictionStressHetero_T(Input_Bulk, MinFrictionAllowed,PrincipalStressRatioXYZ, 
+                StressOnSurface_Sig1Orientation, StressGredient_Sig1Orientation, MinimumNormalStressAllowed,
+                LoadingFaultCount, StressLocation, StressRotationStrike, StressRotationDip)
+    
+
+    
+    FaultRakeAngle = Input_Bulk[:,10] # this will be over written after stresscalculation
+    FaultCount = length(Input_Bulk[:,1])
+    P1, P2, P3, UnitVector_Normal, UnitVector_StrikeSlip, UnitVector_DipSlip, UnitVector_Slip = 
+        RotVerts_UnitVectors(Input_Bulk, FaultCount, FaultRakeAngle) ##### Here, Rake angle and Slip vector will be recalculated
+    
+    FaultCenter = (P1+P2+P3)/3
+    for ElemIdx = 1:FaultCount
+
+        UnitVector_Normal_i = UnitVector_Normal[ElemIdx,:]
+        ReceiverPoint = FaultCenter[ElemIdx,:]
+        
+        ReceiverPrincipalStressRatioXYZ = zeros(3)
+        ReceiverPrincipalStressRatioXYZ[1] = InverseDistWeighting(StressLocation, PrincipalStressRatioXYZ[:,1], ReceiverPoint, 1.0)
+        ReceiverPrincipalStressRatioXYZ[2] = InverseDistWeighting(StressLocation, PrincipalStressRatioXYZ[:,2], ReceiverPoint, 1.0)
+        ReceiverPrincipalStressRatioXYZ[3] = InverseDistWeighting(StressLocation, PrincipalStressRatioXYZ[:,3], ReceiverPoint, 1.0)
+        ReceiverStressRotationStrike =  InverseDistWeighting(StressLocation, StressRotationStrike, ReceiverPoint, 1.0)
+        ReceiverStressRotationDip =  InverseDistWeighting(StressLocation, StressRotationDip, ReceiverPoint, 1.0)
+        PrincipalStressRatio = [-ReceiverPrincipalStressRatioXYZ[1] 0 0 
+                                0 -ReceiverPrincipalStressRatioXYZ[2] 0
+                                0 0 -ReceiverPrincipalStressRatioXYZ[3]]
+
+        RotationMat_Strike =
+        [cosd(ReceiverStressRotationStrike) -sind(ReceiverStressRotationStrike)  0
+        sind(ReceiverStressRotationStrike) cosd(ReceiverStressRotationStrike) 0
+        0  0  1]
+
+        RotationMat_Dip =
+        [1 0 0
+        0 cosd(ReceiverStressRotationDip) -sind(ReceiverStressRotationDip) 
+        0 sind(ReceiverStressRotationDip) cosd(ReceiverStressRotationDip)]
+
+        RotationMat =  RotationMat_Strike * RotationMat_Dip
+        StressRatioXYZ = RotationMat * PrincipalStressRatio * RotationMat'  
+
+        
+        TractionVector_i = StressRatioXYZ * UnitVector_Normal_i
+        DotProduct_i = dot(UnitVector_Normal_i, TractionVector_i)            
+        Traction_Normal_i = DotProduct_i .* UnitVector_Normal_i
+        Traction_Shear_i = TractionVector_i - Traction_Normal_i
+        Vector_Horizontal_i = cross(UnitVector_Normal_i, [0, 0, 1])
+        RakeAngle = acosd(dot(Traction_Shear_i , Vector_Horizontal_i) / 
+                    (norm(Traction_Shear_i ) * norm(Vector_Horizontal_i ))) + 180
+        Friction = norm(Traction_Shear_i ) / norm(Traction_Normal_i ) 
+
+        if Traction_Shear_i[3] < 0; RakeAngle = 360 - RakeAngle ; end
+        if RakeAngle > 360; RakeAngle -= 180; end
+        
+        UnitVector_StrikeSlip[ElemIdx,:] = cross(UnitVector_Normal[ElemIdx,:], [0, 0, 1]) / 
+                                            norm(cross(UnitVector_Normal[ElemIdx,:], [0, 0, 1]) )
+        UnitVector_DipSlip[ElemIdx,:] = cross(UnitVector_StrikeSlip[ElemIdx,:], UnitVector_Normal[ElemIdx,:]) /
+                                            norm(cross(UnitVector_StrikeSlip[ElemIdx,:], UnitVector_Normal[ElemIdx,:]))
+        UnitVector_Slip[ElemIdx,:] = UnitVector_StrikeSlip[ElemIdx,:] * cosd(RakeAngle) + 
+                                    UnitVector_DipSlip[ElemIdx,:] * sind(RakeAngle)
+
+
+        Input_Bulk[ElemIdx, 10] =  RakeAngle
+        Input_Bulk[ElemIdx, 16] =  Friction
+
+        Input_Bulk[ElemIdx,17] = norm(Traction_Normal_i) * StressOnSurface_Sig1Orientation
+        Input_Bulk[ElemIdx,18] = norm(Traction_Normal_i) * StressGredient_Sig1Orientation 
+        if Input_Bulk[ElemIdx,17] < MinimumNormalStressAllowed; Input_Bulk[ElemIdx,17] = MinimumNormalStressAllowed; end
+
+    end
+
+    return Input_Bulk, UnitVector_Normal, UnitVector_Slip, UnitVector_DipSlip, UnitVector_StrikeSlip
+end
+
 
 function FindMu0_AdjV_R(Input_Bulk, MaximumTargetVelocity, V_p, V_r, ConstantMu0)
         MaxFric, MaxF_idx = findmax(Input_Bulk[:,14])
@@ -159,3 +234,80 @@ function FindMu0_AdjV_T(Input_Bulk, MaximumTargetVelocity, V_p, V_r, ConstantMu0
         ResidualFriction = Mu0 + (Fault_a[MaxF_idx] - Fault_b[MaxF_idx]) * log.(V_r / 1e-9 )
     return Input_Bulk, Mu0, PeakFriction, ResidualFriction
 end
+
+
+
+function InverseDistWeighting(SourcePoint, SourceValue, ReceiverPoint, pValue)
+    SourceCount = length(SourcePoint[:,1])
+    Numerator = 0.0
+    Denominator = 0.0
+    for i=1:SourceCount
+        DistanceInv = 1/ (norm(SourcePoint[i,:] - ReceiverPoint))^pValue
+        if DistanceInv > 1e20
+            DistanceInv = 1e20
+        end
+        Numerator = Numerator+ DistanceInv * SourceValue[i]
+        Denominator = Denominator + DistanceInv
+    end
+    Value = Numerator/ Denominator
+    return Value
+
+end
+
+
+function PlotPrincipalStresses(StressLocation, PrincipalStressRatioXYZ, StressRotationStrike, StressRotationDip, ax)
+
+    StressCount = length(StressLocation[:,1])
+    Linewidth = 2
+    Arrow_length_ratio = 0.01
+    PrinpalStressLength = 1e5
+    for StressIdx=1:StressCount        
+        UnlotatedVectorX =[PrincipalStressRatioXYZ[StressIdx,1], 0.0, 0.0]
+        UnlotatedVectorY =[0.0, PrincipalStressRatioXYZ[StressIdx,2], 0.0]
+        UnlotatedVectorZ =[0.0, 0.0, PrincipalStressRatioXYZ[StressIdx,3]]
+
+        RotationMat_Strike=
+        [cosd(StressRotationStrike[StressIdx]) -sind(StressRotationStrike[StressIdx])  0
+        sind(StressRotationStrike[StressIdx]) cosd(StressRotationStrike[StressIdx]) 0
+        0  0  1];
+
+        RotationMat_Dip=
+        [1 0 0
+        0 cosd(StressRotationDip[StressIdx]) -sind(StressRotationDip[StressIdx])
+        0 sind(StressRotationDip[StressIdx]) cosd(StressRotationDip[StressIdx])]
+
+
+        RotatedStessX = RotationMat_Strike * RotationMat_Dip  * UnlotatedVectorX * PrinpalStressLength
+        RotatedStessY = RotationMat_Strike * RotationMat_Dip  * UnlotatedVectorY * PrinpalStressLength
+        RotatedStessZ = RotationMat_Strike * RotationMat_Dip  * UnlotatedVectorZ * PrinpalStressLength
+
+
+        ax.quiver(StressLocation[StressIdx,1] + RotatedStessX[1], StressLocation[StressIdx,2]  + RotatedStessX[2], StressLocation[StressIdx,3] + RotatedStessX[3], 
+        -RotatedStessX[1] , -RotatedStessX[2] , -RotatedStessX[3] ,
+        color="k",arrow_length_ratio=Arrow_length_ratio, linewidth =Linewidth)
+
+        ax.quiver(StressLocation[StressIdx,1] + RotatedStessY[1], StressLocation[StressIdx,2] + RotatedStessY[2],StressLocation[StressIdx,3]+ RotatedStessY[3], 
+        -RotatedStessY[1] , -RotatedStessY[2] , -RotatedStessY[3] ,
+        color="k",arrow_length_ratio=Arrow_length_ratio, linewidth =Linewidth)
+
+        ax.quiver(StressLocation[StressIdx,1] + RotatedStessZ[1], StressLocation[StressIdx,2] + RotatedStessZ[2],StressLocation[StressIdx,3]+ RotatedStessZ[3], 
+        -RotatedStessZ[1] , -RotatedStessZ[2] , -RotatedStessZ[3] ,
+        color="k",arrow_length_ratio=Arrow_length_ratio, linewidth =Linewidth)
+
+        ax.quiver(StressLocation[StressIdx,1] - RotatedStessX[1], StressLocation[StressIdx,2] - RotatedStessX[2], StressLocation[StressIdx,3] - RotatedStessX[3], 
+        RotatedStessX[1] , RotatedStessX[2] , RotatedStessX[3] ,
+        color="k",arrow_length_ratio=Arrow_length_ratio, linewidth =Linewidth)
+
+        ax.quiver(StressLocation[StressIdx,1] - RotatedStessY[1], StressLocation[StressIdx,2] - RotatedStessY[2],StressLocation[StressIdx,3]- RotatedStessY[3], 
+        RotatedStessY[1] , RotatedStessY[2] , RotatedStessY[3] ,
+        color="k",arrow_length_ratio=Arrow_length_ratio, linewidth =Linewidth)
+
+        ax.quiver(StressLocation[StressIdx,1] - RotatedStessZ[1], StressLocation[StressIdx,2] - RotatedStessZ[2],StressLocation[StressIdx,3] - RotatedStessZ[3], 
+        RotatedStessZ[1] , RotatedStessZ[2] , RotatedStessZ[3] ,
+        color="k",arrow_length_ratio=Arrow_length_ratio, linewidth =Linewidth)
+
+        ax.set_aspect("equal")
+    end
+end
+
+
