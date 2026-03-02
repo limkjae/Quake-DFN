@@ -55,6 +55,8 @@ function RunPlotInput(LoadingInputFileName)
         P2 = load(LoadingInputFileName, "P2")
         P3 = load(LoadingInputFileName, "P3")
     end
+    MinCenterX = minimum(FaultCenter[:,1])
+    MinCenterY = minimum(FaultCenter[:,2])
     ########^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^########
     ################################################################################
 
@@ -148,7 +150,7 @@ function RunPlotInput(LoadingInputFileName)
             PlotRotation, MinMax_Axis, ColorMinMax, Transparent, Edge, LoadingFaultCount)
         
         # figure(1)
-        plotforcbar=  scatter([1,1],[1,1],0.1, [MinValue,MaxVaule], cmap="jet")
+        plotforcbar=  scatter([MinCenterX,MinCenterX],[MinCenterY,MinCenterY],0.1, [MinValue,MaxVaule], cmap="jet")
         colorbar(plotforcbar, pad=0.15)
         figure(1).canvas.draw()
         xlabel("x")
@@ -191,7 +193,7 @@ function RunPlotInput(LoadingInputFileName)
             ax.view_init(PlotRotation[1], PlotRotation[2])
         end
 
-        plotforcbar=  scatter([1,1],[1,1],0.1, [MinValue,MaxValue], cmap="jet")
+        plotforcbar=  scatter([MinCenterX,MinCenterX],[MinCenterY,MinCenterY],0.1, [MinValue,MaxValue], cmap="jet")
         colorbar(plotforcbar, pad=0.15)
         figure(1).canvas.draw()
         ax.set_aspect("equal")
