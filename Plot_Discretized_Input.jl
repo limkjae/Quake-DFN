@@ -49,6 +49,12 @@ function RunPlotInput(LoadingInputFileName)
     # FaultMass= load(LoadingInputFileName, "FaultMass")
     FaultMass = ones(FaultCount)
     MinimumNormalStress = load(LoadingInputFileName, "MinimumNormalStress")
+
+    if RorT == "T"
+        P1 = load(LoadingInputFileName, "P1")
+        P2 = load(LoadingInputFileName, "P2")
+        P3 = load(LoadingInputFileName, "P3")
+    end
     ########^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^########
     ################################################################################
 
@@ -108,10 +114,10 @@ function RunPlotInput(LoadingInputFileName)
         ColorMinMax = 0  
         # PlotInput = log10.(Fault_Theta_i); ColorMinMax = 0 
         # PlotInput = log10.(Fault_V_i); ColorMinMax = 0  
-        # PlotInput =Fault_NormalStress; ColorMinMax = 0    
+        PlotInput =Fault_NormalStress; ColorMinMax = 0    
         # PlotInput =KoverKC ;ColorMinMax=[0,5]
         # PlotInput =UnderResolved ;ColorMinMax=[0,1]
-        PlotInput = Fault_a - Fault_b; ColorMinMax = 0  
+        # PlotInput = Fault_a - Fault_b; ColorMinMax = 0  
         # PlotInput =  Fault_BulkIndex; ColorMinMax = 0  
         # PlotInput = Fault_Dc; ColorMinMax = 0  
         # PlotInput = FaultRakeAngle; ColorMinMax = 0  
