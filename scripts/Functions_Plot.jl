@@ -429,6 +429,12 @@ end
 
 function get_event_fragments(FileName, FileNameInput)
 
+# using JLD2
+# using LinearAlgebra
+# ResultName="Result"
+# FileName="Results/" * ResultName * ".jld2"
+# FileNameInput="Results/" * ResultName * "_Input.jld2"
+
 
     ResultTime=load(FileName,"History_Time")
     ResultDisp=load(FileName,"History_Disp")
@@ -437,7 +443,21 @@ function get_event_fragments(FileName, FileNameInput)
     FaultLengthStrike =load(FileNameInput, "FaultLengthStrike")
     FaultLengthDip =load(FileNameInput, "FaultLengthDip")
     ShearModulus=load(FileNameInput, "ShearModulus")
+    RorT =load(FileNameInput,"RorT")
 
+    if RorT == "T"
+        P1 = load(FileNameInput, "P1")
+        P2 = load(FileNameInput, "P2")
+        P3 = load(FileNameInput, "P3")
+        P1_2 = norm.(eachrow(P1 .- P2))
+        P1_3 = norm.(eachrow(P1 .- P3))
+        P2_3 = norm.(eachrow(P2 .- P3))
+        s = (P1_2 + P1_3 + P2_3) ./ 2
+        FaultArea = sqrt.(s .* (s- P1_2) .* (s- P1_3).* (s- P2_3) )
+    else
+        FaultArea = FaultLengthStrike .* FaultLengthDip
+
+    end
 
 
     # DispRate = zeros(size(ResultDisp,1),size(ResultDisp,2))
@@ -454,7 +474,7 @@ function get_event_fragments(FileName, FileNameInput)
 
               if DispRate > DispRateCrits
                    DispIncrement = ResultDisp[TimeIdx,FaultIdx] - ResultDisp[TimeIdx-1,FaultIdx]
-                   MomentIncrement = DispIncrement * FaultLengthStrike[FaultIdx] * FaultLengthDip[FaultIdx]  * ShearModulus     
+                   MomentIncrement = DispIncrement * FaultArea[FaultIdx] * ShearModulus     
                    if EventOnOrOff == 0 # If this is a new event
                         EventOnOrOff=1
                         EventCount_Fragment=EventCount_Fragment+1
