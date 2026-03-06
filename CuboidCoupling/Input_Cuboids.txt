@@ -1,0 +1,2 @@
+Index, CenterX, CenterY, CenterZ, LengthX, LengthY, LengthZ
+1, 0, 0, 3000, 4000, 2000, 200
