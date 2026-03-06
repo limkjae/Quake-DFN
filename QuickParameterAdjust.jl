@@ -65,6 +65,13 @@ function ParameterAdj(LoadingFaultCount, FaultMass, Fault_a, Fault_b, Fault_Dc,
     #     end
     # end
 
+    ####### Uniform Mu0 set (The Larger the Stabler initially) ########
+    # Fault_Theta_i .= 1e12
+    # Mu0 = 0.54
+    # Fault_Dc .= 2e-3
+    # Fault_V_i .= 1e-9 .* exp.( (Fault_Friction_i .- Mu0 .- Fault_b .* log.(Fault_Theta_i .* 1e-9 ./ Fault_Dc)) ./ Fault_a)
+    ####################################################################
+
     # Fault_Theta_i .= 0.9e10
     # Fault_Dc .= 1e-3
     # Fault_a .= 0.05
