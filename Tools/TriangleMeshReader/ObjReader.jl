@@ -23,6 +23,7 @@ Crit_TooClose= 1.05
 TooCloseNormal_Multiplier = 0.6
 MinNormalStress = 2e6
 
+AmpFactor = 100
 
 Rake = 0
 a = 0.005
@@ -65,7 +66,7 @@ for RowI = 1:length(MeshOBJ_Raw[:,1])
 
 end
 
-Vertex = Vertex[2:end,:] * 100
+Vertex = Vertex[2:end,:] * AmpFactor
 VertexNormal = VertexNormal[2:end,:]
 Face = Face[2:end,:]
 Face[2,1]
