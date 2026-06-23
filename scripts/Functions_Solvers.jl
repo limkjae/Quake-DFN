@@ -340,8 +340,9 @@ function SolveOneTimeStep(ConvergenceCrit,DispOld,FrictionOld,
 
     FLAG_GoodToGo=zeros(FaultCount)
 
-    DtOld=copy(Dt)
-    for FaultIdx=1:FaultCount-LoadingFaultCount
+    DtOld = Dt
+    Threads.@threads for FaultIdx=1:FaultCount-LoadingFaultCount
+    # for FaultIdx=1:FaultCount-LoadingFaultCount
         if SolverSwitch[FaultIdx] == 1
         # if VOld[FaultIdx] > 1e-3
             
@@ -367,13 +368,13 @@ function SolveOneTimeStep(ConvergenceCrit,DispOld,FrictionOld,
         end
 
     end  
-    V[FaultCount-LoadingFaultCount+1:FaultCount].=LoadingRate[FaultCount-LoadingFaultCount+1:FaultCount];
-    Friction[FaultCount-LoadingFaultCount+1:FaultCount]=FrictionOld[FaultCount-LoadingFaultCount+1:FaultCount];
-    Disp[FaultCount-LoadingFaultCount+1:FaultCount]=DispOld[FaultCount-LoadingFaultCount+1:FaultCount]+V[FaultCount-LoadingFaultCount+1:FaultCount]*Dt;
-    Theta[FaultCount-LoadingFaultCount+1:FaultCount]=ThetaOld[FaultCount-LoadingFaultCount+1:FaultCount];
-    EffNormalStress[FaultCount-LoadingFaultCount+1:FaultCount].=1e10;
-    Dt_All[FaultCount-LoadingFaultCount+1:FaultCount].=Dt;
-    InstabilityThistime[FaultCount-LoadingFaultCount+1:FaultCount].=0;
+    V[FaultCount-LoadingFaultCount+1:FaultCount] .= LoadingRate[FaultCount-LoadingFaultCount+1:FaultCount]
+    Friction[FaultCount-LoadingFaultCount+1:FaultCount] .= FrictionOld[FaultCount-LoadingFaultCount+1:FaultCount]
+    Disp[FaultCount-LoadingFaultCount+1:FaultCount] .= DispOld[FaultCount-LoadingFaultCount+1:FaultCount]+V[FaultCount-LoadingFaultCount+1:FaultCount]*Dt
+    Theta[FaultCount-LoadingFaultCount+1:FaultCount] .= ThetaOld[FaultCount-LoadingFaultCount+1:FaultCount]
+    EffNormalStress[FaultCount-LoadingFaultCount+1:FaultCount] .= 1e10
+    Dt_All[FaultCount-LoadingFaultCount+1:FaultCount] .= Dt
+    InstabilityThistime[FaultCount-LoadingFaultCount+1:FaultCount] .= 0
     FLAG_GoodToGo[FaultCount-LoadingFaultCount+1:FaultCount] .= 1
     
 return V, Friction, Disp, Theta, EffNormalStress, Dt_All, InstabilityThistime, FLAG_GoodToGo
