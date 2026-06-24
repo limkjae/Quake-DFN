@@ -8,6 +8,7 @@ using PyPlot
 using PyCall
 using LowRankApprox
 using Statistics
+using Base.Threads
 pygui(true)
 
 
@@ -35,6 +36,10 @@ load(LoadingInputFileName, "FaultCenter", "Block_Range_Level","Admissible","Elem
 ThreadCount = 5
 
 Disp = ones(FaultCount) 
+
+AdmissibleBlockSep, InAdmissibleBlockSep = 
+        Ad_InAd_Blocks_EachThreads(BlockCount, Admissible, ThreadCount, FaultCount, 
+                            Block_Range_Level, BlockToClusterSR)
 
 StreeVectorShear = zeros(FaultCount)
 StreeVectorNormal = zeros(FaultCount)

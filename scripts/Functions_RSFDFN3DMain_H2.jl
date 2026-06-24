@@ -203,12 +203,9 @@ function main(ShearModulus, FaultCount, LoadingFaultCount, Mass,
             ####################################################################    
 
 
+            
 
-            FaultIdx=0
-            Terminate=0
-            Iteration=0
-
-            foreach(subvec -> fill!(subvec, 0), D_Cluster)
+            foreach(subvec -> fill!(subvec, 0), D_Cluster)  
             foreach(subvec -> fill!(subvec, 0), Sig_Cluster)
             foreach(subvec -> fill!(subvec, 0), thread_buffers)
             NetDisp = Far_Load_Disp_Initial - DispOld
@@ -223,13 +220,20 @@ function main(ShearModulus, FaultCount, LoadingFaultCount, Mass,
             ##########    Calculate Shear and Normal Stress Change    ###########
             # PlanarFault = 1
             # if PlanarFault == 0
-                EffNormalStressMatrixProduct = H2MatVecCalculation(K_d_N, Cluster_W_N, zeros(FaultCount), InAdmissibleBlockSep, ElementRange_SR,  
-                            DispOld, ThreadCount, thread_buffers,
-                            ClusterCount, IsLeaf, IsSingleMom, Cluster_ClusterRange, D_Cluster, 
-                            DaughterElem, AdmissibleBlockSep, BlockToClusterSR,  Sig_Cluster, 
-                            NonLeafClusterIdx, LeafClusterIdx, Rank, Block_Range_Level)
+            foreach(subvec -> fill!(subvec, 0), D_Cluster)
+            foreach(subvec -> fill!(subvec, 0), Sig_Cluster)
+            foreach(subvec -> fill!(subvec, 0), thread_buffers)
+            EffNormalStressMatrixProduct = H2MatVecCalculation(K_d_N, Cluster_W_N, zeros(FaultCount), InAdmissibleBlockSep, ElementRange_SR,  
+                        NetDisp, ThreadCount, thread_buffers,
+                        ClusterCount, IsLeaf, IsSingleMom, Cluster_ClusterRange, D_Cluster, 
+                        DaughterElem, AdmissibleBlockSep, BlockToClusterSR,  Sig_Cluster, 
+                        NonLeafClusterIdx, LeafClusterIdx, Rank, Block_Range_Level)
             # end
 
+
+            FaultIdx=0
+            Terminate=0
+            Iteration=0
             #################### One step Solve ####################
             while Terminate==0
                 Iteration=Iteration+1;

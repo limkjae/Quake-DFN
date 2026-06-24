@@ -26,8 +26,8 @@ function BuildHMatStructure()
 
     ##########################################################################
     #####----- Hmatrix compression detail ----#####
-    TotalHierarchyLevel = 6
-    MinimumElementsToCut = 50
+    TotalHierarchyLevel = 0 # if 0, automatically selected
+    MinimumElementsToCut = 80
     DistDiamRatioCrit = 1.3     
     ArrangePoint = [10000,6000,10000] ### Arrange point
     # ArrangePoint = [0,0,-1000] ### Arrange point
@@ -42,7 +42,12 @@ function BuildHMatStructure()
     Input_Segment, LoadingFaultCount, ShearModulus, PoissonRatio, RockDensity, 
     Switch_StrikeSlip_or_ReverseNormal, DropCrit, DropCritNormalStressMultiplier, MinimumNS, RorT, FaultCount =
         ReadBulkInput(InputBulkFileName)
-
+    
+    if TotalHierarchyLevel == 0
+        Faultcount = length(Input_Segment[:,1])
+        TotalHierarchyLevel = ceil(Int, log(2, Faultcount/MinimumElementsToCut))
+        println("Hierarchy Level: ", TotalHierarchyLevel)
+    end
 
     Input_Segment = [Input_Segment ones(FaultCount) zeros(FaultCount)]
 

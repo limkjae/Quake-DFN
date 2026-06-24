@@ -299,6 +299,11 @@ function FindKd(BlockCount, ElementRange_SR, Admissible, BlockToClusterSR,
         end
 
 
+        # if BlockIdx > 500
+            if BlockIdx % 50 == 0
+               print("\033c")   
+            end
+        # end
     end
 
 return K_d_S, K_d_N
@@ -371,7 +376,7 @@ function SkeletonAndBasis_BuildK_Leaf(Input_Segment, Rank, ClusterCenter, Cluste
     if length(Skeleton_Local_N) != Rank # if Skeleton_Local is smaller than Rank * 2, add some random number.
         # println(SK_Proxy_Matrix)
         while length(Skeleton_Local_N) < Rank
-            println("Adding Random Skeleton")
+            # println("Adding Random Skeleton")
             RandElem = rand(1:RankRange)
             if RandElem in Skeleton_Local_N
             else
@@ -544,12 +549,13 @@ function InterpMatrix_N(K, W_s,W_r, SkS, SkR)
     W_i = W_s
     U_i = W_r
 
-    Interp_S = qr(K[:,SkS], Val(true)) \ K
+    Interp_S = pinv(K[:, SkS]) * K
     T_s = Interp_S / W_i
 
-    Interp_R = qr(K'[:,SkR] , Val(true)) \ K'
+    Interp_R = pinv(K'[:, SkR]) * K'
     T_r = Interp_R / U_i
     K_id = T_r' * K[SkR,SkS] * T_s
+
 
     return K_id
 end
@@ -576,9 +582,12 @@ function InterpMatrixReceiver_N(K, W_r, SkR)
     U_i = W_r
 
     # Interp_R = K'[:,SkR] \ K'
-    Interp_R = qr(K'[:,SkR] , Val(true)) \ K'
+    # Interp_R = qr(K'[:,SkR] , Val(true)) \ K'
+    Interp_R = pinv(K'[:, SkR]) * K'
     T_r = Interp_R / U_i
     K_id = T_r' * K[SkR,:] 
+
+
 
     return K_id
 end
@@ -591,9 +600,9 @@ function InterpMatrixSource(K, W_s, SkS)
     
     # println(inv(K))
 
-    # Interp_S = K[:,SkS] \ K
+    Interp_S = K[:,SkS] \ K
     # Interp_S = pinv(K[:, SkS]) * K
-    Interp_S = qr(K[:, SkS], Val(true)) \ K
+    # Interp_S = qr(K[:, SkS], Val(true)) \ K
     T_s = Interp_S / W_i
     K_id = K[:,SkS] * T_s
 
@@ -607,10 +616,14 @@ function InterpMatrixSource_N(K, W_s, SkS)
     W_i = W_s
     
     # println(inv(K))
-
+    # if cond(K[:, SkS]) > 1e10
+    # else 
+        # Interp_S = K[:,SkS] \ K
+    # end
     # Interp_S = K[:,SkS] \ K
     # Interp_S = pinv(K[:, SkS]) * K
-    Interp_S = qr(K[:, SkS], Val(true)) \ K
+    # Interp_S = qr(K[:, SkS], Val(true)) \ K
+    Interp_S = pinv(K[:, SkS]) * K
     T_s = Interp_S / W_i
     K_id = K[:,SkS] * T_s
 

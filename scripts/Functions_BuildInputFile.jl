@@ -505,7 +505,7 @@ function StiffnessMatrix_ByParts_Calculation_Rec(Input_SegmentSource, Input_Segm
             end
         end
         end
-        print("\033c")                  
+        # print("\033c")                  
 
 
     return StiffnessMatrixShear, StiffnessMatrixNormal 
