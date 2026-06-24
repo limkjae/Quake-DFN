@@ -26,9 +26,9 @@ function BuildHMatStructure()
 
     ##########################################################################
     #####----- Hmatrix compression detail ----#####
-    TotalHierarchyLevel = 8
-    MinimumElementsToCut = 10
-    DistDiamRatioCrit = 1.0     
+    TotalHierarchyLevel = 6
+    MinimumElementsToCut = 50
+    DistDiamRatioCrit = 1.3     
     ArrangePoint = [10000,6000,10000] ### Arrange point
     # ArrangePoint = [0,0,-1000] ### Arrange point
 
