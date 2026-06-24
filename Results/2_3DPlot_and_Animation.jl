@@ -40,8 +40,9 @@ FaultMass= load(FileNameInput, "FaultMass")
 
 
 
-# figure(10); clf(); PyPlot.plot(log10.(ResultV[:,1:1:end])); xlabel("Record Step")
-PlotStep = 600
+figure(10); clf(); PyPlot.plot(log10.(ResultV[:,1:1:end])); xlabel("Record Step")
+##
+PlotStep = 200
 
 if PlotStep > length(ResultTime)
     error("Plot step should be smaller than the maximum record ($(length(ResultTime)))")
@@ -60,7 +61,7 @@ DayLocation = [0,0,1000]
 ################## What to Plot ? ###################
 PlotInput=log10.(ResultV[PlotStep,:]); ColorMinMax=[-12, 0] 
 # PlotInput=log10.(ResultV[PlotStep,:]); ColorMinMax=[MaxVLog-3,MaxVLog] 
-# PlotInput= Result_NormalStress[PlotStep,:] ; ColorMinMax=0
+PlotInput= Result_NormalStress[PlotStep,:] -Result_NormalStress[1,:] ; ColorMinMax=0
 # PlotInput=log10.(ResultPressure[PlotStep,:]); ColorMinMax=[3,6]
 # PlotInput= Result_NormalStress[PlotStep,:] -  Fault_NormalStress; ColorMinMax=[-1e6,1e6]
 # PlotInput=ResultDisp[PlotStep,:]; ColorMinMax= 0

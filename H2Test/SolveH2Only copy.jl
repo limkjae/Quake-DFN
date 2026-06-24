@@ -51,7 +51,6 @@ AdmissibleBlockSep, InAdmissibleBlockSep =
             Ad_InAd_Blocks_EachThreads(BlockCount, Admissible, ThreadCount, FaultCount, 
                                 Block_Range_Level, BlockToClusterSR)
 
-for i=1:10
 
     Stress = zeros(FaultCount)
     D_Cluster = [zeros(Float64, Rank) for _ in 1:ClusterCount]
@@ -74,7 +73,20 @@ for i=1:10
                                 DaughterElem, AdmissibleBlockSep, BlockToClusterSR,  Sig_Cluster, 
                                 NonLeafClusterIdx, LeafClusterIdx, Rank, Block_Range_Level)
 
-end
+
+
+
+
+
+
+
+
+
+
+
+
+
+                                
 Fig = lines(StressShear)
 Fig
 

@@ -300,7 +300,7 @@ function FindKd(BlockCount, ElementRange_SR, Admissible, BlockToClusterSR,
 
 
         # if BlockIdx > 500
-            if BlockIdx % 50 == 0
+            if BlockIdx % 500 == 0
                print("\033c")   
             end
         # end

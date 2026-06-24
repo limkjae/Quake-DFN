@@ -224,11 +224,12 @@ function main(ShearModulus, FaultCount, LoadingFaultCount, Mass,
             foreach(subvec -> fill!(subvec, 0), Sig_Cluster)
             foreach(subvec -> fill!(subvec, 0), thread_buffers)
             EffNormalStressMatrixProduct = H2MatVecCalculation(K_d_N, Cluster_W_N, zeros(FaultCount), InAdmissibleBlockSep, ElementRange_SR,  
-                        NetDisp, ThreadCount, thread_buffers,
+                        DispOld, ThreadCount, thread_buffers,
                         ClusterCount, IsLeaf, IsSingleMom, Cluster_ClusterRange, D_Cluster, 
                         DaughterElem, AdmissibleBlockSep, BlockToClusterSR,  Sig_Cluster, 
                         NonLeafClusterIdx, LeafClusterIdx, Rank, Block_Range_Level)
             # end
+
 
 
             FaultIdx=0
