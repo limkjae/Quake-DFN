@@ -6,16 +6,16 @@ using LowRankApprox
 using Clustering
 using LinearAlgebra
 using Base.Threads
-# using PyPlot
-# using PyCall
+using PyPlot
+using PyCall
 # @pyimport matplotlib.patches as patches
-# pygui(true)
+pygui(true)
 
 # include("FindAwayElements.jl")
 # include("Functions_Plot.jl")
 
 
-include("scripts/Functions_H2.jl")
+include("scripts/Functions_H2.jl") 
 include("scripts/Functions_BuildInputFile.jl")
 include("scripts/Functions_OKADA3D.jl")
 # include("scripts/Functions_OKADA3D_Vec.jl")
@@ -28,11 +28,9 @@ InputBulkFileName="Input_BulkFaultGeometry.txt"
 OutputFileName="Input_Discretized.jld2"
 HMatrixStructureFile = "Input_HmatrixStructure.jld2"
 
-Rank = 15
-RadMultiple1 = 1.3
-RadMultiple2 = 2.0
-RadRange = 100
-MinimumProxyElments = 20
+Rank = 20
+RadMultipleForElemSelect = 4.0
+MinimumProxyElments = 200
 if MinimumProxyElments < Rank; MinimumProxyElments = Rank; end
 #############################################################
 
@@ -41,10 +39,11 @@ if MinimumProxyElments < Rank; MinimumProxyElments = Rank; end
 
 Block_Ctr_Diam, Block_Range_Level, Input_Segment, LoadingFaultExist, LoadingFaultCount,
 MinimumElementsToCut, ArrangePoint, Admissible, ElementRange_SR, Switch_StrikeSlip_or_ReverseNormal, 
-ShearModulus, PoissonRatio, RockDensity, DropCrit, DropCritNormalStressMultiplier, MinimumNS, RorT =
+ShearModulus, PoissonRatio, RockDensity, DropCrit, DropCritNormalStressMultiplier, MinimumNS, RorT, DistDiamRatioCrit =
 load(HMatrixStructureFile, "Block_Ctr_Diam", "Block_Range_Level", "Input_Segment", "LoadingFaultExist", "LoadingFaultCount",
     "MinimumElementsToCut", "ArrangePoint", "Admissible", "ElementRange_SR", "Switch_StrikeSlip_or_ReverseNormal", 
-    "ShearModulus", "PoissonRatio", "RockDensity", "DropCrit", "DropCritNormalStressMultiplier", "MinimumNS", "RorT")
+    "ShearModulus", "PoissonRatio", "RockDensity", "DropCrit", "DropCritNormalStressMultiplier", "MinimumNS", "RorT","DistDiamRatioCrit")
+
 
 FaultCount = length(Input_Segment[:,1])
 
@@ -88,15 +87,15 @@ end
 
 ####################### Calculate the Skeletons and W  for Leaf #######################
 
-# Cluster_SkeletonLocal_S, Cluster_SkeletonGlobal_S, Cluster_W_S, Cluster_ClusterRange,
-#     Cluster_SkeletonLocal_N, Cluster_SkeletonGlobal_N, Cluster_W_N = 
-#         FindW_SN(ClusterCount, Input_Segment, Block_Range_Level, DaughterElemVec, IsLeaf, IsSingleMom)
 
 Cluster_SkeletonLocal_S, Cluster_SkeletonGlobal_S, Cluster_W_S, Cluster_ClusterRange,
     Cluster_SkeletonLocal_N, Cluster_SkeletonGlobal_N, Cluster_W_N = 
-        FindW_SN(ClusterCount, Input_Segment, Block_Range_Level, DaughterElemVec, IsLeaf, IsSingleMom)
+        FindW_SN(ClusterCount, Input_Segment, Block_Range_Level, DaughterElemVec, IsLeaf, IsSingleMom,
+                 RadMultipleForElemSelect, MinimumProxyElments, DistDiamRatioCrit, Rank, ShearModulus, PoissonRatio) 
 
 println("SN Done")
+
+
 
 K_d_S, K_d_N = FindKd(BlockCount, ElementRange_SR, Admissible, BlockToClusterSR,
                 Cluster_SkeletonLocal_S, Cluster_W_S, Cluster_ClusterRange,

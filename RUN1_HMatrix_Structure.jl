@@ -27,7 +27,7 @@ function BuildHMatStructure()
     ##########################################################################
     #####----- Hmatrix compression detail ----#####
     TotalHierarchyLevel = 0 # if 0, automatically selected
-    MinimumElementsToCut = 80
+    MinimumElementsToCut = 50
     DistDiamRatioCrit = 1.3     
     ArrangePoint = [10000,6000,10000] ### Arrange point
     # ArrangePoint = [0,0,-1000] ### Arrange point
@@ -75,6 +75,7 @@ function BuildHMatStructure()
     "Input_Segment", Input_Segment, 
     "LoadingFaultExist", LoadingFaultExist,
     "MinimumElementsToCut", MinimumElementsToCut, 
+    "DistDiamRatioCrit", DistDiamRatioCrit,
     "ArrangePoint", ArrangePoint, 
     "Admissible", Admissible, 
     "ElementRange_SR", ElementRange_SR, 

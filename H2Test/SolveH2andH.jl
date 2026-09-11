@@ -9,16 +9,17 @@ using LowRankApprox
 using Clustering
 using LinearAlgebra
 using Base.Threads
+using BenchmarkTools
 # @pyimport matplotlib.patches as patches
 # pygui(true)
 
 
 include("../scripts/Functions_H2.jl") 
 include("../scripts/Functions_Hmatrix.jl") 
-# ElementCount = 4800
 
-H2File = "Input_DiscretizedH2.jld2"
-HFile = "Input_Discretized_H.jld2"
+ElementCount = 2537
+H2File = "H2Test/Input_Discretized_$(ElementCount)_H2.jld2"
+HFile = "H2Test/Input_Discretized_$(ElementCount)_H.jld2"
 
 
 FaultCenter, Block_Range_Level, Admissible, ElementRange_SR, Rank, BlockToClusterSR,
@@ -43,7 +44,6 @@ ThreadCount = 5
 Disp = ones(FaultCount) 
 # Disp = rand(length(StiffnessMatrixShear[1,:])) 
 
-
 StressShearH2 = zeros(FaultCount)
 StressShearF = zeros(FaultCount)
 StressShearH = zeros(FaultCount)
@@ -51,8 +51,6 @@ StressShearH = zeros(FaultCount)
 StressNormalH2 = zeros(FaultCount)
 StressNormalF = zeros(FaultCount)
 StressNormalH = zeros(FaultCount)
-
-
 
 
 AdmissibleBlockSep, InAdmissibleBlockSep = 
@@ -65,17 +63,21 @@ AdmissibleBlockSep, InAdmissibleBlockSep =
     Sig_Cluster = [zeros(Float64, Rank) for _ in 1:ClusterCount]
     thread_buffers = [zeros(Float64, length(Stress)) for _ in 1:ThreadCount] # <-- Allocates every call!
 
-    @time StressShear = H2MatVecCalculation(K_d_S, Cluster_W_S, Stress, InAdmissibleBlockSep, ElementRange_SR,  
+    StressShear = H2MatVecCalculation(K_d_S, Cluster_W_S, Stress, InAdmissibleBlockSep, ElementRange_SR,  
                                 Disp, ThreadCount, thread_buffers,
                                 ClusterCount, IsLeaf, IsSingleMom, Cluster_ClusterRange, D_Cluster, 
                                 DaughterElem, AdmissibleBlockSep, BlockToClusterSR,  Sig_Cluster, 
                                 NonLeafClusterIdx, LeafClusterIdx, Rank, Block_Range_Level)
 
+
+                                
+
+
     Stress = zeros(FaultCount)
     D_Cluster = [zeros(Float64, Rank) for _ in 1:ClusterCount]
     Sig_Cluster = [zeros(Float64, Rank) for _ in 1:ClusterCount]
     thread_buffers = [zeros(Float64, length(Stress)) for _ in 1:ThreadCount] # <-- Allocates every call!
-    @time StressNormal = H2MatVecCalculation(K_d_N, Cluster_W_N, Stress, InAdmissibleBlockSep, ElementRange_SR,  
+    StressNormal = H2MatVecCalculation(K_d_N, Cluster_W_N, Stress, InAdmissibleBlockSep, ElementRange_SR,  
                                 Disp, ThreadCount, thread_buffers,
                                 ClusterCount, IsLeaf, IsSingleMom, Cluster_ClusterRange, D_Cluster, 
                                 DaughterElem, AdmissibleBlockSep, BlockToClusterSR,  Sig_Cluster, 
@@ -104,28 +106,44 @@ Par_ElementDivision_Shear = ParallelOptimization2(ShearStiffness_H,
                 BlockCount, ThreadCount, Ranks_Shear, Admissible)
 
 
-@time StressShearH = HmatSolver_Pararllel(Disp, ShearStiffness_H, ElementRange_SR, 
+StressShearH = HmatSolver_Pararllel(Disp, ShearStiffness_H, ElementRange_SR, 
                                     Par_ElementDivision_Shear, ThreadCount, zeros(FaultCount, ThreadCount))
 
-@time StressNormalH = HmatSolver_Pararllel(Disp, NormalStiffness_H, ElementRange_SR, 
+ StressNormalH = HmatSolver_Pararllel(Disp, NormalStiffness_H, ElementRange_SR, 
                                     Par_ElementDivision_Shear, ThreadCount, zeros(FaultCount, ThreadCount))
 
 
 println("H-Matrix Done")
 
 
+Base.summarysize(K_d_S) 
+Base.summarysize(Cluster_W_S) 
+Base.summarysize(Stress) 
+Base.summarysize(InAdmissibleBlockSep) 
+Base.summarysize(thread_buffers) 
+
+
+# lines!(vec(StressShear))
 
 
 
 
-
-
-
-                                
 Fig = lines(StressShear)
 lines!(vec(StressShearH))
 Fig
 
+
+println("B Time H2 ")
+@btime H2MatVecCalculation(K_d_S, Cluster_W_S, Stress, InAdmissibleBlockSep, ElementRange_SR,  
+                            Disp, ThreadCount, thread_buffers,
+                            ClusterCount, IsLeaf, IsSingleMom, Cluster_ClusterRange, D_Cluster, 
+                            DaughterElem, AdmissibleBlockSep, BlockToClusterSR,  Sig_Cluster, 
+                            NonLeafClusterIdx, LeafClusterIdx, Rank, Block_Range_Level)
+println("B Time H ")                            
+@btime HmatSolver_Pararllel(Disp, ShearStiffness_H, ElementRange_SR, 
+                            Par_ElementDivision_Shear, ThreadCount, zeros(FaultCount, ThreadCount))
+
+println("Time Comparison Done")
 ##
 
 Fig = lines(StressNormal)

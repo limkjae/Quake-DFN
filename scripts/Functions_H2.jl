@@ -45,7 +45,8 @@ function FindMomDaughter(Block_Range_Level, ClusterCount)
 end
 
 
-function FindW_SN(ClusterCount, Input_Segment, Block_Range_Level, DaughterElemVec, IsLeaf, IsSingleMom)
+function FindW_SN(ClusterCount, Input_Segment, Block_Range_Level, DaughterElemVec, IsLeaf, IsSingleMom,
+                 RadMultipleForElemSelect, MinimumProxyElments, DistDiamRatioCrit, Rank, ShearModulus, PoissonRatio)  
 
     Cluster_SkeletonLocal_S = Vector{Int}[]
     Cluster_SkeletonGlobal_S = Vector{Int}[]
@@ -56,49 +57,40 @@ function FindW_SN(ClusterCount, Input_Segment, Block_Range_Level, DaughterElemVe
     Cluster_W_N =  Matrix{Float64}[]
 
     Cluster_ClusterRange = Vector{Int}[]
-    
-    SkeletonPrevLevel_S = []
-    SkeletonThisLevel_S = []
-    SkeletonPrevLevel_N = []
-    SkeletonThisLevel_N = []
-    SkeletonAll = []
-    OrderEachLevel = 1 
-    RangeInEachLevel = zeros(Int, ClusterCount,2)
-    FaultCenter = Input_Segment[:,1:3]
+    CurrentLevelCluster_i_S = []
+    CurrentLevelCluster_i_N = []    
+    ClusterRange_All=[]
+
+    for C_i=1:ClusterCount
+        push!(ClusterRange_All, [Block_Range_Level[C_i,1], Block_Range_Level[C_i,2]])
+    end
 
     for Cluster_i = 1:ClusterCount
         
         ClusterLevel = Block_Range_Level[Cluster_i,3]
         DaughterElem_i = DaughterElemVec[Cluster_i]
-        ClusterRange = [Block_Range_Level[Cluster_i,1], Block_Range_Level[Cluster_i,2]]
-        println(Cluster_i)
-        if Cluster_i > 1 ###### Calculate the order of this cluster in each level
-            if ClusterLevel == Block_Range_Level[Cluster_i-1,3] # if current level is same to the previous
-                OrderEachLevel = OrderEachLevel + 1
-            else ##### if level changes, update the skeletons
-                OrderEachLevel = 1
-                SkeletonPrevLevel_S = SkeletonThisLevel_S
-                SkeletonThisLevel_S = []
-                SkeletonPrevLevel_N = SkeletonThisLevel_N
-                SkeletonThisLevel_N = []
-            end
-        end
+        ClusterRange = ClusterRange_All[Cluster_i]
+        println(Cluster_i,"/",ClusterCount)
 
-        RangeInEachLevel[Cluster_i,:] = [(OrderEachLevel-1)*Rank + 1, OrderEachLevel * Rank]
+        # if Cluster_i > 1 ###### If level changed, store the previous level skeleton elements
+        #     if ClusterLevel == Block_Range_Level[Cluster_i-1,3] # if current level is same to the previousskeletons
+        #         push!(CurrentLevelCluster_i_S, Cluster_i)
+
+        #     else ##### if level changes, update the 
+        #         PrevLevelSkeleton_i_S = reduce(vcat, Cluster_SkeletonGlobal_S[CurrentLevelCluster_i_S])
+        #         CurrentLevelCluster_i_S = []
+        #         println("Level Changed :", ClusterLevel)
+        #     end
+        # end
 
         if IsLeaf[Cluster_i] == 1 # This is Leaf Cluster
-            
-
-            ClusterCenter = Block_Ctr_Diam[Cluster_i,1:3] ### Read Ctr and Diam from Full Matrix
-            ClusterDiameter = Block_Ctr_Diam[Cluster_i,4]
-            ClusterRangeCollect = collect(ClusterRange[1]:ClusterRange[2])
+            ClusterElements = collect(ClusterRange[1]:ClusterRange[2])
 
             ProxyElements_i_S, Skeleton_Local_i_S, Skeleton_Global_i_S, W_i_S,
             ProxyElements_i_N, Skeleton_Local_i_N, Skeleton_Global_i_N, W_i_N = 
-                SkeletonAndBasis_BuildK_Leaf(Input_Segment, Rank, ClusterCenter, ClusterDiameter, ClusterRangeCollect, 
-                                RadMultiple1, RadMultiple2, MinimumProxyElments, RadRange, ShearModulus, PoissonRatio)    
-            # println(Cluster_i,"  ", DaughterElem_i, "  ",ClusterRangeCollect)
-            SkeletonAll = [SkeletonAll; Skeleton_Global_i_S]
+                SkeletonAndBasis_BuildK_LeafSN(Input_Segment, Rank, ClusterElements,  
+                    RadMultipleForElemSelect, MinimumProxyElments, ShearModulus, PoissonRatio, Cluster_i,
+                    ClusterRange_All, Block_Range_Level, Block_Ctr_Diam, DistDiamRatioCrit)   
 
         elseif IsSingleMom[Cluster_i] == 1 # For single mom, just use the Daughter information
             Skeleton_Local_i_S = Cluster_SkeletonLocal_S[DaughterElem_i[1]]
@@ -112,40 +104,25 @@ function FindW_SN(ClusterCount, Input_Segment, Block_Range_Level, DaughterElemVe
         else #### We only care about the skeletons from the daughter level
 
             ################# Shear ################
-            DaughterSkeleton_S = [Cluster_SkeletonGlobal_S[DaughterElem_i[1]]; Cluster_SkeletonGlobal_S[DaughterElem_i[2]]]
-            ClusterCenter_S = vec(sum(FaultCenter[DaughterSkeleton_S,:], dims=1)) / (2*Rank)
-            ClusterDiameter_S = maximum(norm.(eachrow(FaultCenter[DaughterSkeleton_S,:] .- ClusterCenter_S'))) *2
-            ClusterSkeletonRange_S = [collect((RangeInEachLevel[DaughterElem_i[1],1]) : RangeInEachLevel[DaughterElem_i[1],2])
-                                    collect((RangeInEachLevel[DaughterElem_i[2],1]) : RangeInEachLevel[DaughterElem_i[2],2])]
-                
-            @views ProxyElements_i_S, Skeleton_Local_i_S, Skeleton_LocallyGlobal_i_S, W_i_S = 
-            SkeletonAndBasis_BuildK_S(Input_Segment[SkeletonPrevLevel_S,:], Rank, ClusterCenter_S, ClusterDiameter_S, ClusterSkeletonRange_S, 
-                                RadMultiple1, RadMultiple2, MinimumProxyElments, RadRange, ShearModulus, PoissonRatio)    
-
-            Skeleton_Global_i_S = DaughterSkeleton_S[Skeleton_Local_i_S]
-            ProxyElements_i_S = SkeletonPrevLevel_S[ProxyElements_i_S]
-
+            ClusterElements_SK = [Cluster_SkeletonGlobal_S[DaughterElem_i[1]]; Cluster_SkeletonGlobal_S[DaughterElem_i[2]]]
+            @views ProxyElements_i_S, Skeleton_Local_i_S, Skeleton_Global_i_S, W_i_S = 
+            SkeletonAndBasis_BuildK_HLS(Input_Segment, Rank,
+                                ClusterElements_SK, Cluster_SkeletonGlobal_S,
+                                RadMultipleForElemSelect, MinimumProxyElments, ShearModulus, PoissonRatio, Cluster_i,
+                                ClusterRange_All, Block_Range_Level, Block_Ctr_Diam, DistDiamRatioCrit)
+   
+ 
             ################# Normal ################
-            DaughterSkeleton_N = [Cluster_SkeletonGlobal_N[DaughterElem_i[1]]; Cluster_SkeletonGlobal_N[DaughterElem_i[2]]]
-            ClusterCenter_N = vec(sum(FaultCenter[DaughterSkeleton_N,:], dims=1)) / (2*Rank)
-            ClusterDiameter_N = maximum(norm.(eachrow(FaultCenter[DaughterSkeleton_N,:] .- ClusterCenter_N'))) *2
-            ClusterSkeletonRange_N = [collect((RangeInEachLevel[DaughterElem_i[1],1]) : RangeInEachLevel[DaughterElem_i[1],2])
-                                    collect((RangeInEachLevel[DaughterElem_i[2],1]) : RangeInEachLevel[DaughterElem_i[2],2])]
-                
-            @views ProxyElements_i_N, Skeleton_Local_i_N, Skeleton_LocallyGlobal_i_N, W_i_N = 
-            SkeletonAndBasis_BuildK_N(Input_Segment[SkeletonPrevLevel_N,:], Rank, ClusterCenter_N, ClusterDiameter_N, ClusterSkeletonRange_N, 
-                                RadMultiple1, RadMultiple2, MinimumProxyElments, RadRange, ShearModulus, PoissonRatio)    
+            ClusterElements_SK = [Cluster_SkeletonGlobal_N[DaughterElem_i[1]]; Cluster_SkeletonGlobal_N[DaughterElem_i[2]]]
 
-            Skeleton_Global_i_N = DaughterSkeleton_N[Skeleton_Local_i_N]
-            ProxyElements_i_N = SkeletonPrevLevel_N[ProxyElements_i_N]
-
-
-
+                # println(RadMultiple1)
+            @views ProxyElements_i_N, Skeleton_Local_i_N, Skeleton_Global_i_N, W_i_N = 
+            SkeletonAndBasis_BuildK_HLN(Input_Segment, Rank, 
+                                ClusterElements_SK, Cluster_SkeletonGlobal_N,
+                                RadMultipleForElemSelect, MinimumProxyElments, ShearModulus, PoissonRatio, Cluster_i,
+                                ClusterRange_All, Block_Range_Level, Block_Ctr_Diam, DistDiamRatioCrit) 
+  
         end
-
-        SkeletonThisLevel_S = [SkeletonThisLevel_S; Skeleton_Global_i_S]
-        SkeletonThisLevel_N = [SkeletonThisLevel_N; Skeleton_Global_i_N]
-
 
         push!(Cluster_SkeletonLocal_S, Skeleton_Local_i_S)
         push!(Cluster_SkeletonGlobal_S, Skeleton_Global_i_S)
@@ -311,65 +288,60 @@ end
 
 
 
-
-
-
-function SkeletonAndBasis2(K, Rank, ClusterCenter, ClusterDiam, ClusterRange, FaultCenter, 
-    RadMultiple1, RadMultiple2, MinimumProxyElments, RadRange)
-
-    ProxyElements = []
-    FaultCount_i  = length(FaultCenter[:,1])
-    while length(ProxyElements) < MinimumProxyElments
-        ProxyElements = []
-        for i=1:FaultCount_i
-            FaultDistance = norm(FaultCenter[i,:] - ClusterCenter)
-            if ClusterDiam * RadMultiple1 - RadRange <  FaultDistance < ClusterDiam * RadMultiple1 + RadRange ||
-                ClusterDiam * RadMultiple2 - RadRange <  FaultDistance < ClusterDiam * RadMultiple2 + RadRange
-                ProxyElements = [ProxyElements; i]
-            end
-        end
-        RadRange = RadRange + 100
-        
-        # RadMultiple2 = RadMultiple2 * 0.7
-    end
-    @views SK_Proxy_Matrix = K[ClusterRange,ProxyElements]
-    Skeleton_Local = idfact(SK_Proxy_Matrix', rank = Rank)[:sk]
-    # println(length(Skeleton_Local))
-    Skeleton_Global =  Skeleton_Local .+ ClusterRange[1] .- 1
-    W = SK_Proxy_Matrix'[:,Skeleton_Local] \ SK_Proxy_Matrix'
-
-    return ProxyElements, Skeleton_Local, Skeleton_Global, W
-end
-
-function SkeletonAndBasis_BuildK_Leaf(Input_Segment, Rank, ClusterCenter, ClusterDiam, ClusterRange,  
-    RadMultiple1, RadMultiple2, MinimumProxyElments, RadRange, ShearModulus, PoissonRatio)   
+function SkeletonAndBasis_BuildK_LeafSN(Input_Segment, Rank, ClusterElements,  
+    RadMultipleForElemSelect, MinimumProxyElments, ShearModulus, PoissonRatio, Cluster_i,
+    ClusterRange_All, Block_Range_Level, Block_Ctr_Diam, DistDiamRatioCrit)   
 
     FaultCenter = Input_Segment[:,1:3]
     ProxyElements = []
-    FaultCount_i  = length(FaultCenter[:,1])
-    while length(ProxyElements) < MinimumProxyElments
-        ProxyElements = []
-        for i=1:FaultCount_i
-            FaultDistance = norm(FaultCenter[i,:] - ClusterCenter)
-            if ClusterDiam * RadMultiple1 - RadRange <  FaultDistance < ClusterDiam * RadMultiple1 + RadRange ||
-                ClusterDiam * RadMultiple2 - RadRange <  FaultDistance < ClusterDiam * RadMultiple2 + RadRange
-                ProxyElements = [ProxyElements; i]
+
+    ClusterLevel_i = Block_Range_Level[Cluster_i,3]
+    ClusterCenter_i = Block_Ctr_Diam[Cluster_i,1:3]
+    ClusterDiam_i = Block_Ctr_Diam[Cluster_i,4]
+    ProxyElements = []
+
+    for C_i = 1:length(ClusterRange_All) ###### Select the Element That is in Admissible Range.
+        if ClusterLevel_i == Block_Range_Level[C_i,3]
+            Distance = norm(ClusterCenter_i -  Block_Ctr_Diam[C_i,1:3])
+            Diam =  maximum([ClusterDiam_i, Block_Ctr_Diam[C_i,4]])
+            if  Distance/Diam > DistDiamRatioCrit 
+                ProxyElements = [ProxyElements; collect(Block_Range_Level[C_i,1]:Block_Range_Level[C_i,2])]
+            
             end
         end
-        RadRange = RadRange + 100
-        
-        # RadMultiple2 = RadMultiple2 * 0.7
     end
-    
+   
+    ProxyElemNear = []
+    for Elem_i in ProxyElements # Include Elements that is within x3 of Cluster Diam
+        Distance = norm(ClusterCenter_i -  FaultCenter[Elem_i,1:3])
+        if Distance/ClusterDiam_i < RadMultipleForElemSelect
+            push!(ProxyElemNear, Elem_i)            
+        end
+    end
+
+    if length(ProxyElements) == 0
+        ProxyElemNear = collect(1:MinimumProxyElments)
+    elseif length(ProxyElemNear) < MinimumProxyElments
+        ElemCountAdded = MinimumProxyElments - length(ProxyElemNear)
+        if ElemCountAdded > 0
+            println(ProxyElemNear)
+            AllowedPool = setdiff(ProxyElements, ProxyElemNear)
+            println("Pool ",ElemCountAdded,"  ", AllowedPool)
+            AddedElem = sample(AllowedPool, ElemCountAdded, replace=false)
+            println("Adding ",ElemCountAdded,"  ", AddedElem)
+            ProxyElemNear = [ProxyElemNear; AddedElem]
+            println(ProxyElemNear)
+        end
+    end
+    ProxyElements = copy(ProxyElemNear)
+
     SK_Proxy_Matrix_S, SK_Proxy_Matrix_N = 
-    StiffnessMatrix_ByParts_Calculation_Rec(Input_Segment[ProxyElements,:],Input_Segment[ClusterRange,:],  ShearModulus, PoissonRatio,
+    StiffnessMatrix_ByParts_Calculation_Rec(Input_Segment[ProxyElements,:],Input_Segment[ClusterElements,:],  ShearModulus, PoissonRatio,
                                         1, 1)    
 
     Skeleton_Local_S = idfact(SK_Proxy_Matrix_S', rank = Rank)[:sk]
-    Skeleton_Global_S =  Skeleton_Local_S .+ ClusterRange[1] .- 1
+    Skeleton_Global_S =  Skeleton_Local_S .+ ClusterElements[1] .- 1
     W_S = SK_Proxy_Matrix_S'[:,Skeleton_Local_S] \ SK_Proxy_Matrix_S'
-
-
 
     Skeleton_Local_N = idfact(SK_Proxy_Matrix_N', rank = Rank)[:sk]
     RankRange = size(SK_Proxy_Matrix_N)[1]    
@@ -385,9 +357,8 @@ function SkeletonAndBasis_BuildK_Leaf(Input_Segment, Rank, ClusterCenter, Cluste
         end        
     end
 
-    Skeleton_Global_N =  Skeleton_Local_N .+ ClusterRange[1] .- 1
+    Skeleton_Global_N =   ClusterElements[Skeleton_Local_N] 
     W_N = SK_Proxy_Matrix_N'[:,Skeleton_Local_N] \ SK_Proxy_Matrix_N' 
-
     ProxyElements_S = copy(ProxyElements)
     ProxyElements_N =  copy(ProxyElements)
 
@@ -395,135 +366,138 @@ function SkeletonAndBasis_BuildK_Leaf(Input_Segment, Rank, ClusterCenter, Cluste
            ProxyElements_N, Skeleton_Local_N, Skeleton_Global_N, W_N
 end
 
-function SkeletonAndBasis_BuildK_S(Input_Segment, Rank, ClusterCenter, ClusterDiam, ClusterRange,  
-    RadMultiple1, RadMultiple2, MinimumProxyElments, RadRange, ShearModulus, PoissonRatio)   
 
+function SkeletonAndBasis_BuildK_HLS(Input_Segment, Rank, 
+    ClusterElements_SK,  Cluster_SkeletonGlobal_S,
+    RadMultipleForElemSelect, MinimumProxyElments, ShearModulus, PoissonRatio, Cluster_i, 
+    ClusterRange_All, Block_Range_Level, Block_Ctr_Diam, DistDiamRatioCrit)   
     FaultCenter = Input_Segment[:,1:3]
     ProxyElements = []
-    FaultCount_i  = length(FaultCenter[:,1])
-    while length(ProxyElements) < MinimumProxyElments
-        ProxyElements = []
-        for i=1:FaultCount_i
-            FaultDistance = norm(FaultCenter[i,:] - ClusterCenter)
-            if ClusterDiam * RadMultiple1 - RadRange <  FaultDistance < ClusterDiam * RadMultiple1 + RadRange ||
-                ClusterDiam * RadMultiple2 - RadRange <  FaultDistance < ClusterDiam * RadMultiple2 + RadRange
-                ProxyElements = [ProxyElements; i]
+        
+    ClusterLevel_i = Block_Range_Level[Cluster_i,3]
+    ClusterCenter_i = Block_Ctr_Diam[Cluster_i,1:3]
+    ClusterDiam_i = Block_Ctr_Diam[Cluster_i,4]
+
+    ProxyElements = []
+    
+    for C_i = 1:length(ClusterRange_All)
+        if ClusterLevel_i == Block_Range_Level[C_i,3]
+            Distance = norm(ClusterCenter_i -  Block_Ctr_Diam[C_i,1:3])
+            Diam =  maximum([ClusterDiam_i, Block_Ctr_Diam[C_i,4]])
+            if  Distance/Diam > DistDiamRatioCrit 
+                ProxyElements = [ProxyElements; Cluster_SkeletonGlobal_S[DaughterElem[C_i,1]]]
+                if DaughterElem[C_i,2] > 0
+                    ProxyElements = [ProxyElements; Cluster_SkeletonGlobal_S[DaughterElem[C_i,2]]]
+                end
             end
         end
-        RadRange = RadRange + 100
-        
-        # RadMultiple2 = RadMultiple2 * 0.7
     end
-    
+ 
+    ProxyElemNear = []
+    for Elem_i in ProxyElements # Include Elements that is within x3 of Cluster Diam
+        Distance = norm(ClusterCenter_i -  FaultCenter[Elem_i,1:3])
+        if Distance/ClusterDiam_i < RadMultipleForElemSelect
+            push!(ProxyElemNear, Elem_i)            
+        end
+    end
+    println("PE - PEN ",length(ProxyElements) - length(ProxyElemNear))
+
+    if length(ProxyElements) == 0
+        ProxyElemNear = collect(1:MinimumProxyElments)
+    elseif length(ProxyElements) < MinimumProxyElments
+        ProxyElemNear = ProxyElements
+    elseif length(ProxyElemNear) < MinimumProxyElments
+        ElemCountAdded = MinimumProxyElments - length(ProxyElemNear)
+        if ElemCountAdded > 0
+            println(ProxyElemNear)
+            AllowedPool = setdiff(ProxyElements, ProxyElemNear)
+            println("Pool ",ElemCountAdded,"  ", AllowedPool)
+            AddedElem = sample(AllowedPool, ElemCountAdded, replace=false)
+            println("Adding ",ElemCountAdded,"  ", AddedElem)
+            ProxyElemNear = [ProxyElemNear; AddedElem]
+            println(ProxyElemNear)
+        end
+    end
+    ProxyElements = ProxyElemNear
+
+   
     SK_Proxy_Matrix, SK_Proxy_MatrixNorm = 
-    StiffnessMatrix_ByParts_Calculation_Rec(Input_Segment[ProxyElements,:],Input_Segment[ClusterRange,:],  ShearModulus, PoissonRatio,
+    StiffnessMatrix_ByParts_Calculation_Rec(Input_Segment[ProxyElements,:],Input_Segment[ClusterElements_SK,:],  ShearModulus, PoissonRatio,
                                         1, 1)    
-# println(ClusterRange[1])
-    # @views SK_Proxy_Matrix = K[ClusterRange,ProxyElements]
+
     Skeleton_Local = idfact(SK_Proxy_Matrix', rank = Rank)[:sk]
-    # println(length(Skeleton_Local))
-    Skeleton_Global =  Skeleton_Local .+ ClusterRange[1] .- 1
+    Skeleton_Global =  ClusterElements_SK[Skeleton_Local]
     W = SK_Proxy_Matrix'[:,Skeleton_Local] \ SK_Proxy_Matrix'
 
     return ProxyElements, Skeleton_Local, Skeleton_Global, W
 end
 
-function SkeletonAndBasis_BuildK_N(Input_Segment, Rank, ClusterCenter, ClusterDiam, ClusterRange,  
-    RadMultiple1, RadMultiple2, MinimumProxyElments, RadRange, ShearModulus, PoissonRatio)   
 
+function SkeletonAndBasis_BuildK_HLN(Input_Segment, Rank,
+    ClusterElements_SK, Cluster_SkeletonGlobal_N,
+    RadMultipleForElemSelect, MinimumProxyElments, ShearModulus, PoissonRatio, Cluster_i, 
+    ClusterRange_All, Block_Range_Level, Block_Ctr_Diam, DistDiamRatioCrit)   
     FaultCenter = Input_Segment[:,1:3]
     ProxyElements = []
-    FaultCount_i  = length(FaultCenter[:,1])
-    while length(ProxyElements) < MinimumProxyElments
-        ProxyElements = []
-        for i=1:FaultCount_i
-            FaultDistance = norm(FaultCenter[i,:] - ClusterCenter)
-            if ClusterDiam * RadMultiple1 - RadRange <  FaultDistance < ClusterDiam * RadMultiple1 + RadRange ||
-                ClusterDiam * RadMultiple2 - RadRange <  FaultDistance < ClusterDiam * RadMultiple2 + RadRange
-                ProxyElements = [ProxyElements; i]
-            end
-        end
-        RadRange = RadRange + 100
         
-        # RadMultiple2 = RadMultiple2 * 0.7
-    end
-    
-    SK_Proxy_MatrixShear, SK_Proxy_Matrix = 
-    StiffnessMatrix_ByParts_Calculation_Rec(Input_Segment[ProxyElements,:],Input_Segment[ClusterRange,:],  ShearModulus, PoissonRatio,
-                                        1, 1)  
+    ClusterLevel_i = Block_Range_Level[Cluster_i,3]
+    ClusterCenter_i = Block_Ctr_Diam[Cluster_i,1:3]
+    ClusterDiam_i = Block_Ctr_Diam[Cluster_i,4]
 
-    Skeleton_Local = idfact(SK_Proxy_Matrix', rank = Rank)[:sk]
-
-    RankRange = size(SK_Proxy_Matrix)[1]    
-    if length(Skeleton_Local) != Rank # if Skeleton_Local is smaller than Rank * 2, add some random number.
-        # println(SK_Proxy_Matrix)
-        println("Adding Random Skeleton")
-        while length(Skeleton_Local) < Rank
-            RandElem = rand(1:RankRange)
-            if RandElem in Skeleton_Local
-            else
-                push!(Skeleton_Local, RandElem)
-            end
-        end        
-    end
-    
-
-    Skeleton_Global =  Skeleton_Local .+ ClusterRange[1] .- 1
-    W = SK_Proxy_Matrix'[:,Skeleton_Local] \ SK_Proxy_Matrix'
-
-    return ProxyElements, Skeleton_Local, Skeleton_Global, W
-
-end
-
-
-
-function SkeletonAndBasis_BuildK_Normal(Input_Segment, Rank, ClusterCenter, ClusterDiam, ClusterRange,  
-    RadMultiple1, RadMultiple2, MinimumProxyElments, RadRange, ShearModulus, PoissonRatio)   
-
-    FaultCenter = Input_Segment[:,1:3]
     ProxyElements = []
-    FaultCount_i  = length(FaultCenter[:,1])
-    while length(ProxyElements) < MinimumProxyElments
-        ProxyElements = []
-        for i=1:FaultCount_i
-            FaultDistance = norm(FaultCenter[i,:] - ClusterCenter)
-            if ClusterDiam * RadMultiple1 - RadRange <  FaultDistance < ClusterDiam * RadMultiple1 + RadRange ||
-                ClusterDiam * RadMultiple2 - RadRange <  FaultDistance < ClusterDiam * RadMultiple2 + RadRange
-                ProxyElements = [ProxyElements; i]
+    
+    for C_i = 1:length(ClusterRange_All)
+        if ClusterLevel_i == Block_Range_Level[C_i,3]
+            Distance = norm(ClusterCenter_i -  Block_Ctr_Diam[C_i,1:3])
+            Diam =  maximum([ClusterDiam_i, Block_Ctr_Diam[C_i,4]])
+            if  Distance/Diam > DistDiamRatioCrit 
+                # DaughterSkeletons = Cluster_SkeletonLocal_S[DaughterElem[C_i][1]]
+                ProxyElements = [ProxyElements; Cluster_SkeletonGlobal_N[DaughterElem[C_i,1]]]
+                if DaughterElem[C_i,2] > 0
+                    ProxyElements = [ProxyElements; Cluster_SkeletonGlobal_N[DaughterElem[C_i,2]]]
+                end
             end
         end
-        RadRange = RadRange + 100
-        
-        # RadMultiple2 = RadMultiple2 * 0.7
     end
-    
-    SK_Proxy_MatrixShear, SK_Proxy_Matrix = 
-    StiffnessMatrix_ByParts_Calculation_Rec(Input_Segment[ProxyElements,:],Input_Segment[ClusterRange,:],  ShearModulus, PoissonRatio,
-                                        1, 1)  
+ 
+    ProxyElemNear = []
+    for Elem_i in ProxyElements # Include Elements that is within x3 of Cluster Diam
+        Distance = norm(ClusterCenter_i -  FaultCenter[Elem_i,1:3])
+        if Distance/ClusterDiam_i < RadMultipleForElemSelect
+            push!(ProxyElemNear, Elem_i)            
+        end
+    end
+
+    if length(ProxyElements) == 0
+        ProxyElemNear = collect(1:MinimumProxyElments)
+    elseif length(ProxyElements) < MinimumProxyElments
+        ProxyElemNear = ProxyElements
+    elseif length(ProxyElemNear) < MinimumProxyElments
+        ElemCountAdded = MinimumProxyElments - length(ProxyElemNear)
+        if ElemCountAdded > 0
+            println(ProxyElemNear)
+            AllowedPool = setdiff(ProxyElements, ProxyElemNear)
+            println("Pool ",ElemCountAdded,"  ", AllowedPool)
+            AddedElem = sample(AllowedPool, ElemCountAdded, replace=false)
+            println("Adding ",ElemCountAdded,"  ", AddedElem)
+            ProxyElemNear = [ProxyElemNear; AddedElem]
+            println(ProxyElemNear)
+        end
+    end
+    ProxyElements = ProxyElemNear
+
+   
+    SK_Proxy_Matrix, SK_Proxy_MatrixNorm = 
+    StiffnessMatrix_ByParts_Calculation_Rec(Input_Segment[ProxyElements,:],Input_Segment[ClusterElements_SK,:],  ShearModulus, PoissonRatio,
+                                        1, 1)    
 
     Skeleton_Local = idfact(SK_Proxy_Matrix', rank = Rank)[:sk]
-    println(maximum(SK_Proxy_Matrix) - minimum(SK_Proxy_Matrix), "   ", length(Skeleton_Local))
-    
-    println(size(SK_Proxy_Matrix),  length(Skeleton_Local), "  ",ProxyElements)
-
-    RankRange = size(SK_Proxy_Matrix)[1]    
-    if length(Skeleton_Local) != Rank # if Skeleton_Local is smaller than Rank * 2, add some random number.
-        # println(SK_Proxy_Matrix)
-        while length(Skeleton_Local) < Rank
-            RandElem = rand(1:RankRange)
-            if RandElem in Skeleton_Local
-            else
-                push!(Skeleton_Local, RandElem)
-            end
-        end        
-    end
-    println(size(SK_Proxy_Matrix),  length(Skeleton_Local), "  ",ProxyElements)
-
-    Skeleton_Global =  Skeleton_Local .+ ClusterRange[1] .- 1
+    Skeleton_Global =  ClusterElements_SK[Skeleton_Local]
     W = SK_Proxy_Matrix'[:,Skeleton_Local] \ SK_Proxy_Matrix'
 
     return ProxyElements, Skeleton_Local, Skeleton_Global, W
 end
+
 
 function InterpMatrix(K, W_s,W_r, SkS, SkR)
     # Interpolate the matrix to the basis of each cluster for each source and receiver
