@@ -165,17 +165,25 @@ function RunRSFDFN3D()
     # FaultMass = minimum([FaultLengthStrike FaultLengthDip],dims = 2) * RockDensity ./ 3
     # FaultMass .= 1e6  
 
+    if Hmatrix == true
+        K_Self  = GetKself(ShearStiffness_H, ElementRange_SR, FaultCount)
+    else 
+        K_Self = diag(StiffnessMatrixShear)
+    end
+
 
     ############# Evolution and Alpha Value ################
     Alpha_Evo = 0.0
     EvolutionDR = 1
     ########################################################
     
+
+
     #######---------- Logical quick adjust ----------#######
     LoadingFaultCount, FaultMass, Fault_a, Fault_b, Fault_Dc, Fault_Theta_i, Fault_V_i, 
     Fault_Friction_i, Fault_NormalStress, Fault_V_Const, FaultCenter, FaultIndex_Adjusted, MinimumNormalStress = 
         ParameterAdj(LoadingFaultCount, FaultMass, Fault_a, Fault_b, Fault_Dc, Fault_Theta_i, Fault_V_i, 
-        Fault_Friction_i, Fault_NormalStress, Fault_V_Const, 
+        Fault_Friction_i, Fault_NormalStress, Fault_V_Const, K_Self,
         FaultStrikeAngle, FaultDipAngle, FaultCenter, Fault_BulkIndex, FaultRakeAngle, MinimumNormalStress)
 
     ############################### Adjust Parameters ##############################
@@ -187,12 +195,6 @@ function RunRSFDFN3D()
     ################################ Time Step Set  ################################
 
     Period=zeros(FaultCount)
-    if Hmatrix == true
-        K_Self  = GetKself(ShearStiffness_H, ElementRange_SR, FaultCount)
-    else 
-        K_Self = diag(StiffnessMatrixShear)
-    end
-
     for i=1:FaultCount
         Period[i]=sqrt(FaultMass[i]/abs(K_Self[i]))
     end

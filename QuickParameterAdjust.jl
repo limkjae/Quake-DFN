@@ -1,7 +1,7 @@
 
 
 function ParameterAdj(LoadingFaultCount, FaultMass, Fault_a, Fault_b, Fault_Dc, 
-    Fault_Theta_i, Fault_V_i, Fault_Friction_i, Fault_NormalStress, Fault_V_Const,
+    Fault_Theta_i, Fault_V_i, Fault_Friction_i, Fault_NormalStress, Fault_V_Const, K_Self,
      FaultStrikeAngle, FaultDipAngle, FaultCenter, Fault_BulkIndex, FaultRakeAngle, MinimumNormalStress)
 
     FaultMass_Original = copy(FaultMass)
@@ -26,7 +26,7 @@ function ParameterAdj(LoadingFaultCount, FaultMass, Fault_a, Fault_b, Fault_Dc,
 
     ######################################################################################################
     ##########################  Calculation of initial state from stress orientation #####################
-    
+    ##########################  Only works for vertial Fasult                        ###################
     # MaxStressOrientation = 85. # between 0-180 degree
     # StressRatioMaxOverMin = 0.5
     # MinFrictionAllowed = 0.1 # smaller than this friction is not allowed
@@ -51,6 +51,16 @@ function ParameterAdj(LoadingFaultCount, FaultMass, Fault_a, Fault_b, Fault_Dc,
 
     ######################################################################################################
     ######################################### Direct Adjust ##############################################
+
+    # println(Fault_Dc)
+    # Fault_a .= 0.002
+    # Fault_b .= 0.004
+    # Fault_Dc .= 10e-4
+    # Fault_NormalStress .= 10e6
+    # Fault_V_i .= 1e-20
+    # Fault_Theta_i .= 1e10
+    # MinimumNormalStress= 1e6
+    
     # for i in eachindex(Fault_Dc)
     #     if Fault_BulkIndex[i]==1
     #         Fault_V_i[i]=1e-12
@@ -71,15 +81,18 @@ function ParameterAdj(LoadingFaultCount, FaultMass, Fault_a, Fault_b, Fault_Dc,
     # Fault_Dc .= 2e-3
     # Fault_V_i .= 1e-9 .* exp.( (Fault_Friction_i .- Mu0 .- Fault_b .* log.(Fault_Theta_i .* 1e-9 ./ Fault_Dc)) ./ Fault_a)
     ####################################################################
-
-    # Fault_Theta_i .= 0.9e10
-    # Fault_Dc .= 1e-3
-    # Fault_a .= 0.05
-    # Fault_b .= 0.003
-    # Fault_NormalStress .= 10e6
-    # Fault_V_i .= Fault_V_i * 10
-    # Fault_Theta_i .= 1e10
-    # MinimumNormalStress= 1e6
+    
+    ################## Dc Based on the Numerical Resolution #######################
+    # KoverKc = 1.2
+    # Fault_Dc .= 10e-4 # for the elements where a-b > 0
+    # for i = 1:FaultCount
+    #     if (Fault_b[i] - Fault_a[i]) > 0
+    #         # Fault_Dc[i] = KoverKc *(Fault_b[i] - Fault_a[i])*Fault_NormalStress[i] / K_Self[i] 
+    #         Fault_Dc[i] = KoverKc *(Fault_b[i])*Fault_NormalStress[i] / K_Self[i] 
+    #         # Fault_Dc[i] = KoverKc * ((Fault_b[i] - Fault_a[i])^2) / Fault_b[i] * Fault_NormalStress[i] / K_Self[i] 
+    #     end
+    # end
+    #######################################################################
 
     # FaultMass .= 1e5
     # FaultMass .= 1e6

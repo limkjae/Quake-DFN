@@ -20,7 +20,7 @@ include("scripts/Functions_Hmatrix.jl")
 LoadingInputFileName="Input_Discretized.jld2" #only Needed when BuildStiffnessMatrix=2
 
 
-function RunPlotInput(LoadingInputFileName)
+# function RunPlotInput(LoadingInputFileName)
 
     ################################################################################
     ############################### Load Input Files ###############################
@@ -63,29 +63,29 @@ function RunPlotInput(LoadingInputFileName)
 
     println("FaultCount: ", FaultCount)
 
+    K_Self=[]
+    if haskey(load(LoadingInputFileName), "ShearStiffness_H")
+        ShearStiffness_H = load(LoadingInputFileName, "ShearStiffness_H")
+        ElementRange_SR = load(LoadingInputFileName, "ElementRange_SR")
+        LoadingStiffnessH, K_Self= StiffnessTransitionToLoading(ShearStiffness_H, ElementRange_SR, FaultCount)
+        K_Self = K_Self
+    else 
+
+        K_Self= diag(load(LoadingInputFileName, "StiffnessMatrixShear"))
+
+    end
+
     
     ################################################################################
     ######++++++++++++++++++++++ Apply Adjust Parameters +++++++++++++++++++++######
     LoadingFaultCount, FaultMass, Fault_a, Fault_b, Fault_Dc, Fault_Theta_i, Fault_V_i, Fault_Friction_i,
     Fault_NormalStress, Fault_V_Const, FaultCenter, FaultIndex_Adjusted = 
         ParameterAdj(LoadingFaultCount, FaultMass, Fault_a, Fault_b, Fault_Dc, Fault_Theta_i, Fault_V_i, 
-        Fault_Friction_i, Fault_NormalStress, Fault_V_Const, 
+        Fault_Friction_i, Fault_NormalStress, Fault_V_Const, K_Self,
         FaultStrikeAngle, FaultDipAngle, FaultCenter, Fault_BulkIndex, FaultRakeAngle, MinimumNormalStress)
         
     ########^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^########
     ################################################################################
-
-    K_Self=[]
-    if haskey(load(LoadingInputFileName), "ShearStiffness_H")
-        ShearStiffness_H = load(LoadingInputFileName, "ShearStiffness_H")
-        ElementRange_SR = load(LoadingInputFileName, "ElementRange_SR")
-        LoadingStiffnessH, K_Self= StiffnessTransitionToLoading(ShearStiffness_H, ElementRange_SR, FaultCount)
-        K_Self = -K_Self
-    else 
-
-        K_Self= diag(load(LoadingInputFileName, "StiffnessMatrixShear"))
-
-    end
 
 
     ################################################################################
@@ -94,7 +94,7 @@ function RunPlotInput(LoadingInputFileName)
         UnderResolved = zeros(FaultCount)
         for i=1:FaultCount
             
-            KoverKC[i] =  -K_Self[i]/((Fault_b[i] - Fault_a[i])*Fault_NormalStress[i]/Fault_Dc[i]) 
+            KoverKC[i] =  K_Self[i]/((Fault_b[i] - Fault_a[i])*Fault_NormalStress[i]/Fault_Dc[i]) 
             if KoverKC[i] < 0
                 KoverKC[i] = 100
             end
@@ -116,8 +116,8 @@ function RunPlotInput(LoadingInputFileName)
         ColorMinMax = 0  
         # PlotInput = log10.(Fault_Theta_i); ColorMinMax = 0 
         # PlotInput = log10.(Fault_V_i); ColorMinMax = 0  
-        PlotInput =Fault_NormalStress; ColorMinMax = 0    
-        # PlotInput =KoverKC ;ColorMinMax=[0,5]
+        # PlotInput =Fault_NormalStress; ColorMinMax = 0    
+        PlotInput = KoverKC ;ColorMinMax=[0,5]
         # PlotInput =UnderResolved ;ColorMinMax=[0,1]
         # PlotInput = Fault_a - Fault_b; ColorMinMax = 0  
         # PlotInput =  Fault_BulkIndex; ColorMinMax = 0  
@@ -225,10 +225,10 @@ function RunPlotInput(LoadingInputFileName)
     ########^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^########
     ################################################################################
         
-end
+# end
 
 
-RunPlotInput(LoadingInputFileName)
+# RunPlotInput(LoadingInputFileName)
 
 
 

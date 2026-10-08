@@ -2,9 +2,10 @@
 ######################## input parameters for the Simulation ######################
 
 
+
 ######################### Simulation Time Set #############################
-TotalStep = 10000 # Total simulation step
-SaveStep = 5000 # Automatically saved every this step
+TotalStep = 20000 # Total simulation step
+SaveStep = 10000 # Automatically saved every this step
 RecordStep = 10 # Simulation sampling rate !! should be a factor of SaveStep !!
 
 ThreadCount = 5 # Only used for HMatrix Simulations. 5~8 seems to be most efficient in most of the computer
@@ -13,12 +14,13 @@ ThreadCount = 5 # Only used for HMatrix Simulations. 5~8 seems to be most effici
 DtCut = 5
 SwitchV = 1e-2
 RuptureTimeStepMultiple = 3
-MaximumDt = 1e7
+MaximumDt = 1e6
 VerticalLengthScaleforM = 0 # if 0, Mass is automatically determined based on the fault length (radiation damping dominated for large rupture). If not, M = VerticalLengthScaleforM * density / 2
 
 
 ##########################  Save File Name  ###############################
 SaveFileName = "Result"
+
 
 
 ####### Strong Interaction Supression for Numerical Stability in case too Strong Interaction ######
