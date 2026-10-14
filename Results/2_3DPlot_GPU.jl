@@ -1,4 +1,8 @@
 
+# 3D plot of fault elements using Makie.jl
+# if you use GPU, it will be much faster
+# if you have loaded PyPlot, you may need to restart Julia to use Makie
+
 using GLMakie
 using GeometryBasics
 using LinearAlgebra
